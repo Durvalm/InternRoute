@@ -20,8 +20,13 @@ def update_profile():
   user = User.query.get_or_404(user_id)
   data = request.get_json() or {}
 
+  try:
+    graduation_date = parse_date(data.get("graduation_date"))
+  except ValueError:
+    return jsonify({"error": "Invalid graduation_date format"}), 400
+
   user.experience_level = data.get("experience_level", user.experience_level)
-  user.graduation_date = parse_date(data.get("graduation_date")) or user.graduation_date
+  user.graduation_date = graduation_date or user.graduation_date
 
   db.session.commit()
   return jsonify({"user": user.to_dict()})
@@ -33,8 +38,13 @@ def complete_onboarding():
   user = User.query.get_or_404(user_id)
   data = request.get_json() or {}
 
+  try:
+    graduation_date = parse_date(data.get("graduation_date"))
+  except ValueError:
+    return jsonify({"error": "Invalid graduation_date format"}), 400
+
   user.experience_level = data.get("experience_level")
-  user.graduation_date = parse_date(data.get("graduation_date"))
+  user.graduation_date = graduation_date
   user.onboarding_completed = True
 
   db.session.commit()

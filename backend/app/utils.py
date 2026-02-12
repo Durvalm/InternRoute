@@ -4,6 +4,9 @@ from datetime import date, datetime
 def parse_date(value: str | None) -> date | None:
   if not value:
     return None
+  # Accept YYYY-MM by coercing to first day of month.
+  if len(value) == 7:
+    value = f"{value}-01"
   return datetime.fromisoformat(value).date()
 
 
