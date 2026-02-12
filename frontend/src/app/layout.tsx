@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import AuthGuard from "@/components/AuthGuard";
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space" });
 
@@ -17,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={spaceGrotesk.variable}>
       <body className="font-sans">
-        {children}
+        <AuthGuard>{children}</AuthGuard>
       </body>
     </html>
   );

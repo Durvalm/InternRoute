@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Code2,
@@ -15,6 +15,7 @@ import {
   GraduationCap,
   Sparkles
 } from "lucide-react";
+import { clearToken } from "@/lib/auth";
 
 type SidebarProps = {
   onClose?: () => void;
@@ -34,6 +35,11 @@ const navItems = [
 
 export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const handleLogout = () => {
+    clearToken();
+    router.push("/login");
+  };
 
   return (
     <div className="flex flex-col h-full bg-white text-slate-600">
@@ -94,7 +100,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <p className="text-sm font-medium text-slate-900 truncate">Alex Student</p>
             <p className="text-xs text-slate-500 truncate">CS Major @ Tech U</p>
           </div>
-          <LogOut size={16} className="text-slate-400 hover:text-red-500" />
+          <button onClick={handleLogout} aria-label="Log out">
+            <LogOut size={16} className="text-slate-400 hover:text-red-500" />
+          </button>
         </div>
       </div>
     </div>
