@@ -1,15 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Clock, Calendar, AlertCircle, Briefcase, Zap } from "lucide-react";
 
-export default function CountdownWidget() {
-  const [daysLeft, setDaysLeft] = useState(0);
+const formatMonthYear = (value: string | null | undefined) => {
+  if (!value) return "May 2027";
+  const date = new Date(value);
+  return date.toLocaleString("en-US", { month: "long", year: "numeric" });
+};
+
+type CountdownWidgetProps = {
+  daysLeftOverride?: number;
+  recruitingDate?: string;
+  graduationDate?: string | null;
+  readiness?: number;
+};
+
+export default function CountdownWidget({
+  daysLeftOverride,
+  recruitingDate,
+  graduationDate,
+  readiness
+}: CountdownWidgetProps) {
+  const [daysLeft, setDaysLeft] = useState(daysLeftOverride ?? 0);
   const [status, setStatus] = useState<"prep" | "window" | "late">("prep");
 
-  const userReadiness = 42;
+  const userReadiness = readiness ?? 42;
 
   useEffect(() => {
+    if (typeof daysLeftOverride === "number" && daysLeftOverride >= 0) {
+      setDaysLeft(daysLeftOverride);
+      setStatus("prep");
+      return;
+    }
+
     const today = new Date();
     const currentYear = today.getFullYear();
     const windowStart = new Date(currentYear, 7, 1);
@@ -28,7 +52,17 @@ export default function CountdownWidget() {
       const diffTime = Math.abs(targetDate.getTime() - today.getTime());
       setDaysLeft(Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
     }
-  }, []);
+  }, [daysLeftOverride]);
+
+  const recruitingLabel = useMemo(() => {
+    if (recruitingDate) {
+      return `Recruiting Window opens on ${new Date(recruitingDate).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric"
+      })}`;
+    }
+    return "Recruiting Window opens on August 1st";
+  }, [recruitingDate]);
 
   const content = (() => {
     if (status === "window") {
@@ -50,7 +84,7 @@ export default function CountdownWidget() {
 
     return {
       title: "Next Window Opens in:",
-      subtitle: "Recruiting Window opens on August 1st",
+      subtitle: recruitingLabel,
       color: "bg-slate-900",
       icon: Clock
     };
@@ -89,7 +123,7 @@ export default function CountdownWidget() {
           <div>
             <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mb-1">Graduation Date</p>
             <div className="flex items-center justify-between bg-white/10 p-3 rounded-lg border border-white/10">
-              <span className="font-medium text-white">May 2027</span>
+              <span className="font-medium text-white">{formatMonthYear(graduationDate)}</span>
               <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded">Junior</span>
             </div>
           </div>

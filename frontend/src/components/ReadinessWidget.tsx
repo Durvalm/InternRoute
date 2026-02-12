@@ -11,7 +11,11 @@ type CategoryProgressProps = {
   details: string;
 };
 
-export default function ReadinessWidget() {
+type ReadinessWidgetProps = {
+  progress: number;
+};
+
+export default function ReadinessWidget({ progress }: ReadinessWidgetProps) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
@@ -24,13 +28,13 @@ export default function ReadinessWidget() {
             <p className="text-sm text-slate-500">Your preparedness for the recruiting season</p>
           </div>
         </div>
-        <span className="text-3xl font-bold text-indigo-600">42%</span>
+        <span className="text-3xl font-bold text-indigo-600">{progress}%</span>
       </div>
 
       <div className="w-full bg-slate-100 rounded-full h-4 mb-8 overflow-hidden">
         <div
           className="bg-indigo-600 h-4 rounded-full transition-all duration-1000 ease-out relative"
-          style={{ width: "42%" }}
+          style={{ width: `${progress}%` }}
         >
           <div className="absolute top-0 left-0 bottom-0 right-0 bg-white/20 animate-[shimmer_2s_infinite] bg-[length:200%_100%] bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
         </div>
