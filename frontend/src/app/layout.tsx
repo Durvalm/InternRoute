@@ -5,7 +5,7 @@ import "./globals.css";
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space" });
 
 export const metadata: Metadata = {
-  title: "InternRoute",
+  title: "InternshipRoute",
   description: "Your internship prep cockpit"
 };
 

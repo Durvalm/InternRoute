@@ -24,3 +24,5 @@ yarn-error.log*
 pnpm-debug.log*
 
 PRODUCT_PRIVATE.md
+todo.txt
+MVP_SPEC.md
