@@ -19,6 +19,11 @@ export async function apiRequest<T>(path: string, options?: RequestInit): Promis
   });
 
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined") {
+      const { clearToken } = await import("@/lib/auth");
+      clearToken();
+      window.location.href = "/login";
+    }
     throw new Error(`API error: ${res.status}`);
   }
 
