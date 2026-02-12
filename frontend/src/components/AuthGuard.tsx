@@ -1,21 +1,55 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { getToken } from "@/lib/auth";
+import { apiRequest } from "@/lib/api";
+import { clearToken, getToken } from "@/lib/auth";
 
-const AUTH_PATHS = ["/login", "/register", "/onboarding"];
+const PUBLIC_PATHS = ["/login", "/register"];
+
+type MeResponse = {
+  user: {
+    onboarding_completed: boolean;
+  };
+};
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     const token = getToken();
-    if (!token && !AUTH_PATHS.some((path) => pathname.startsWith(path))) {
-      router.replace("/login");
+    if (!token) {
+      if (!PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
+        router.replace("/login");
+      }
+      setChecked(true);
+      return;
     }
+
+    apiRequest<MeResponse>("/auth/me")
+      .then((data) => {
+        if (!data.user.onboarding_completed && !pathname.startsWith("/onboarding")) {
+          router.replace("/onboarding");
+          return;
+        }
+        if (data.user.onboarding_completed && pathname.startsWith("/onboarding")) {
+          router.replace("/dashboard");
+          return;
+        }
+        setChecked(true);
+      })
+      .catch(() => {
+        clearToken();
+        router.replace("/login");
+        setChecked(true);
+      });
   }, [pathname, router]);
+
+  if (!checked) {
+    return null;
+  }
 
   return <>{children}</>;
 }
