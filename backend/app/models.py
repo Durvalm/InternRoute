@@ -2,6 +2,7 @@ from datetime import datetime
 from passlib.hash import bcrypt
 from .extensions import db
 
+
 class User(db.Model):
   __tablename__ = "users"
 
@@ -43,6 +44,8 @@ class UserProgress(db.Model):
   category_coding = db.Column(db.Integer, default=0)
   category_projects = db.Column(db.Integer, default=0)
   category_resume = db.Column(db.Integer, default=0)
+  coding_override_score = db.Column(db.Integer, nullable=True)
+  coding_override_source = db.Column(db.String(100), nullable=True)
   updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
   user = db.relationship("User", backref=db.backref("progress", uselist=False))
@@ -56,3 +59,53 @@ class UserProgress(db.Model):
         "resume": self.category_resume
       }
     }
+
+
+class Module(db.Model):
+  __tablename__ = "modules"
+
+  id = db.Column(db.Integer, primary_key=True)
+  key = db.Column(db.String(64), unique=True, nullable=False)
+  name = db.Column(db.String(120), nullable=False)
+  category = db.Column(db.String(32), nullable=False)
+  overall_weight = db.Column(db.Integer, nullable=False)
+  unlock_threshold = db.Column(db.Integer, nullable=False, default=80, server_default=db.text("80"))
+  next_module_id = db.Column(db.Integer, db.ForeignKey("modules.id"), nullable=True)
+  sort_order = db.Column(db.Integer, nullable=False)
+  created_at = db.Column(db.DateTime, default=datetime.utcnow)
+  updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+  next_module = db.relationship("Module", remote_side=[id], uselist=False)
+
+
+class Task(db.Model):
+  __tablename__ = "tasks"
+
+  id = db.Column(db.Integer, primary_key=True)
+  module_id = db.Column(db.Integer, db.ForeignKey("modules.id"), nullable=False)
+  title = db.Column(db.String(255), nullable=False)
+  description = db.Column(db.Text, nullable=True)
+  weight = db.Column(db.Integer, nullable=False)
+  is_bonus = db.Column(db.Boolean, nullable=False, default=False, server_default=db.text("false"))
+  sort_order = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+  is_active = db.Column(db.Boolean, nullable=False, default=True, server_default=db.text("true"))
+  created_at = db.Column(db.DateTime, default=datetime.utcnow)
+  updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+  module = db.relationship("Module", backref=db.backref("tasks", lazy=True))
+
+
+class UserTaskCompletion(db.Model):
+  __tablename__ = "user_task_completions"
+
+  id = db.Column(db.Integer, primary_key=True)
+  user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+  task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
+  completed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+  __table_args__ = (
+    db.UniqueConstraint("user_id", "task_id", name="uq_user_task_completion"),
+  )
+
+  user = db.relationship("User", backref=db.backref("task_completions", lazy=True))
+  task = db.relationship("Task", backref=db.backref("completions", lazy=True))

@@ -7,6 +7,16 @@ import ActionItemsWidget from "@/components/ActionItemsWidget";
 import QuickResourcesWidget from "@/components/QuickResourcesWidget";
 import { apiRequest } from "@/lib/api";
 
+type ModuleProgress = {
+  module_key: string;
+  module_name: string;
+  score: number;
+  is_unlocked: boolean;
+  unlock_threshold: number;
+  has_tasks: boolean;
+  has_bonus_tasks: boolean;
+};
+
 type DashboardSummary = {
   user_name: string | null;
   progress: number;
@@ -15,6 +25,8 @@ type DashboardSummary = {
     projects: number;
     resume: number;
   };
+  module_progress: ModuleProgress[];
+  next_action: string | null;
   season_status: "prep" | "window";
   days_until_recruiting: number;
   recruiting_date: string;
@@ -61,7 +73,10 @@ export default function Dashboard() {
             progress={summary?.progress ?? 0}
             categories={summary?.category_readiness}
           />
-          <ActionItemsWidget />
+          <ActionItemsWidget
+            moduleProgress={summary?.module_progress ?? []}
+            nextAction={summary?.next_action ?? null}
+          />
         </div>
 
         <div className="lg:col-span-1 flex flex-col gap-6">

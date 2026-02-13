@@ -3,6 +3,11 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..extensions import db
 from ..models import User
 from ..utils import parse_date
+from ..services.progression import (
+  clear_coding_override,
+  recompute_and_persist_user_progress,
+  set_coding_override_for_advanced,
+)
 
 bp = Blueprint("user", __name__, url_prefix="/user")
 
@@ -41,6 +46,10 @@ def update_profile():
     if coding_skill_level not in ALLOWED_CODING_SKILL_LEVELS:
       return jsonify({"error": "Invalid coding_skill_level"}), 400
     user.coding_skill_level = coding_skill_level
+    if coding_skill_level == "Advanced":
+      set_coding_override_for_advanced(user.id, score=80)
+    else:
+      clear_coding_override(user.id)
 
   if "graduation_date" in data:
     try:
@@ -49,6 +58,7 @@ def update_profile():
       return jsonify({"error": "Invalid graduation_date format"}), 400
 
   db.session.commit()
+  recompute_and_persist_user_progress(user.id, commit=True)
   return jsonify({"user": user.to_dict()})
 
 @bp.post("/onboarding")
@@ -79,4 +89,9 @@ def complete_onboarding():
   user.onboarding_completed = True
 
   db.session.commit()
+  if coding_skill_level == "Advanced":
+    set_coding_override_for_advanced(user.id, score=80)
+  else:
+    clear_coding_override(user.id)
+  recompute_and_persist_user_progress(user.id, commit=True)
   return jsonify({"user": user.to_dict()})
