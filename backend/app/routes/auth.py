@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from sqlalchemy.exc import IntegrityError
 from ..extensions import db
 from ..models import User, UserProgress
 
@@ -8,7 +9,7 @@ bp = Blueprint("auth", __name__, url_prefix="/auth")
 @bp.post("/register")
 def register():
   data = request.get_json() or {}
-  email = data.get("email")
+  email = (data.get("email") or "").strip().lower()
   password = data.get("password")
 
   if not email or not password:
@@ -22,12 +23,14 @@ def register():
     user.set_password(password)
   except ValueError:
     return jsonify({"error": "Password too long (max 72 bytes)."}), 400
-  db.session.add(user)
-  db.session.commit()
 
-  progress = UserProgress(user_id=user.id)
-  db.session.add(progress)
-  db.session.commit()
+  progress = UserProgress(user=user)
+  db.session.add_all([user, progress])
+  try:
+    db.session.commit()
+  except IntegrityError:
+    db.session.rollback()
+    return jsonify({"error": "Email already registered"}), 409
 
   token = create_access_token(identity=str(user.id))
   return jsonify({"access_token": token, "user": user.to_dict()})
@@ -35,7 +38,7 @@ def register():
 @bp.post("/login")
 def login():
   data = request.get_json() or {}
-  email = data.get("email")
+  email = (data.get("email") or "").strip().lower()
   password = data.get("password")
 
   if not email or not password:

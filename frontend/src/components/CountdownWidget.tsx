@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Clock, Calendar, AlertCircle, Briefcase, Zap } from "lucide-react";
 
 const formatMonthYear = (value: string | null | undefined) => {
@@ -12,52 +12,29 @@ const formatMonthYear = (value: string | null | undefined) => {
 };
 
 type CountdownWidgetProps = {
-  daysLeftOverride?: number;
+  seasonStatus?: "prep" | "window";
+  daysUntilRecruiting?: number;
   recruitingDate?: string;
+  daysUntilWindowClose?: number | null;
+  recruitingWindowEnd?: string | null;
   graduationDate?: string | null;
   readiness?: number;
 };
 
 export default function CountdownWidget({
-  daysLeftOverride,
+  seasonStatus,
+  daysUntilRecruiting,
   recruitingDate,
+  daysUntilWindowClose,
+  recruitingWindowEnd,
   graduationDate,
   readiness
 }: CountdownWidgetProps) {
-  const [daysLeft, setDaysLeft] = useState(daysLeftOverride ?? 0);
-  const [status, setStatus] = useState<"prep" | "window" | "late">("prep");
+  const status = seasonStatus === "window" ? "window" : "prep";
+  const daysLeft = typeof daysUntilRecruiting === "number" ? daysUntilRecruiting : 0;
+  const daysLeftInWindow = typeof daysUntilWindowClose === "number" ? daysUntilWindowClose : null;
 
   const userReadiness = readiness ?? 0;
-
-  useEffect(() => {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const windowStartThisYear = new Date(currentYear, 7, 1);
-    const windowEndThisYear = new Date(currentYear + 1, 2, 31);
-
-    const windowStart =
-      today >= windowStartThisYear
-        ? windowStartThisYear
-        : today <= windowEndThisYear
-          ? new Date(currentYear - 1, 7, 1)
-          : windowStartThisYear;
-    const windowEnd =
-      windowStart.getFullYear() === currentYear
-        ? new Date(currentYear + 1, 2, 31)
-        : windowEndThisYear;
-
-    if (today >= windowStart && today <= windowEnd) {
-      setStatus("window");
-      const diffTime = Math.abs(windowEnd.getTime() - today.getTime());
-      setDaysLeft(Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-    } else {
-      setStatus("prep");
-      const targetDate = windowStartThisYear;
-      const diffTime = Math.abs(targetDate.getTime() - today.getTime());
-      const computed = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      setDaysLeft(typeof daysLeftOverride === "number" ? daysLeftOverride : computed);
-    }
-  }, [daysLeftOverride]);
 
   const recruitingLabel = useMemo(() => {
     if (recruitingDate) {
@@ -74,9 +51,22 @@ export default function CountdownWidget({
     return "Recruiting Window opens on August 1st";
   }, [recruitingDate]);
 
+  const windowCloseLabel = useMemo(() => {
+    if (!recruitingWindowEnd) return null;
+    const [year, month, day] = recruitingWindowEnd.split("-").map(Number);
+    if (!year || !month || !day) return null;
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC"
+    });
+  }, [recruitingWindowEnd]);
+
   const content = (() => {
     if (status === "window") {
-      if (userReadiness > 70) {
+      if (userReadiness >= 70) {
         return {
           title: "Recruiting is LIVE! 🚨",
           subtitle: "You are ready. Apply now!",
@@ -86,7 +76,9 @@ export default function CountdownWidget({
       }
       return {
         title: "Recruiting is LIVE! ⚠️",
-        subtitle: "Prioritize 'Easy Apply' & finish your Resume ASAP.",
+        subtitle: windowCloseLabel
+          ? `Current window closes on ${windowCloseLabel}`
+          : "Prioritize 'Easy Apply' and finish your Resume ASAP.",
         color: "bg-amber-600",
         icon: AlertCircle
       };
@@ -119,6 +111,12 @@ export default function CountdownWidget({
           <div className="flex items-end gap-2 mb-2">
             <span className="text-5xl font-bold tracking-tight text-white">{daysLeft}</span>
             <span className="text-xl text-slate-400 mb-1.5">Days</span>
+          </div>
+        )}
+        {status === "window" && daysLeftInWindow !== null && (
+          <div className="flex items-end gap-2 mb-2">
+            <span className="text-5xl font-bold tracking-tight text-white">{daysLeftInWindow}</span>
+            <span className="text-xl text-slate-200 mb-1.5">Days Left</span>
           </div>
         )}
 

@@ -11,7 +11,7 @@ class User(db.Model):
   name = db.Column(db.String(120), nullable=True)
   coding_skill_level = db.Column(db.String(50), nullable=True)
   graduation_date = db.Column(db.Date, nullable=True)
-  onboarding_completed = db.Column(db.Boolean, default=False)
+  onboarding_completed = db.Column(db.Boolean, nullable=False, default=False, server_default=db.text("false"))
   created_at = db.Column(db.DateTime, default=datetime.utcnow)
   updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -23,20 +23,31 @@ export default function OnboardingPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+
+    if (!name.trim()) {
+      setError("Name is required.");
+      return;
+    }
+    if (!graduationDate) {
+      setError("Graduation date is required.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       await apiRequest<ProfileResponse>("/user/onboarding", {
         method: "POST",
         body: JSON.stringify({
-          name,
+          name: name.trim(),
           coding_skill_level: codingSkillLevel,
           graduation_date: graduationDate || null
         })
       });
       router.push("/dashboard");
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      const message = err instanceof Error && err.message ? err.message : "Something went wrong. Please try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -57,6 +68,7 @@ export default function OnboardingPage() {
             placeholder="Alex Johnson"
             value={name}
             onChange={(event) => setName(event.target.value)}
+            required
           />
         </div>
         <div>
@@ -80,6 +92,7 @@ export default function OnboardingPage() {
             className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
             value={graduationDate}
             onChange={(event) => setGraduationDate(event.target.value)}
+            required
           />
         </div>
         {error ? <p className="text-xs text-red-500">{error}</p> : null}

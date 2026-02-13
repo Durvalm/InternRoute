@@ -15,8 +15,11 @@ type DashboardSummary = {
     projects: number;
     resume: number;
   };
+  season_status: "prep" | "window";
   days_until_recruiting: number;
   recruiting_date: string;
+  days_until_window_close: number | null;
+  recruiting_window_end: string | null;
   graduation_date: string | null;
 };
 
@@ -63,8 +66,11 @@ export default function Dashboard() {
 
         <div className="lg:col-span-1 flex flex-col gap-6">
           <CountdownWidget
-            daysLeftOverride={summary?.days_until_recruiting}
+            seasonStatus={summary?.season_status}
+            daysUntilRecruiting={summary?.days_until_recruiting}
             recruitingDate={summary?.recruiting_date}
+            daysUntilWindowClose={summary?.days_until_window_close}
+            recruitingWindowEnd={summary?.recruiting_window_end}
             graduationDate={summary?.graduation_date}
             readiness={summary?.progress}
           />
