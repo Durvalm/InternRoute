@@ -9,14 +9,14 @@ bp = Blueprint("user", __name__, url_prefix="/user")
 @bp.get("/profile")
 @jwt_required()
 def profile():
-  user_id = get_jwt_identity()
+  user_id = int(get_jwt_identity())
   user = User.query.get_or_404(user_id)
   return jsonify({"user": user.to_dict()})
 
 @bp.patch("/profile")
 @jwt_required()
 def update_profile():
-  user_id = get_jwt_identity()
+  user_id = int(get_jwt_identity())
   user = User.query.get_or_404(user_id)
   data = request.get_json() or {}
 
@@ -34,7 +34,7 @@ def update_profile():
 @bp.post("/onboarding")
 @jwt_required()
 def complete_onboarding():
-  user_id = get_jwt_identity()
+  user_id = int(get_jwt_identity())
   user = User.query.get_or_404(user_id)
   data = request.get_json() or {}
 

@@ -15,6 +15,8 @@ class User(db.Model):
   updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
   def set_password(self, password: str) -> None:
+    if len(password.encode("utf-8")) > 72:
+      raise ValueError("Password exceeds 72 bytes")
     self.password_hash = bcrypt.hash(password)
 
   def check_password(self, password: str) -> bool:

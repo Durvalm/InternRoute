@@ -9,7 +9,7 @@ bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 @bp.get("/summary")
 @jwt_required()
 def summary():
-  user_id = get_jwt_identity()
+  user_id = int(get_jwt_identity())
   user = User.query.get_or_404(user_id)
 
   today = date.today()
@@ -26,4 +26,3 @@ def summary():
     "est_ready_by": "Aug 2026",
     "streak_days": 7
   })
-

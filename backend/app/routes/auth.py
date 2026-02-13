@@ -18,11 +18,14 @@ def register():
     return jsonify({"error": "Email already registered"}), 409
 
   user = User(email=email)
-  user.set_password(password)
+  try:
+    user.set_password(password)
+  except ValueError:
+    return jsonify({"error": "Password too long (max 72 bytes)."}), 400
   db.session.add(user)
   db.session.commit()
 
-  token = create_access_token(identity=user.id)
+  token = create_access_token(identity=str(user.id))
   return jsonify({"access_token": token, "user": user.to_dict()})
 
 @bp.post("/login")
@@ -38,12 +41,12 @@ def login():
   if not user or not user.check_password(password):
     return jsonify({"error": "Invalid credentials"}), 401
 
-  token = create_access_token(identity=user.id)
+  token = create_access_token(identity=str(user.id))
   return jsonify({"access_token": token, "user": user.to_dict()})
 
 @bp.get("/me")
 @jwt_required()
 def me():
-  user_id = get_jwt_identity()
+  user_id = int(get_jwt_identity())
   user = User.query.get_or_404(user_id)
   return jsonify({"user": user.to_dict()})
