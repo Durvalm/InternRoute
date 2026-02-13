@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from ..extensions import db
-from ..models import User
+from ..models import User, UserProgress
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -23,6 +23,10 @@ def register():
   except ValueError:
     return jsonify({"error": "Password too long (max 72 bytes)."}), 400
   db.session.add(user)
+  db.session.commit()
+
+  progress = UserProgress(user_id=user.id)
+  db.session.add(progress)
   db.session.commit()
 
   token = create_access_token(identity=str(user.id))

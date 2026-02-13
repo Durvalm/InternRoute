@@ -30,3 +30,27 @@ class User(db.Model):
       "graduation_date": self.graduation_date.isoformat() if self.graduation_date else None,
       "onboarding_completed": self.onboarding_completed
     }
+
+
+class UserProgress(db.Model):
+  __tablename__ = "user_progress"
+
+  id = db.Column(db.Integer, primary_key=True)
+  user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
+  readiness_score = db.Column(db.Integer, default=0)
+  category_coding = db.Column(db.Integer, default=0)
+  category_projects = db.Column(db.Integer, default=0)
+  category_resume = db.Column(db.Integer, default=0)
+  updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+  user = db.relationship("User", backref=db.backref("progress", uselist=False))
+
+  def to_dict(self):
+    return {
+      "readiness_score": self.readiness_score,
+      "category_readiness": {
+        "coding": self.category_coding,
+        "projects": self.category_projects,
+        "resume": self.category_resume
+      }
+    }

@@ -17,11 +17,26 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const validatePassword = (value: string) => {
+    if (new TextEncoder().encode(value).length > 72) {
+      return "Password must be 72 bytes or less.";
+    }
+    return null;
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    const validation = validatePassword(password);
+    if (validation) {
+      setPasswordError(validation);
+      return;
+    }
+
     setError(null);
+    setPasswordError(null);
     setLoading(true);
 
     try {
@@ -32,7 +47,9 @@ export default function RegisterPage() {
       setToken(data.access_token);
       router.push(data.user.onboarding_completed ? "/dashboard" : "/onboarding");
     } catch (err) {
-      setError("Could not create account. Try another email.");
+      const message =
+        err instanceof Error && err.message ? err.message : "Could not create account. Try another email.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -60,13 +77,18 @@ export default function RegisterPage() {
             className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
             placeholder="Create a secure password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              const next = event.target.value;
+              setPassword(next);
+              setPasswordError(validatePassword(next));
+            }}
           />
         </div>
+        {passwordError ? <p className="text-xs text-amber-600">{passwordError}</p> : null}
         {error ? <p className="text-xs text-red-500">{error}</p> : null}
         <button
           className="w-full rounded-xl bg-night text-white py-3 text-sm font-semibold disabled:opacity-60"
-          disabled={loading}
+          disabled={loading || Boolean(passwordError)}
         >
           {loading ? "Creating account..." : "Create account"}
         </button>

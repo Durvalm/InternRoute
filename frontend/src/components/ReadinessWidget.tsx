@@ -13,9 +13,18 @@ type CategoryProgressProps = {
 
 type ReadinessWidgetProps = {
   progress: number;
+  categories?: {
+    coding: number;
+    projects: number;
+    resume: number;
+  };
 };
 
-export default function ReadinessWidget({ progress }: ReadinessWidgetProps) {
+export default function ReadinessWidget({ progress, categories }: ReadinessWidgetProps) {
+  const coding = categories?.coding ?? 0;
+  const projects = categories?.projects ?? 0;
+  const resume = categories?.resume ?? 0;
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
@@ -44,7 +53,7 @@ export default function ReadinessWidget({ progress }: ReadinessWidgetProps) {
         <CategoryProgress
           icon={Code2}
           label="Coding Skills"
-          percentage={65}
+          percentage={coding}
           color="text-emerald-600"
           bgColor="bg-emerald-600"
           bgLight="bg-emerald-50"
@@ -53,7 +62,7 @@ export default function ReadinessWidget({ progress }: ReadinessWidgetProps) {
         <CategoryProgress
           icon={Briefcase}
           label="Projects"
-          percentage={30}
+          percentage={projects}
           color="text-amber-600"
           bgColor="bg-amber-600"
           bgLight="bg-amber-50"
@@ -62,7 +71,7 @@ export default function ReadinessWidget({ progress }: ReadinessWidgetProps) {
         <CategoryProgress
           icon={FileText}
           label="Resume"
-          percentage={85}
+          percentage={resume}
           color="text-blue-600"
           bgColor="bg-blue-600"
           bgLight="bg-blue-50"

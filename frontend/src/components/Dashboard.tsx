@@ -9,6 +9,11 @@ import { apiRequest } from "@/lib/api";
 
 type DashboardSummary = {
   progress: number;
+  category_readiness: {
+    coding: number;
+    projects: number;
+    resume: number;
+  };
   days_until_recruiting: number;
   recruiting_date: string;
   graduation_date: string | null;
@@ -48,7 +53,10 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <ReadinessWidget progress={summary?.progress ?? 42} />
+          <ReadinessWidget
+            progress={summary?.progress ?? 42}
+            categories={summary?.category_readiness}
+          />
           <ActionItemsWidget />
         </div>
 

@@ -48,7 +48,9 @@ export default function OnboardingPage() {
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="text-xs font-medium text-slate-600">Experience level</label>
+          <label className="text-xs font-medium text-slate-600">
+            How would you rate your coding skills with at least one programming language?
+          </label>
           <select
             className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
             value={experienceLevel}

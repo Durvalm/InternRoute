@@ -24,7 +24,16 @@ export async function apiRequest<T>(path: string, options?: RequestInit): Promis
       clearToken();
       window.location.href = "/login";
     }
-    throw new Error(`API error: ${res.status}`);
+
+    let message = `API error: ${res.status}`;
+    try {
+      const data = await res.json();
+      if (data?.error) message = data.error;
+      if (data?.msg) message = data.msg;
+    } catch (err) {
+      // ignore JSON parse errors
+    }
+    throw new Error(message);
   }
 
   return res.json() as Promise<T>;
