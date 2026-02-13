@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -16,6 +17,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { clearToken } from "@/lib/auth";
+import { clearUser, getUser } from "@/lib/user";
 
 type SidebarProps = {
   onClose?: () => void;
@@ -36,10 +38,17 @@ const navItems = [
 export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [userName, setUserName] = useState("Student");
   const handleLogout = () => {
     clearToken();
+    clearUser();
     router.push("/login");
   };
+
+  useEffect(() => {
+    const user = getUser();
+    if (user?.name) setUserName(user.name);
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-white text-slate-600">
@@ -97,8 +106,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
             className="w-10 h-10 rounded-full object-cover border border-slate-200"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-900 truncate">Alex Student</p>
-            <p className="text-xs text-slate-500 truncate">CS Major @ Tech U</p>
+            <p className="text-sm font-medium text-slate-900 truncate">{userName}</p>
+            <p className="text-xs text-slate-500 truncate">CS Major</p>
           </div>
           <button onClick={handleLogout} aria-label="Log out">
             <LogOut size={16} className="text-slate-400 hover:text-red-500" />

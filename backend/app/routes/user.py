@@ -25,7 +25,8 @@ def update_profile():
   except ValueError:
     return jsonify({"error": "Invalid graduation_date format"}), 400
 
-  user.experience_level = data.get("experience_level", user.experience_level)
+  user.name = data.get("name", user.name)
+  user.coding_skill_level = data.get("coding_skill_level", user.coding_skill_level)
   user.graduation_date = graduation_date or user.graduation_date
 
   db.session.commit()
@@ -43,7 +44,8 @@ def complete_onboarding():
   except ValueError:
     return jsonify({"error": "Invalid graduation_date format"}), 400
 
-  user.experience_level = data.get("experience_level")
+  user.name = data.get("name")
+  user.coding_skill_level = data.get("coding_skill_level")
   user.graduation_date = graduation_date
   user.onboarding_completed = True
 

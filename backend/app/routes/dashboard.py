@@ -26,6 +26,7 @@ def summary():
     db.session.commit()
 
   payload = {
+    "user_name": user.name,
     "progress": progress.readiness_score,
     "category_readiness": {
       "coding": progress.category_coding,
@@ -34,9 +35,7 @@ def summary():
     },
     "days_until_recruiting": days,
     "recruiting_date": target.isoformat(),
-    "graduation_date": user.graduation_date.isoformat() if user.graduation_date else None,
-    "est_ready_by": "Aug 2026",
-    "streak_days": 7
+    "graduation_date": user.graduation_date.isoformat() if user.graduation_date else None
   }
 
   return jsonify(payload)

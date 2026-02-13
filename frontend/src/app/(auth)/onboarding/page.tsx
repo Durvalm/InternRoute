@@ -6,14 +6,16 @@ import { apiRequest } from "@/lib/api";
 
 type ProfileResponse = {
   user: {
-    experience_level: string | null;
+    name: string | null;
+    coding_skill_level: string | null;
     graduation_date: string | null;
   };
 };
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [experienceLevel, setExperienceLevel] = useState("Beginner");
+  const [name, setName] = useState("");
+  const [codingSkillLevel, setCodingSkillLevel] = useState("Beginner");
   const [graduationDate, setGraduationDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,7 +29,8 @@ export default function OnboardingPage() {
       await apiRequest<ProfileResponse>("/user/onboarding", {
         method: "POST",
         body: JSON.stringify({
-          experience_level: experienceLevel,
+          name,
+          coding_skill_level: codingSkillLevel,
           graduation_date: graduationDate || null
         })
       });
@@ -48,13 +51,22 @@ export default function OnboardingPage() {
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
+          <label className="text-xs font-medium text-slate-600">Full name</label>
+          <input
+            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
+            placeholder="Alex Johnson"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </div>
+        <div>
           <label className="text-xs font-medium text-slate-600">
             How would you rate your coding skills with at least one programming language?
           </label>
           <select
             className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-            value={experienceLevel}
-            onChange={(event) => setExperienceLevel(event.target.value)}
+            value={codingSkillLevel}
+            onChange={(event) => setCodingSkillLevel(event.target.value)}
           >
             <option>Beginner</option>
             <option>Intermediate</option>

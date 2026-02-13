@@ -8,7 +8,8 @@ class User(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   email = db.Column(db.String(255), unique=True, nullable=False)
   password_hash = db.Column(db.String(255), nullable=False)
-  experience_level = db.Column(db.String(50), nullable=True)
+  name = db.Column(db.String(120), nullable=True)
+  coding_skill_level = db.Column(db.String(50), nullable=True)
   graduation_date = db.Column(db.Date, nullable=True)
   onboarding_completed = db.Column(db.Boolean, default=False)
   created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -26,7 +27,8 @@ class User(db.Model):
     return {
       "id": self.id,
       "email": self.email,
-      "experience_level": self.experience_level,
+      "name": self.name,
+      "coding_skill_level": self.coding_skill_level,
       "graduation_date": self.graduation_date.isoformat() if self.graduation_date else None,
       "onboarding_completed": self.onboarding_completed
     }

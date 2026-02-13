@@ -21,7 +21,9 @@ export async function apiRequest<T>(path: string, options?: RequestInit): Promis
   if (!res.ok) {
     if (res.status === 401 && typeof window !== "undefined") {
       const { clearToken } = await import("@/lib/auth");
+      const { clearUser } = await import("@/lib/user");
       clearToken();
+      clearUser();
       window.location.href = "/login";
     }
 

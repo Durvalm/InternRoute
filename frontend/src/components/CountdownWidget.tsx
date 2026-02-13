@@ -5,8 +5,10 @@ import { Clock, Calendar, AlertCircle, Briefcase, Zap } from "lucide-react";
 
 const formatMonthYear = (value: string | null | undefined) => {
   if (!value) return "May 2027";
-  const date = new Date(value);
-  return date.toLocaleString("en-US", { month: "long", year: "numeric" });
+  const [year, month] = value.split("-").map(Number);
+  if (!year || !month) return "May 2027";
+  const date = new Date(Date.UTC(year, month - 1, 1));
+  return date.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
 };
 
 type CountdownWidgetProps = {
@@ -25,19 +27,24 @@ export default function CountdownWidget({
   const [daysLeft, setDaysLeft] = useState(daysLeftOverride ?? 0);
   const [status, setStatus] = useState<"prep" | "window" | "late">("prep");
 
-  const userReadiness = readiness ?? 42;
+  const userReadiness = readiness ?? 0;
 
   useEffect(() => {
-    if (typeof daysLeftOverride === "number" && daysLeftOverride >= 0) {
-      setDaysLeft(daysLeftOverride);
-      setStatus("prep");
-      return;
-    }
-
     const today = new Date();
     const currentYear = today.getFullYear();
-    const windowStart = new Date(currentYear, 7, 1);
-    const windowEnd = new Date(currentYear, 10, 30);
+    const windowStartThisYear = new Date(currentYear, 7, 1);
+    const windowEndThisYear = new Date(currentYear + 1, 2, 31);
+
+    const windowStart =
+      today >= windowStartThisYear
+        ? windowStartThisYear
+        : today <= windowEndThisYear
+          ? new Date(currentYear - 1, 7, 1)
+          : windowStartThisYear;
+    const windowEnd =
+      windowStart.getFullYear() === currentYear
+        ? new Date(currentYear + 1, 2, 31)
+        : windowEndThisYear;
 
     if (today >= windowStart && today <= windowEnd) {
       setStatus("window");
@@ -45,21 +52,24 @@ export default function CountdownWidget({
       setDaysLeft(Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
     } else {
       setStatus("prep");
-      let targetDate = windowStart;
-      if (today > windowEnd) {
-        targetDate = new Date(currentYear + 1, 7, 1);
-      }
+      const targetDate = windowStartThisYear;
       const diffTime = Math.abs(targetDate.getTime() - today.getTime());
-      setDaysLeft(Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+      const computed = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      setDaysLeft(typeof daysLeftOverride === "number" ? daysLeftOverride : computed);
     }
   }, [daysLeftOverride]);
 
   const recruitingLabel = useMemo(() => {
     if (recruitingDate) {
-      return `Recruiting Window opens on ${new Date(recruitingDate).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric"
-      })}`;
+      const [year, month, day] = recruitingDate.split("-").map(Number);
+      if (year && month && day) {
+        const date = new Date(Date.UTC(year, month - 1, day));
+        return `Recruiting Window opens on ${date.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          timeZone: "UTC"
+        })}`;
+      }
     }
     return "Recruiting Window opens on August 1st";
   }, [recruitingDate]);

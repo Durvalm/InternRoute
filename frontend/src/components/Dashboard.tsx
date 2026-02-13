@@ -8,6 +8,7 @@ import QuickResourcesWidget from "@/components/QuickResourcesWidget";
 import { apiRequest } from "@/lib/api";
 
 type DashboardSummary = {
+  user_name: string | null;
   progress: number;
   category_readiness: {
     coding: number;
@@ -17,8 +18,6 @@ type DashboardSummary = {
   days_until_recruiting: number;
   recruiting_date: string;
   graduation_date: string | null;
-  est_ready_by: string;
-  streak_days: number;
 };
 
 export default function Dashboard() {
@@ -44,7 +43,9 @@ export default function Dashboard() {
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Good afternoon, Alex! 👋</h1>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Good afternoon{summary?.user_name ? `, ${summary.user_name}` : ""}! 👋
+          </h1>
           <p className="text-slate-500">You're making great progress toward your internship goal.</p>
         </div>
       </div>
@@ -54,7 +55,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6">
           <ReadinessWidget
-            progress={summary?.progress ?? 42}
+            progress={summary?.progress ?? 0}
             categories={summary?.category_readiness}
           />
           <ActionItemsWidget />
