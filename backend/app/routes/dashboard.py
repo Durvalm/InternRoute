@@ -7,6 +7,7 @@ from ..services.progression import (
   get_tasks_for_user_module,
   recompute_and_persist_user_progress,
 )
+from ..services.recruiting import build_recruiting_view
 
 bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -17,18 +18,22 @@ def summary():
   user = User.query.get_or_404(user_id)
 
   today = date.today()
-  next_window_start = date(today.year, 8, 1)
-  if next_window_start < today:
-    next_window_start = date(today.year + 1, 8, 1)
-
-  current_window_start = date(today.year, 8, 1) if today >= date(today.year, 8, 1) else date(today.year - 1, 8, 1)
-  current_window_end = date(current_window_start.year + 1, 3, 31)
-  window_is_open = current_window_start <= today <= current_window_end
-
-  days_until_next_window = days_until(next_window_start)
-  days_until_window_close = days_until(current_window_end) if window_is_open else None
 
   computed = recompute_and_persist_user_progress(user.id, commit=True)
+  recruiting = build_recruiting_view(
+    today=today,
+    readiness_score=computed["progress"],
+    graduation_date=user.graduation_date,
+  )
+  next_window_start = date.fromisoformat(recruiting["next_peak_date"])
+  current_window_end = (
+    date.fromisoformat(recruiting["recruiting_window_end"])
+    if recruiting["recruiting_window_end"]
+    else None
+  )
+  window_is_open = recruiting["season"] in {"peak", "lower"}
+  days_until_next_window = days_until(next_window_start)
+  days_until_window_close = days_until(current_window_end) if current_window_end else None
 
   payload = {
     "user_name": user.name,
@@ -40,8 +45,9 @@ def summary():
     "days_until_recruiting": days_until_next_window,
     "recruiting_date": next_window_start.isoformat(),
     "days_until_window_close": days_until_window_close,
-    "recruiting_window_end": current_window_end.isoformat() if window_is_open else None,
-    "graduation_date": user.graduation_date.isoformat() if user.graduation_date else None
+    "recruiting_window_end": current_window_end.isoformat() if current_window_end else None,
+    "graduation_date": user.graduation_date.isoformat() if user.graduation_date else None,
+    "recruiting": recruiting,
   }
 
   return jsonify(payload)

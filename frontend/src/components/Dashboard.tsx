@@ -17,6 +17,29 @@ type ModuleProgress = {
   has_bonus_tasks: boolean;
 };
 
+type RecruitingScenario = {
+  id: string;
+  name: string;
+  header: string;
+  subtext: string;
+  color_theme: "indigo" | "emerald" | "amber" | "slate";
+  countdown_label: string;
+  countdown_target: string;
+  countdown_days: number;
+  countdown_direction: "until" | "since";
+  show_one_summer_badge: boolean;
+};
+
+type RecruitingSummary = {
+  season: "peak" | "lower" | "off";
+  readiness_status: "ready" | "not_ready";
+  summers_left: number | null;
+  next_peak_date: string;
+  recruiting_window_end: string | null;
+  season_explainer: string;
+  scenario: RecruitingScenario;
+};
+
 type DashboardSummary = {
   user_name: string | null;
   progress: number;
@@ -33,6 +56,7 @@ type DashboardSummary = {
   days_until_window_close: number | null;
   recruiting_window_end: string | null;
   graduation_date: string | null;
+  recruiting: RecruitingSummary;
 };
 
 export default function Dashboard() {
@@ -88,6 +112,7 @@ export default function Dashboard() {
             recruitingWindowEnd={summary?.recruiting_window_end}
             graduationDate={summary?.graduation_date}
             readiness={summary?.progress}
+            recruiting={summary?.recruiting}
           />
           <QuickResourcesWidget />
         </div>
