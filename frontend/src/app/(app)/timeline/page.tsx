@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ComponentType, ReactNode } from "react";
 import {
@@ -20,8 +20,7 @@ import {
   Lightbulb,
   Map,
   Target,
-  XCircle,
-  Zap
+  XCircle
 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 
@@ -59,7 +58,45 @@ type TimelineSummary = {
     summers_left: number | null;
     next_peak_date: string;
   };
+  module_progress: ModuleProgress[];
 };
+
+type ModuleProgress = {
+  module_key: string;
+  module_name: string;
+  score: number;
+  is_unlocked: boolean;
+  unlock_threshold: number;
+  has_tasks: boolean;
+  has_bonus_tasks: boolean;
+};
+
+type TimelineTask = {
+  id: number;
+  title: string;
+  description: string | null;
+  weight: number;
+  is_bonus: boolean;
+  is_completed: boolean;
+};
+
+type TimelineTasksResponse = {
+  module_key: string;
+  tasks: TimelineTask[];
+};
+
+type TaskCompletionResponse = {
+  task_id: number;
+  completed: boolean;
+  module_progress: ModuleProgress[];
+};
+
+const completionItems = [
+  "I should target around 70% readiness before applying, while still avoiding perfection paralysis.",
+  "I should ideally be ready before August for applications, but if not, the sooner I start the better.",
+  "Most internships run in the summer; applications happen the year before, mainly August-December and often stretching into March.",
+  "I understand that summers-left matters for planning, but I should also chase off-season internships, hackathons, and other opportunities."
+];
 
 const seasons: Season[] = [
   {
@@ -116,13 +153,6 @@ const roadmap: RoadmapStep[] = [
     stageState: "later",
     icon: CheckCircle2
   }
-];
-
-const completionItems = [
-  "I should target around 70% readiness before applying, while still avoiding perfection paralysis.",
-  "I should ideally be ready before August for applications, but if not, the sooner I start the better.",
-  "Most internships run in the summer; applications happen the year before, mainly August-December and often stretching into March.",
-  "I understand that summers-left matters for planning, but I should also chase off-season internships, hackathons, and other opportunities."
 ];
 
 function InfoCard({ icon: Icon, title, children, colorClass = "text-indigo-600 bg-indigo-50" }: InfoCardProps) {
@@ -187,8 +217,15 @@ function seasonStyles(tone: Season["tone"]) {
 export default function TimelinePage() {
   const router = useRouter();
   const [summary, setSummary] = useState<TimelineSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [timelineTasks, setTimelineTasks] = useState<TimelineTask[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
+  const [tasksError, setTasksError] = useState<string | null>(null);
   const [completionChecks, setCompletionChecks] = useState<boolean[]>(() => completionItems.map(() => false));
+  const [checklistHydrated, setChecklistHydrated] = useState(false);
+  const [serverChecklistSynced, setServerChecklistSynced] = useState(false);
+  const [syncingTaskId, setSyncingTaskId] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -199,6 +236,60 @@ export default function TimelinePage() {
       })
       .catch(() => {
         if (active) setSummaryError("Unable to load your personalized timeline data.");
+      })
+      .finally(() => {
+        if (active) setSummaryLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setChecklistHydrated(true);
+      return;
+    }
+    const saved = window.localStorage.getItem("timeline_completion_checks_v2");
+    if (!saved) {
+      setChecklistHydrated(true);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length === completionItems.length) {
+        setCompletionChecks(parsed.map(Boolean));
+      }
+    } catch {
+      // ignore corrupted local storage
+    }
+    setChecklistHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!checklistHydrated) return;
+    window.localStorage.setItem("timeline_completion_checks_v2", JSON.stringify(completionChecks));
+  }, [completionChecks, checklistHydrated]);
+
+  useEffect(() => {
+    let active = true;
+    setTasksLoading(true);
+    setTasksError(null);
+
+    apiRequest<TimelineTasksResponse>("/dashboard/tasks?module_key=timeline")
+      .then((data) => {
+        if (active) setTimelineTasks(data.tasks ?? []);
+      })
+      .catch(() => {
+        if (active) {
+          setTimelineTasks([]);
+          setTasksError("Unable to load timeline checklist.");
+        }
+      })
+      .finally(() => {
+        if (active) setTasksLoading(false);
       });
 
     return () => {
@@ -208,49 +299,85 @@ export default function TimelinePage() {
 
   const summersLeft = summary?.recruiting?.summers_left ?? null;
   const summersLeftLabel =
-    summersLeft === null
+    summaryLoading
+      ? "Loading personalized timeline..."
+      : summersLeft === null
       ? "Set your graduation date to calculate this."
       : `${summersLeft} ${summersLeft === 1 ? "summer" : "summers"} left`;
 
   const summersLeftDetail =
-    summersLeft === null
+    summaryLoading
+      ? "We are calculating your timeline context."
+      : summersLeft === null
       ? "Once your graduation date is set, we can map your realistic internship windows."
       : summersLeft <= 0
         ? "Summer windows are likely closed, but off-season internships and entry-level routes still matter."
         : summersLeft === 1
           ? "High urgency: this is likely your final summer internship window."
           : "You still have runway. Use each summer to ladder up in quality and brand signal.";
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("timeline_completion_checks_v1");
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length === completionItems.length) {
-        setCompletionChecks(parsed.map(Boolean));
-      }
-    } catch {
-      // ignore corrupted local storage
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("timeline_completion_checks_v1", JSON.stringify(completionChecks));
-  }, [completionChecks]);
-
+  const timelineModule = summary?.module_progress.find((module) => module.module_key === "timeline");
+  const codingModule = summary?.module_progress.find((module) => module.module_key === "coding");
+  const timelineTask = timelineTasks[0] ?? null;
   const allChecksComplete = completionChecks.every(Boolean);
+  const codingSkillsUnlocked = Boolean(codingModule?.is_unlocked);
+
+  const updateTimelineTaskCompletion = useCallback(async (nextCompleted: boolean) => {
+    if (!timelineTask) {
+      setTasksError("Timeline completion task is not configured.");
+      return;
+    }
+    if (syncingTaskId === timelineTask.id) return;
+    const previousCompleted = timelineTask.is_completed;
+    setTasksError(null);
+    setSyncingTaskId(timelineTask.id);
+    setTimelineTasks((prev) => prev.map((item) => (item.id === timelineTask.id ? { ...item, is_completed: nextCompleted } : item)));
+
+    try {
+      const data = await apiRequest<TaskCompletionResponse>(`/dashboard/tasks/${timelineTask.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ completed: nextCompleted })
+      });
+      setSummary((prev) =>
+        prev
+          ? { ...prev, module_progress: data.module_progress }
+          : {
+            graduation_date: null,
+            recruiting: { summers_left: null, next_peak_date: "" },
+            module_progress: data.module_progress
+          }
+      );
+    } catch {
+      setTimelineTasks((prev) => prev.map((item) => (item.id === timelineTask.id ? { ...item, is_completed: previousCompleted } : item)));
+      setTasksError("Unable to save your checklist progress. Please try again.");
+    } finally {
+      setSyncingTaskId(null);
+    }
+  }, [timelineTask, syncingTaskId]);
+
+  useEffect(() => {
+    if (tasksLoading || !checklistHydrated || !timelineTask || serverChecklistSynced) return;
+    if (timelineTask.is_completed && !allChecksComplete) {
+      setCompletionChecks(completionItems.map(() => true));
+    }
+    if (!timelineTask.is_completed && allChecksComplete) {
+      setCompletionChecks(completionItems.map(() => false));
+    }
+    setServerChecklistSynced(true);
+  }, [tasksLoading, checklistHydrated, timelineTask, serverChecklistSynced, allChecksComplete]);
 
   const toggleCompletionCheck = (index: number) => {
-    setCompletionChecks((prev) => prev.map((value, i) => (i === index ? !value : value)));
+    if (syncingTaskId !== null) return;
+    const nextChecks = completionChecks.map((value, i) => (i === index ? !value : value));
+    setCompletionChecks(nextChecks);
+    if (!timelineTask) return;
+    const nextAllChecksComplete = nextChecks.every(Boolean);
+    if (nextAllChecksComplete !== timelineTask.is_completed) {
+      void updateTimelineTaskCompletion(nextAllChecksComplete);
+    }
   };
 
   const handleCompleteAndContinue = () => {
-    if (!allChecksComplete) return;
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("timeline_section_completed_v1", "true");
-    }
+    if (!codingSkillsUnlocked) return;
     router.push("/skills");
   };
 
@@ -606,26 +733,43 @@ export default function TimelinePage() {
         </p>
 
         <div className="mt-5 space-y-2.5">
-          {completionItems.map((item, index) => (
-            <label
-              key={item}
-              className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors"
-            >
-              <input
-                type="checkbox"
-                checked={completionChecks[index]}
-                onChange={() => toggleCompletionCheck(index)}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="text-sm text-slate-700 leading-relaxed">{item}</span>
-            </label>
-          ))}
+          {tasksLoading ? <p className="text-sm text-slate-500">Loading checklist...</p> : null}
+
+          {!tasksLoading && !tasksError && timelineTasks.length === 0 ? (
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+              No checklist tasks are configured for this module yet.
+            </p>
+          ) : null}
+
+          {!tasksLoading && timelineTask
+            ? completionItems.map((item, index) => (
+              <label
+                key={item}
+                className={`flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 transition-colors ${syncingTaskId !== null ? "opacity-70 cursor-wait" : "cursor-pointer hover:bg-slate-100"}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={completionChecks[index]}
+                  onChange={() => toggleCompletionCheck(index)}
+                  disabled={syncingTaskId !== null}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-60"
+                />
+                <span className="text-sm text-slate-700 leading-relaxed">{item}</span>
+              </label>
+            ))
+            : null}
         </div>
 
-        <p className={`mt-4 text-xs ${allChecksComplete ? "text-emerald-600" : "text-slate-500"}`}>
-          {allChecksComplete
-            ? "Section complete. You can continue to Coding Skills."
-            : "Complete all checks to unlock the next step."}
+        {tasksError ? <p className="mt-4 text-xs text-red-500">{tasksError}</p> : null}
+
+        <p className={`mt-4 text-xs ${codingSkillsUnlocked ? "text-emerald-600" : "text-slate-500"}`}>
+          {codingSkillsUnlocked
+            ? "Section complete. Coding Skills is unlocked."
+            : timelineModule
+              ? `Timeline progress: ${timelineModule.score}% (needs ${timelineModule.unlock_threshold}% to unlock Coding Skills).`
+              : allChecksComplete
+                ? "Checklist complete. Syncing unlock state..."
+                : "Complete checklist tasks to unlock the next module."}
         </p>
       </section>
 
@@ -637,14 +781,14 @@ export default function TimelinePage() {
         <button
           type="button"
           onClick={handleCompleteAndContinue}
-          disabled={!allChecksComplete}
+          disabled={!codingSkillsUnlocked}
           className={`inline-flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-base font-bold transition-all w-full md:w-auto ${
-            allChecksComplete
+            codingSkillsUnlocked
               ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
               : "bg-slate-200 text-slate-500 cursor-not-allowed"
           }`}
         >
-          {allChecksComplete ? "Mark Complete & Continue to Coding Skills" : "Complete Checklist to Continue"}
+          {codingSkillsUnlocked ? "Continue to Coding Skills" : "Complete Checklist to Continue"}
           <ArrowRight size={20} />
         </button>
       </section>

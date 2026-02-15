@@ -265,11 +265,11 @@ def get_tasks_for_user_module(user_id: int, module_key: str) -> dict[str, Any] |
   }
 
 
-def set_task_completion_internal(user_id: int, task_id: int, completed: bool) -> None:
+def set_task_completion_internal(user_id: int, task_id: int, completed: bool) -> dict[str, Any]:
   completion = UserTaskCompletion.query.filter_by(user_id=user_id, task_id=task_id).first()
   if completed and completion is None:
     db.session.add(UserTaskCompletion(user_id=user_id, task_id=task_id))
   if not completed and completion is not None:
     db.session.delete(completion)
 
-  recompute_and_persist_user_progress(user_id, commit=True)
+  return recompute_and_persist_user_progress(user_id, commit=True)

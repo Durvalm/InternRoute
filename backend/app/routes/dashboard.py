@@ -1,11 +1,12 @@
 from datetime import date
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from ..models import User
+from ..models import Task, User
 from ..utils import days_until
 from ..services.progression import (
   get_tasks_for_user_module,
   recompute_and_persist_user_progress,
+  set_task_completion_internal,
 )
 from ..services.recruiting import build_recruiting_view
 
@@ -74,3 +75,26 @@ def tasks():
   if payload is None:
     return jsonify({"error": "Module not found"}), 404
   return jsonify(payload)
+
+
+@bp.patch("/tasks/<int:task_id>")
+@jwt_required()
+def update_task_completion(task_id: int):
+  user_id = int(get_jwt_identity())
+  payload = request.get_json() or {}
+  completed = payload.get("completed")
+  if not isinstance(completed, bool):
+    return jsonify({"error": "completed must be a boolean"}), 400
+
+  task = Task.query.filter_by(id=task_id, is_active=True).first()
+  if task is None:
+    return jsonify({"error": "Task not found"}), 404
+
+  computed = set_task_completion_internal(user_id, task_id, completed)
+  return jsonify(
+    {
+      "task_id": task_id,
+      "completed": completed,
+      "module_progress": computed["module_progress"],
+    }
+  )
