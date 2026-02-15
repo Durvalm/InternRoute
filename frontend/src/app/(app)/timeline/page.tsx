@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ComponentType, ReactNode } from "react";
 import {
   AlertTriangle,
@@ -73,14 +73,14 @@ const seasons: Season[] = [
     name: "Lower Recruiting Window",
     months: "January - March",
     summary: "Smaller teams, startups, and local companies hire now.",
-    details: "Fewer spots, but often easier interviews, and less competition",
+    details: "Fewer spots, but often easier interviews and less competition.",
     tone: "medium"
   },
   {
     name: "Off-Season Window",
     months: "April - July",
     summary: "Preparation time for the next cycle.",
-    details: "Little hiring happening, good time to build skills, projects, practice leetcode, etc...",
+    details: "Less hiring happens in this period; it is a good time to build skills, projects, and practice LeetCode.",
     tone: "quiet"
   }
 ];
@@ -100,7 +100,7 @@ const roadmap: RoadmapStep[] = [
   },
   {
     title: "Killer Projects",
-    description: "Build 2-3 projects that prove you can build real software and builds your resume.",
+    description: "Build 2-3 projects that prove you can build real software and strengthen your resume.",
     stageState: "later",
     icon: Target
   },
@@ -112,10 +112,17 @@ const roadmap: RoadmapStep[] = [
   },
   {
     title: "The Application Machine",
-    description: "Applying to 100+ roles efficiently, learn the tools, get noticed, learn about OAs, etc...",
+    description: "Apply to 100+ roles efficiently, learn the workflow, and improve your response rate (including OA prep).",
     stageState: "later",
     icon: CheckCircle2
   }
+];
+
+const completionItems = [
+  "I should target around 70% readiness before applying, while still avoiding perfection paralysis.",
+  "I should ideally be ready before August for applications, but if not, the sooner I start the better.",
+  "Most internships run in the summer; applications happen the year before, mainly August-December and often stretching into March.",
+  "I understand that summers-left matters for planning, but I should also chase off-season internships, hackathons, and other opportunities."
 ];
 
 function InfoCard({ icon: Icon, title, children, colorClass = "text-indigo-600 bg-indigo-50" }: InfoCardProps) {
@@ -178,8 +185,10 @@ function seasonStyles(tone: Season["tone"]) {
 }
 
 export default function TimelinePage() {
+  const router = useRouter();
   const [summary, setSummary] = useState<TimelineSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [completionChecks, setCompletionChecks] = useState<boolean[]>(() => completionItems.map(() => false));
 
   useEffect(() => {
     let active = true;
@@ -212,6 +221,39 @@ export default function TimelinePage() {
           ? "High urgency: this is likely your final summer internship window."
           : "You still have runway. Use each summer to ladder up in quality and brand signal.";
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("timeline_completion_checks_v1");
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length === completionItems.length) {
+        setCompletionChecks(parsed.map(Boolean));
+      }
+    } catch {
+      // ignore corrupted local storage
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("timeline_completion_checks_v1", JSON.stringify(completionChecks));
+  }, [completionChecks]);
+
+  const allChecksComplete = completionChecks.every(Boolean);
+
+  const toggleCompletionCheck = (index: number) => {
+    setCompletionChecks((prev) => prev.map((value, i) => (i === index ? !value : value)));
+  };
+
+  const handleCompleteAndContinue = () => {
+    if (!allChecksComplete) return;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("timeline_section_completed_v1", "true");
+    }
+    router.push("/skills");
+  };
+
   return (
     <div className="max-w-6xl mx-auto pb-24 space-y-8 font-sans">
       <section className="rounded-3xl bg-[#1e1b4b] text-white overflow-hidden shadow-xl relative">
@@ -235,11 +277,11 @@ export default function TimelinePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
               <div className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-1">Target Audience</div>
-              <p className="text-sm font-medium text-white">Aspiring Software Engineers, the skills taught are also foundational for stuff like: (Web, Mobile, Systems, etc...)</p>
+              <p className="text-sm font-medium text-white">Aspiring software engineers. The skills taught here are foundational for web, mobile, and systems paths.</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
               <div className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-1">The Goal</div>
-              <p className="text-sm font-medium text-white">Get you "Market Ready" to compete for high-paying internships. Teach you how to stand out in recruiting windows.</p>
+              <p className="text-sm font-medium text-white">Get you market-ready to compete for high-paying internships and stand out in recruiting windows.</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
               <div className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-1">Why It Works</div>
@@ -344,7 +386,7 @@ export default function TimelinePage() {
             <h2 className="text-xl font-bold text-slate-900 mb-2">Internship Basics + Your Summers Left</h2>
             <p className="text-sm text-slate-500 mb-6">
               Most CS internships run in the summer (usually around 10-14 weeks). The key detail: recruiting for
-              those roles usually starts the previous year, often beginning in August. Which means it's important to get ready before or around August to start applying.
+              those roles usually starts the previous year, often beginning in August. That is why it is important to get ready before (or around) August and start applying early.
             </p>
 
             <div className="mb-6 rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
@@ -495,8 +537,8 @@ export default function TimelinePage() {
             </p>
             <ul className="space-y-2">
               {[
-                "Delay graduation (e.g. May -> Dec) to buy time for one more summer internship.",
-                "Apply to Masters programs to buy more time and upskill.",
+                "Delay graduation (e.g. May -> December) to buy time for one more summer internship.",
+                "Apply to master's programs to buy more time and upskill.",
                 "Work in startups and local companies (which possibly care less about internships).",
                 "Find lower tier jobs than Software Engineering and build up from there."
               ].map((item) => (
@@ -513,43 +555,43 @@ export default function TimelinePage() {
         </div>
       </div>
 
-      <section className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <h2 className="text-3xl font-bold text-slate-900">Learning Path</h2>
-          <p className="mt-2 text-slate-500">
-            This platform is designed as a linear progression. Complete the stages in order to maximize your chances.
+      <section className="bg-white rounded-3xl border border-slate-200 p-5 md:p-6 shadow-sm">
+        <div className="text-center max-w-xl mx-auto mb-6">
+          <h2 className="text-xl md:text-2xl font-bold text-slate-900">Internship Path</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            This platform is designed as a linear progression.
           </p>
         </div>
 
-        <div className="relative max-w-5xl mx-auto">
-          <div className="absolute left-8 top-5 bottom-5 w-px bg-slate-200" />
-          <div className="space-y-6">
+        <div className="relative max-w-3xl mx-auto">
+          <div className="absolute left-6 top-3 bottom-3 w-px bg-slate-200" />
+          <div className="space-y-4">
             {roadmap.map((step, index) => (
               <div
                 key={step.title}
-                className="relative flex gap-6 items-start"
+                className="relative flex gap-4 items-start"
               >
                 <div
-                  className={`shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center z-10 border ${step.stageState === "current"
+                  className={`shrink-0 w-12 h-12 rounded-lg flex items-center justify-center z-10 border ${step.stageState === "current"
                     ? "bg-slate-900 border-slate-900 text-white shadow-md"
                     : step.stageState === "next"
                       ? "bg-white border-indigo-400 text-indigo-600"
                       : "bg-white border-slate-300 text-slate-500"
                     }`}
                 >
-                  <step.icon size={24} />
+                  <step.icon size={18} />
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-xl md:text-2xl font-bold text-slate-900">{step.title}</h3>
+                    <h3 className="text-base md:text-lg font-bold text-slate-900">{step.title}</h3>
                     {step.stageState === "current" ? (
-                      <span className="rounded-full bg-slate-100 text-slate-700 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider">
+                      <span className="rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
                         Current
                       </span>
                     ) : null}
                   </div>
-                  <p className="text-slate-500 mt-1 text-base md:text-lg leading-relaxed">{step.description}</p>
+                  <p className="text-slate-500 mt-1 text-sm leading-relaxed">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -557,18 +599,54 @@ export default function TimelinePage() {
         </div>
       </section>
 
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
+        <h2 className="text-lg md:text-xl font-bold text-slate-900">Before Continuing</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Mark these once you understand them. This is how you complete this section.
+        </p>
+
+        <div className="mt-5 space-y-2.5">
+          {completionItems.map((item, index) => (
+            <label
+              key={item}
+              className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors"
+            >
+              <input
+                type="checkbox"
+                checked={completionChecks[index]}
+                onChange={() => toggleCompletionCheck(index)}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-slate-700 leading-relaxed">{item}</span>
+            </label>
+          ))}
+        </div>
+
+        <p className={`mt-4 text-xs ${allChecksComplete ? "text-emerald-600" : "text-slate-500"}`}>
+          {allChecksComplete
+            ? "Section complete. You can continue to Coding Skills."
+            : "Complete all checks to unlock the next step."}
+        </p>
+      </section>
+
       <section className="rounded-3xl border border-slate-200 bg-white p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Ready to start?</h2>
+          <h2 className="text-xl font-bold text-slate-900">Step 1: Coding Skills</h2>
           <p className="mt-1 text-slate-500">The first step is building your technical leverage.</p>
         </div>
-        <Link
-          href="/skills"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-4 text-base font-bold text-white hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 w-full md:w-auto"
+        <button
+          type="button"
+          onClick={handleCompleteAndContinue}
+          disabled={!allChecksComplete}
+          className={`inline-flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-base font-bold transition-all w-full md:w-auto ${
+            allChecksComplete
+              ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+              : "bg-slate-200 text-slate-500 cursor-not-allowed"
+          }`}
         >
-          Begin Coding Skills Module
+          {allChecksComplete ? "Mark Complete & Continue to Coding Skills" : "Complete Checklist to Continue"}
           <ArrowRight size={20} />
-        </Link>
+        </button>
       </section>
     </div>
   );
