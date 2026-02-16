@@ -3,12 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
+import { setUser as storeUser } from "@/lib/user";
 
 type ProfileResponse = {
   user: {
+    id: number;
+    email: string;
     name: string | null;
     coding_skill_level: string | null;
     graduation_date: string | null;
+    onboarding_completed: boolean;
   };
 };
 
@@ -36,7 +40,7 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-      await apiRequest<ProfileResponse>("/user/onboarding", {
+      const data = await apiRequest<ProfileResponse>("/user/onboarding", {
         method: "POST",
         body: JSON.stringify({
           name: name.trim(),
@@ -44,6 +48,7 @@ export default function OnboardingPage() {
           graduation_date: graduationDate || null
         })
       });
+      storeUser(data.user);
       router.push("/dashboard");
     } catch (err) {
       const message = err instanceof Error && err.message ? err.message : "Something went wrong. Please try again.";

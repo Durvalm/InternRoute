@@ -4,10 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 import { setToken } from "@/lib/auth";
+import { setUser as storeUser } from "@/lib/user";
 
 type AuthResponse = {
   access_token: string;
   user: {
+    id: number;
+    email: string;
+    name: string | null;
+    coding_skill_level: string | null;
+    graduation_date: string | null;
     onboarding_completed: boolean;
   };
 };
@@ -45,6 +51,7 @@ export default function RegisterPage() {
         body: JSON.stringify({ email, password })
       });
       setToken(data.access_token);
+      storeUser(data.user);
       router.push(data.user.onboarding_completed ? "/dashboard" : "/onboarding");
     } catch (err) {
       const message =

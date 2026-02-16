@@ -17,7 +17,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { clearToken } from "@/lib/auth";
-import { clearUser, getUser } from "@/lib/user";
+import { clearUser, getUser, USER_UPDATED_EVENT, type StoredUser } from "@/lib/user";
 
 type SidebarProps = {
   onClose?: () => void;
@@ -35,20 +35,42 @@ const navItems = [
   { icon: Sparkles, label: "Opportunities", href: "/opportunities" }
 ];
 
+function getInitials(name: string): string {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return "S";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
+}
+
 export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [userName, setUserName] = useState("Student");
+  const [user, setCurrentUser] = useState<StoredUser | null>(null);
+
   const handleLogout = () => {
+    onClose?.();
     clearToken();
     clearUser();
     router.push("/login");
   };
 
   useEffect(() => {
-    const user = getUser();
-    if (user?.name) setUserName(user.name);
+    const syncUser = () => {
+      setCurrentUser(getUser());
+    };
+
+    syncUser();
+    window.addEventListener(USER_UPDATED_EVENT, syncUser);
+    return () => {
+      window.removeEventListener(USER_UPDATED_EVENT, syncUser);
+    };
   }, []);
+
+  const userName = user?.name?.trim() || "Student";
+  const initials = getInitials(userName);
 
   return (
     <div className="flex flex-col h-full bg-white text-slate-600">
@@ -85,33 +107,36 @@ export default function Sidebar({ onClose }: SidebarProps) {
             </Link>
           );
         })}
-
-        <div className="px-3 mt-8 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          Account
-        </div>
-        <Link
-          href="/settings"
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-50 hover:text-slate-900 transition-colors"
-        >
-          <Settings size={18} className="text-slate-400" />
-          Settings
-        </Link>
       </div>
 
       <div className="p-4 border-t border-slate-100">
-        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
-          <img
-            src="https://images.unsplash.com/photo-1633092229537-5d491c2b414d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb21wdXRlciUyMHNjaWVuY2UlMjBzdHVkZW50JTIwcG9ydHJhaXR8ZW58MXx8fHwxNzcwODQ1Mjc2fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-            alt="User"
-            className="w-10 h-10 rounded-full object-cover border border-slate-200"
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-900 truncate">{userName}</p>
-            <p className="text-xs text-slate-500 truncate">CS Major</p>
+        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-2 space-y-2">
+          <div className="flex items-center gap-3 p-2">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 flex items-center justify-center text-sm font-semibold">
+              {initials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 truncate">{userName}</p>
+            </div>
           </div>
-          <button onClick={handleLogout} aria-label="Log out">
-            <LogOut size={16} className="text-slate-400 hover:text-red-500" />
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href="/settings"
+              className="inline-flex items-center justify-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-white border border-slate-200 transition-colors"
+              onClick={onClose}
+            >
+              <Settings size={14} className="text-slate-500" />
+              Settings
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center justify-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-red-600 hover:bg-red-50 border border-red-200 transition-colors"
+            >
+              <LogOut size={14} className="text-red-500" />
+              Log out
+            </button>
+          </div>
         </div>
       </div>
     </div>
