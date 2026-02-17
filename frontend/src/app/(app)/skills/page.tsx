@@ -603,13 +603,13 @@ export default function SkillsPage() {
               <span className="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-bold tracking-wider uppercase">
                 Module 02
               </span>
-              <span className="text-base font-medium text-slate-500">The Foundation</span>
+              <span className="text-sm font-medium text-slate-500">The Foundation</span>
             </div>
 
-            <h1 className="mt-4 text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+            <h1 className="mt-4 text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
               The 2 Skills You Need
             </h1>
-            <p className="mt-3 max-w-3xl text-sm md:text-base leading-relaxed text-slate-600">
+            <p className="mt-3 max-w-3xl text-xs md:text-sm leading-relaxed text-slate-600">
               To get your next internship, you need to master two specific areas.
               We split them into separate modules so you can focus.
             </p>
@@ -619,28 +619,28 @@ export default function SkillsPage() {
 
               <article className="relative">
                 <span className="absolute -left-[30px] top-1 h-5 w-5 rounded-full bg-indigo-500 ring-4 ring-indigo-100" />
-                <h2 className="text-lg md:text-xl font-bold text-indigo-900">1. Programming Language (Python)</h2>
-                <div className="mt-2 inline-flex items-center gap-2 text-indigo-600 text-sm md:text-base font-semibold">
+                <h2 className="text-base md:text-lg font-bold text-indigo-900">1. Programming Language (Python)</h2>
+                <div className="mt-2 inline-flex items-center gap-2 text-indigo-600 text-xs md:text-sm font-semibold">
                   <Clock3 size={22} />
                   ~2 Months
                 </div>
-                <p className="mt-2 text-sm md:text-base leading-relaxed text-slate-600">
+                <p className="mt-2 text-xs md:text-sm leading-relaxed text-slate-600">
                   Your main tool. Used for coding interviews, scripts, and logic.
                 </p>
-                <p className="text-sm md:text-base font-semibold text-indigo-700">This Module Focuses on This.</p>
+                <p className="text-xs md:text-sm font-semibold text-indigo-700">This Module Focuses on This.</p>
               </article>
 
               <article className="relative opacity-60">
                 <span className="absolute -left-[30px] top-1 h-5 w-5 rounded-full bg-slate-300" />
-                <h2 className="text-lg md:text-xl font-bold text-slate-700">2. Backend Development</h2>
-                <div className="mt-2 inline-flex items-center gap-2 text-slate-500 text-sm md:text-base font-semibold">
+                <h2 className="text-base md:text-lg font-bold text-slate-700">2. Backend Development</h2>
+                <div className="mt-2 inline-flex items-center gap-2 text-slate-500 text-xs md:text-sm font-semibold">
                   <Clock3 size={22} />
                   ~4 Months
                 </div>
-                <p className="mt-2 text-sm md:text-base leading-relaxed text-slate-600">
+                <p className="mt-2 text-xs md:text-sm leading-relaxed text-slate-600">
                   APIs, Databases, Frameworks, Git. This is how you build real software.
                 </p>
-                <p className="text-sm md:text-base italic text-slate-500">Covered in the "Projects" module.</p>
+                <p className="text-xs md:text-sm italic text-slate-500">Covered in the "Projects" module.</p>
               </article>
             </div>
           </div>
@@ -651,18 +651,18 @@ export default function SkillsPage() {
             </div>
             <div className="relative z-10">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-xl md:text-2xl font-bold">Why Python?</h3>
+                <h3 className="text-lg md:text-xl font-bold">Why Python?</h3>
                 <span className="rounded-full bg-yellow-400 text-slate-900 text-xs font-bold px-3 py-1 uppercase tracking-wide">
                   Recommended
                 </span>
               </div>
-              <p className="mt-3 text-sm md:text-base leading-relaxed text-indigo-100">
+              <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
                 It has the <strong>easiest syntax</strong>, letting you focus on logic, not semicolons.
               </p>
-              <p className="mt-3 text-sm md:text-base leading-relaxed text-indigo-100">
+              <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
                 <strong>Insider Tip:</strong> This also opens Data/AI internship tracks where competition can differ from general SWE.
               </p>
-              <p className="mt-3 text-sm md:text-base leading-relaxed text-indigo-100">
+              <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
                 Plus, Python is a common language for coding interviews.
               </p>
             </div>
@@ -674,11 +674,11 @@ export default function SkillsPage() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <BookOpen size={24} className="text-indigo-600" />
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">How to Learn</h2>
+            <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">How to Learn</h2>
           </div>
           <a
             href="#readiness-check"
-            className="rounded-full bg-indigo-50 text-indigo-700 px-4 py-2 text-sm font-semibold"
+            className="rounded-full bg-indigo-50 text-indigo-700 px-4 py-2 text-xs font-semibold"
           >
             Already know the basics? Skip to Challenges
           </a>
@@ -686,33 +686,33 @@ export default function SkillsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold uppercase tracking-wider text-amber-600">Top Recommendation (Paid)</p>
-            <h3 className="mt-2 text-xl font-bold text-slate-900">The Art of Doing (Python)</h3>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+            <p className="text-xs font-bold uppercase tracking-wider text-amber-600">Top Recommendation (Paid)</p>
+            <h3 className="mt-2 text-lg font-bold text-slate-900">The Art of Doing (Python)</h3>
+            <p className="mt-3 text-xs leading-relaxed text-slate-600">
               You&apos;ll build 40 small projects. It&apos;s the best way to learn by doing.
             </p>
-            <p className="mt-3 text-sm leading-relaxed text-slate-700">
+            <p className="mt-3 text-xs leading-relaxed text-slate-700">
               <strong>Optimization Tip:</strong> Skip the OOP section and the last 5 projects.
               This saves you 8 hours (~20h total).
             </p>
             <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between gap-4">
-              <p className="text-sm font-semibold text-slate-500">Udemy Course</p>
-              <button type="button" className="inline-flex items-center gap-1 text-indigo-600 text-base font-bold">
+              <p className="text-xs font-semibold text-slate-500">Udemy Course</p>
+              <button type="button" className="inline-flex items-center gap-1 text-indigo-600 text-sm font-bold">
                 View Course <ChevronRight size={20} />
               </button>
             </div>
           </article>
 
           <article className="rounded-2xl border border-indigo-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold uppercase tracking-wider text-emerald-600">Free Option</p>
-            <h3 className="mt-2 text-xl font-bold text-slate-900">FreeCodeCamp Python</h3>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+            <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Free Option</p>
+            <h3 className="mt-2 text-lg font-bold text-slate-900">FreeCodeCamp Python</h3>
+            <p className="mt-3 text-xs leading-relaxed text-slate-600">
               An excellent, comprehensive video course available for free on YouTube.
               Great if you are on a budget but still want high-quality instruction.
             </p>
             <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between gap-4">
-              <p className="text-sm font-semibold text-slate-500">YouTube</p>
-              <button type="button" className="inline-flex items-center gap-1 text-indigo-600 text-base font-bold">
+              <p className="text-xs font-semibold text-slate-500">YouTube</p>
+              <button type="button" className="inline-flex items-center gap-1 text-indigo-600 text-sm font-bold">
                 Watch Video <ChevronRight size={20} />
               </button>
             </div>
@@ -725,16 +725,16 @@ export default function SkillsPage() {
           <div>
             <div className="flex items-center gap-2">
               <Code2 size={24} className="text-slate-700" />
-              <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Readiness Check</h2>
+              <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">Readiness Check</h2>
             </div>
-            <p className="mt-1 text-sm md:text-base text-slate-500">
+            <p className="mt-1 text-xs md:text-sm text-slate-500">
               Solve the six fixed challenges to unlock measurable coding progress.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 min-w-[210px] shadow-sm">
             <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Progress</p>
             <div className="mt-1 flex items-center justify-between gap-3">
-              <p className="text-2xl font-bold text-indigo-600">
+              <p className="text-xl font-bold text-indigo-600">
                 {loadingProgress ? "..." : `${completedCount}/${totalChallenges}`}
               </p>
               <div className="h-3 flex-1 rounded-full bg-slate-100 overflow-hidden">
@@ -762,9 +762,8 @@ export default function SkillsPage() {
                       key={challenge.id}
                       type="button"
                       onClick={() => setActiveChallengeId(challenge.id)}
-                      className={`w-full text-left px-4 py-3 border-b border-slate-200 transition-colors ${
-                        active ? "bg-white border-l-4 border-l-indigo-500" : "hover:bg-white/70"
-                      }`}
+                      className={`w-full text-left px-4 py-3 border-b border-slate-200 transition-colors ${active ? "bg-white border-l-4 border-l-indigo-500" : "hover:bg-white/70"
+                        }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -790,8 +789,8 @@ export default function SkillsPage() {
                     </span>
                     <span className="text-xs font-semibold text-slate-500">Problem {activeChallenge.order}</span>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 leading-tight">{activeChallenge.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-600">{activeChallenge.description}</p>
+                  <h3 className="text-base font-bold text-slate-900 leading-tight">{activeChallenge.title}</h3>
+                  <p className="text-xs leading-relaxed text-slate-600">{activeChallenge.description}</p>
                 </div>
 
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
@@ -801,7 +800,7 @@ export default function SkillsPage() {
                   </pre>
                 </div>
 
-                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-900">
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900">
                   <p className="font-semibold">What to return</p>
                   <p className="mt-1">{activeChallenge.whatToReturn}</p>
                   <p className="mt-2 text-xs text-indigo-700">
@@ -828,7 +827,7 @@ export default function SkillsPage() {
             <div className="flex flex-col min-w-0">
               <div className="p-4 md:p-5 border-b border-slate-200">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-xs md:text-sm text-slate-600">
+                  <p className="text-xs text-slate-600">
                     Implement <span className="font-mono font-semibold text-slate-800">{activeChallenge.functionName}(...)</span> and return a string.
                   </p>
                   <div className="flex items-center gap-2">
@@ -836,7 +835,7 @@ export default function SkillsPage() {
                       Language
                     </label>
                     <select
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700"
                       disabled={loadingLanguages || !languages.length}
                       value={selectedLanguageId ?? ""}
                       onChange={(event) => setSelectedLanguageId(Number(event.target.value))}
@@ -919,9 +918,8 @@ export default function SkillsPage() {
                       {runResult.sample_results.map((result, index) => (
                         <div
                           key={`${index}-${result.input_preview}`}
-                          className={`rounded-lg border px-3 py-2 text-sm ${
-                            result.passed ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
-                          }`}
+                          className={`rounded-lg border px-3 py-2 text-sm ${result.passed ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
+                            }`}
                         >
                           <p className="font-semibold">
                             Sample {index + 1}: {result.passed ? "Pass" : "Fail"} ({result.status})
@@ -948,9 +946,8 @@ export default function SkillsPage() {
 
                 {submitResult ? (
                   <div
-                    className={`rounded-lg border px-3 py-2 text-sm ${
-                      submitResult.passed_all_hidden ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
-                    }`}
+                    className={`rounded-lg border px-3 py-2 text-sm ${submitResult.passed_all_hidden ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
+                      }`}
                   >
                     <p className="font-semibold">
                       {submitResult.passed_all_hidden ? "Hidden tests passed." : "Hidden tests not passed yet."}
