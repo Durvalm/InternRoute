@@ -39,10 +39,13 @@ export default function ActionItemsWidget({ moduleProgress, nextAction }: Action
   const [error, setError] = useState<string | null>(null);
 
   const currentModule = useMemo(() => {
-    const unlocked = moduleProgress.filter((module) => module.is_unlocked);
-    if (!unlocked.length) return null;
-    const withTasks = unlocked.find((module) => module.has_tasks);
-    return withTasks ?? unlocked[0];
+    if (!moduleProgress.length) return null;
+
+    const actionable = moduleProgress.find((module) => module.has_tasks && module.score < 100);
+    if (actionable) return actionable;
+
+    const withTasks = moduleProgress.find((module) => module.has_tasks);
+    return withTasks ?? moduleProgress[0];
   }, [moduleProgress]);
 
   useEffect(() => {
@@ -87,13 +90,9 @@ export default function ActionItemsWidget({ moduleProgress, nextAction }: Action
           {moduleProgress.map((module) => (
             <span
               key={module.module_key}
-              className={`text-[11px] px-2 py-1 rounded-full border ${
-                module.is_unlocked
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-slate-50 text-slate-500 border-slate-200"
-              }`}
+              className="text-[11px] px-2 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200"
             >
-              {module.module_name}: {module.score}% {module.is_unlocked ? "" : "(Locked)"}
+              {module.module_name}: {module.score}%
             </span>
           ))}
         </div>

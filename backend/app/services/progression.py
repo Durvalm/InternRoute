@@ -93,9 +93,9 @@ def _compute_overall_score(module_states: list[ModuleState], modules: list[Modul
 
 def _next_action(module_states: list[ModuleState]) -> str | None:
   for state in module_states:
-    if state.is_unlocked and state.has_tasks and state.score < 100:
+    if state.has_tasks and state.score < 100:
       return f"Continue {state.module_name}"
-  if any(state.is_unlocked and state.has_tasks for state in module_states):
+  if any(state.has_tasks for state in module_states):
     return "All available tasks are complete."
   return "No tasks available yet"
 
@@ -152,39 +152,15 @@ def _build_module_states(user: User, progress: UserProgress) -> list[ModuleState
 
     scores_by_module_id[module.id] = score
 
-  first_module_id = modules[0].id
-  previous_by_next: dict[int, Module] = {
-    module.next_module_id: module
-    for module in modules
-    if module.next_module_id is not None
-  }
-
   states: list[ModuleState] = []
   for module in modules:
-    has_advanced_coding_override = (
-      module.key == "coding"
-      and progress.coding_override_score is not None
-      and progress.coding_override_source == "advanced_onboarding"
-    )
-    if module.id == first_module_id:
-      is_unlocked = True
-    elif has_advanced_coding_override:
-      is_unlocked = True
-    else:
-      previous_module = previous_by_next.get(module.id)
-      if previous_module is None:
-        is_unlocked = False
-      else:
-        previous_score = scores_by_module_id.get(previous_module.id, 0)
-        is_unlocked = previous_score >= previous_module.unlock_threshold
-
     states.append(
       ModuleState(
         module_id=module.id,
         module_key=module.key,
         module_name=module.name,
         score=scores_by_module_id.get(module.id, 0),
-        is_unlocked=is_unlocked,
+        is_unlocked=True,
         unlock_threshold=module.unlock_threshold,
         has_tasks=has_tasks_by_module_id.get(module.id, False),
         has_bonus_tasks=has_bonus_by_module_id.get(module.id, False),

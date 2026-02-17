@@ -316,10 +316,8 @@ export default function TimelinePage() {
           ? "High urgency: this is likely your final summer internship window."
           : "You still have runway. Use each summer to ladder up in quality and brand signal.";
   const timelineModule = summary?.module_progress.find((module) => module.module_key === "timeline");
-  const codingModule = summary?.module_progress.find((module) => module.module_key === "coding");
   const timelineTask = timelineTasks[0] ?? null;
   const allChecksComplete = completionChecks.every(Boolean);
-  const codingSkillsUnlocked = Boolean(codingModule?.is_unlocked);
 
   const updateTimelineTaskCompletion = useCallback(async (nextCompleted: boolean) => {
     if (!timelineTask) {
@@ -377,7 +375,6 @@ export default function TimelinePage() {
   };
 
   const handleCompleteAndContinue = () => {
-    if (!codingSkillsUnlocked) return;
     router.push("/skills");
   };
 
@@ -762,14 +759,12 @@ export default function TimelinePage() {
 
         {tasksError ? <p className="mt-4 text-xs text-red-500">{tasksError}</p> : null}
 
-        <p className={`mt-4 text-xs ${codingSkillsUnlocked ? "text-emerald-600" : "text-slate-500"}`}>
-          {codingSkillsUnlocked
-            ? "Section complete. Coding Skills is unlocked."
-            : timelineModule
-              ? `Timeline progress: ${timelineModule.score}% (needs ${timelineModule.unlock_threshold}% to unlock Coding Skills).`
-              : allChecksComplete
-                ? "Checklist complete. Syncing unlock state..."
-                : "Complete checklist tasks to unlock the next module."}
+        <p className="mt-4 text-xs text-slate-500">
+          {timelineModule
+            ? `Timeline progress: ${timelineModule.score}%.`
+            : allChecksComplete
+              ? "Checklist complete. Syncing progress..."
+              : "Complete checklist tasks to build momentum for the next module."}
         </p>
       </section>
 
@@ -781,14 +776,9 @@ export default function TimelinePage() {
         <button
           type="button"
           onClick={handleCompleteAndContinue}
-          disabled={!codingSkillsUnlocked}
-          className={`inline-flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-base font-bold transition-all w-full md:w-auto ${
-            codingSkillsUnlocked
-              ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
-              : "bg-slate-200 text-slate-500 cursor-not-allowed"
-          }`}
+          className="inline-flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-base font-bold transition-all w-full md:w-auto bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
         >
-          {codingSkillsUnlocked ? "Continue to Coding Skills" : "Complete Checklist to Continue"}
+          Continue to Coding Skills
           <ArrowRight size={20} />
         </button>
       </section>
