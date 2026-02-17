@@ -29,7 +29,6 @@ type ChallengeUI = {
   prompt: string;
   hint: string;
   examples: ChallengeExample[];
-  taskTitle: string;
 };
 
 type LanguageOption = {
@@ -38,12 +37,9 @@ type LanguageOption = {
 };
 
 type CodingTasksResponse = {
-  module_key: string;
-  tasks: Array<{
-    id: number;
-    title: string;
-    is_completed: boolean;
-  }>;
+  challenge_completion: Record<string, boolean>;
+  completed_count: number;
+  total: number;
 };
 
 type LanguagesResponse = {
@@ -84,8 +80,7 @@ const CHALLENGES: ChallengeUI[] = [
     title: "The String Reversal",
     prompt: "Read a single line string from stdin and print the reversed string to stdout.",
     hint: "In Python, slicing with [::-1] reverses a string.",
-    examples: [{ input: "hello", output: "olleh" }],
-    taskTitle: "Coding Challenge #1: String Reversal"
+    examples: [{ input: "hello", output: "olleh" }]
   },
   {
     id: "fizzbuzz_logic",
@@ -93,8 +88,7 @@ const CHALLENGES: ChallengeUI[] = [
     title: "FizzBuzz Logic",
     prompt: "Read n from stdin. Print numbers 1..n, replacing multiples of 3 with Fizz, 5 with Buzz, and both with FizzBuzz.",
     hint: "Build each token, then join with spaces for final output.",
-    examples: [{ input: "5", output: "1 2 Fizz 4 Buzz" }],
-    taskTitle: "Coding Challenge #2: FizzBuzz Logic"
+    examples: [{ input: "5", output: "1 2 Fizz 4 Buzz" }]
   },
   {
     id: "list_filtering",
@@ -102,8 +96,7 @@ const CHALLENGES: ChallengeUI[] = [
     title: "List Filtering",
     prompt: "Read n and then n integers. Print only even numbers in original order, space-separated. Print NONE if no evens.",
     hint: "Filter first, then handle the empty case explicitly.",
-    examples: [{ input: "6\\n1 2 3 4 5 6", output: "2 4 6" }],
-    taskTitle: "Coding Challenge #3: List Filtering"
+    examples: [{ input: "6\n1 2 3 4 5 6", output: "2 4 6" }]
   },
   {
     id: "dictionary_basics",
@@ -111,8 +104,7 @@ const CHALLENGES: ChallengeUI[] = [
     title: "Dictionary Basics",
     prompt: "Read n and then n lowercase words. Print the most frequent word and its count. Tie-break by lexicographically smallest word.",
     hint: "Use a frequency map, then choose best by (count desc, word asc).",
-    examples: [{ input: "6\\ncat dog dog cat ant ant", output: "ant 2" }],
-    taskTitle: "Coding Challenge #4: Dictionary Basics"
+    examples: [{ input: "6\ncat dog dog cat ant ant", output: "ant 2" }]
   },
   {
     id: "palindrome_check",
@@ -120,8 +112,7 @@ const CHALLENGES: ChallengeUI[] = [
     title: "The Palindrome",
     prompt: "Read a lowercase string and print YES if it reads the same backward, otherwise NO.",
     hint: "Compare the string with its reverse.",
-    examples: [{ input: "racecar", output: "YES" }],
-    taskTitle: "Coding Challenge #5: Palindrome Check"
+    examples: [{ input: "racecar", output: "YES" }]
   },
   {
     id: "sum_of_two",
@@ -129,8 +120,7 @@ const CHALLENGES: ChallengeUI[] = [
     title: "Sum of Two",
     prompt: "Read n and target on line one, then n integers on line two. Print YES if any pair sums to target, otherwise NO.",
     hint: "Track seen values in a set for O(n) lookup.",
-    examples: [{ input: "5 9\\n2 7 11 15 1", output: "YES" }],
-    taskTitle: "Coding Challenge #6: Sum of Two"
+    examples: [{ input: "5 9\n2 7 11 15 1", output: "YES" }]
   }
 ];
 
@@ -269,10 +259,9 @@ export default function SkillsPage() {
   const refreshCodingProgress = useCallback(async () => {
     setLoadingProgress(true);
     try {
-      const data = await apiRequest<CodingTasksResponse>("/dashboard/tasks?module_key=coding");
+      const data = await apiRequest<CodingTasksResponse>("/skills/progress");
       const nextMap = CHALLENGES.reduce<Record<string, boolean>>((acc, challenge) => {
-        const task = data.tasks.find((item) => item.title === challenge.taskTitle);
-        acc[challenge.id] = Boolean(task?.is_completed);
+        acc[challenge.id] = Boolean(data.challenge_completion[challenge.id]);
         return acc;
       }, {});
       setCompletionMap(nextMap);
@@ -607,11 +596,20 @@ export default function SkillsPage() {
                 </div>
                 <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Example I/O</p>
-                  <p className="mt-1 text-xs text-slate-700">
-                    <span className="font-semibold">Input:</span> {activeChallenge.examples[0].input}
-                    {" | "}
-                    <span className="font-semibold">Output:</span> {activeChallenge.examples[0].output}
-                  </p>
+                  <div className="mt-1 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-700">
+                    <div>
+                      <p className="font-semibold">Input</p>
+                      <pre className="font-mono whitespace-pre-wrap break-words">
+                        {activeChallenge.examples[0].input}
+                      </pre>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Output</p>
+                      <pre className="font-mono whitespace-pre-wrap break-words">
+                        {activeChallenge.examples[0].output}
+                      </pre>
+                    </div>
+                  </div>
                 </div>
               </div>
 

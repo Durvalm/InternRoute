@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import Any
 
 
-CHALLENGE_TASK_TITLES: dict[str, str] = {
-  "string_reversal": "Coding Challenge #1: String Reversal",
-  "fizzbuzz_logic": "Coding Challenge #2: FizzBuzz Logic",
-  "list_filtering": "Coding Challenge #3: List Filtering",
-  "dictionary_basics": "Coding Challenge #4: Dictionary Basics",
-  "palindrome_check": "Coding Challenge #5: Palindrome Check",
-  "sum_of_two": "Coding Challenge #6: Sum of Two",
+CHALLENGE_TASK_SORT_ORDERS: dict[str, int] = {
+  "string_reversal": 1,
+  "fizzbuzz_logic": 2,
+  "list_filtering": 3,
+  "dictionary_basics": 4,
+  "palindrome_check": 5,
+  "sum_of_two": 6,
 }
 
 
@@ -97,4 +97,3 @@ CHALLENGE_CONFIGS: dict[str, dict[str, Any]] = {
 
 def get_challenge_config(challenge_id: str) -> dict[str, Any] | None:
   return CHALLENGE_CONFIGS.get(challenge_id)
-

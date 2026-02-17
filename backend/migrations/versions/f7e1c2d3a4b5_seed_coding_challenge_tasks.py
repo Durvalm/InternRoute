@@ -70,15 +70,6 @@ def upgrade():
         sa.column("updated_at", sa.DateTime()),
     )
 
-    challenge_titles = [task["title"] for task in TASKS]
-
-    conn.execute(
-        tasks_table.update()
-        .where(tasks_table.c.module_id == coding_module_id)
-        .where(~tasks_table.c.title.in_(challenge_titles))
-        .values(is_active=False)
-    )
-
     for task in TASKS:
         existing_id = conn.execute(
             sa.select(tasks_table.c.id)

@@ -10,7 +10,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from ..models import Module, Task
 from ..services.judge0 import Judge0Error, get_languages, run_submission
 from ..services.progression import set_task_completion_internal
-from ..services.skills_challenges import CHALLENGE_TASK_TITLES, get_challenge_config
+from ..services.skills_challenges import CHALLENGE_TASK_SORT_ORDERS, get_challenge_config
 
 bp = Blueprint("skills", __name__, url_prefix="/skills")
 
@@ -84,7 +84,6 @@ def _evaluate_case(source_code: str, language_id: int, test_case: dict[str, str]
     source_code=source_code,
     language_id=language_id,
     stdin=test_case["input"],
-    expected_output=test_case["expected_output"],
     cpu_time_limit=cpu_time_limit,
   )
 
@@ -99,12 +98,16 @@ def _evaluate_case(source_code: str, language_id: int, test_case: dict[str, str]
   normalized_actual = _normalize_output(stdout)
   normalized_expected = _normalize_output(test_case["expected_output"])
   passed = status_id == 3 and normalized_actual == normalized_expected
+  if status_id == 3:
+    status_kind = "ok" if passed else "wrong_answer"
+  else:
+    status_kind = _status_kind(status_id, status_description)
 
   return {
     "passed": passed,
     "status_id": status_id,
     "status_description": status_description,
-    "status_kind": _status_kind(status_id, status_description),
+    "status_kind": status_kind,
     "actual_output": normalized_actual,
     "expected_output": normalized_expected,
     "stdin": test_case["input"],
@@ -168,7 +171,53 @@ def _evaluate_test_group(
     "stderr": _preview(stderr, max_len=500),
     "time_ms": peak_time_ms or None,
     "memory_kb": peak_memory_kb or None,
-  }
+}
+
+
+def _resolve_challenge_task(*, challenge_id: str, coding_module_id: int) -> Task | None:
+  sort_order = CHALLENGE_TASK_SORT_ORDERS.get(challenge_id)
+  if sort_order is None:
+    return None
+  return Task.query.filter_by(
+    module_id=coding_module_id,
+    sort_order=sort_order,
+    is_active=True,
+  ).first()
+
+
+@bp.get("/progress")
+@jwt_required()
+def progress():
+  user_id = int(get_jwt_identity())
+  coding_module = Module.query.filter_by(key="coding").first()
+  if coding_module is None:
+    return jsonify({"error": "Coding module not found"}), 404
+
+  challenge_completion: dict[str, bool] = {}
+  completed_count = 0
+
+  for challenge_id in CHALLENGE_TASK_SORT_ORDERS:
+    task = _resolve_challenge_task(challenge_id=challenge_id, coding_module_id=coding_module.id)
+    if task is None:
+      challenge_completion[challenge_id] = False
+      continue
+
+    is_completed = bool(
+      task.completions
+      and any(completion.user_id == user_id for completion in task.completions)
+    )
+    challenge_completion[challenge_id] = is_completed
+    if is_completed:
+      completed_count += 1
+
+  total = len(CHALLENGE_TASK_SORT_ORDERS)
+  return jsonify(
+    {
+      "challenge_completion": challenge_completion,
+      "completed_count": completed_count,
+      "total": total,
+    }
+  )
 
 
 @bp.get("/languages")
@@ -282,10 +331,9 @@ def submit_challenge(challenge_id: str):
   task_completed = False
 
   if passed_all_hidden:
-    task_title = CHALLENGE_TASK_TITLES.get(challenge_id)
     coding_module = Module.query.filter_by(key="coding").first()
-    if task_title and coding_module:
-      task = Task.query.filter_by(module_id=coding_module.id, title=task_title, is_active=True).first()
+    if coding_module:
+      task = _resolve_challenge_task(challenge_id=challenge_id, coding_module_id=coding_module.id)
       if task:
         set_task_completion_internal(user_id, task.id, True)
         task_completed = True
@@ -303,4 +351,3 @@ def submit_challenge(challenge_id: str):
       "memory_kb": evaluation["memory_kb"],
     }
   )
-

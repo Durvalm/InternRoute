@@ -109,17 +109,18 @@ def run_submission(
   source_code: str,
   language_id: int,
   stdin: str,
-  expected_output: str,
+  expected_output: str | None = None,
   cpu_time_limit: float = 2.0,
 ) -> dict[str, Any]:
   payload = {
     "source_code": source_code,
     "language_id": language_id,
     "stdin": stdin,
-    "expected_output": expected_output,
     "cpu_time_limit": cpu_time_limit,
     "wall_time_limit": max(cpu_time_limit * 2, 3.0),
   }
+  if expected_output is not None:
+    payload["expected_output"] = expected_output
   response = _request_json("POST", "/submissions?base64_encoded=false&wait=true", payload=payload)
 
   # Some deployments ignore wait=true and return only token.
