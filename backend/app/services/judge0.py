@@ -13,6 +13,10 @@ class Judge0Error(RuntimeError):
   pass
 
 
+class Judge0ProcessingTimeout(Judge0Error):
+  pass
+
+
 _LANGUAGE_CACHE: list[dict[str, Any]] | None = None
 _LANGUAGE_CACHE_EXPIRES_AT = 0.0
 
@@ -171,6 +175,10 @@ def _poll_submission(token: str, *, max_attempts: int = 25, interval_seconds: fl
     if status_id not in {1, 2}:  # In Queue / Processing
       return response
     time.sleep(interval_seconds)
+  status = last_response.get("status") if isinstance(last_response, dict) else {}
+  status_id = int((status or {}).get("id") or 0)
+  if status_id in {1, 2}:
+    raise Judge0ProcessingTimeout("Execution is still processing on Judge0. Please retry in a moment.")
   return last_response
 
 
@@ -259,5 +267,11 @@ def run_submission(
   # Some deployments ignore wait=true and return only token.
   if isinstance(response, dict) and "token" in response and "status" not in response:
     return _poll_submission(str(response["token"]))
+
+  if isinstance(response, dict):
+    status = response.get("status") or {}
+    status_id = int(status.get("id") or 0)
+    if status_id in {1, 2}:
+      raise Judge0ProcessingTimeout("Execution is still processing on Judge0. Please retry in a moment.")
 
   return response if isinstance(response, dict) else {}

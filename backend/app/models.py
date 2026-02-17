@@ -83,6 +83,7 @@ class Task(db.Model):
 
   id = db.Column(db.Integer, primary_key=True)
   module_id = db.Column(db.Integer, db.ForeignKey("modules.id"), nullable=False)
+  challenge_id = db.Column(db.String(64), nullable=True)
   title = db.Column(db.String(255), nullable=False)
   description = db.Column(db.Text, nullable=True)
   weight = db.Column(db.Integer, nullable=False)

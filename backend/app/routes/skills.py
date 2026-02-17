@@ -8,16 +8,27 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from ..models import Module, Task
-from ..services.judge0 import Judge0Error, get_compact_languages, get_language_family, get_languages, run_submission
+from ..services.judge0 import (
+  Judge0Error,
+  Judge0ProcessingTimeout,
+  get_compact_languages,
+  get_language_family,
+  get_languages,
+  run_submission,
+)
 from ..services.progression import set_task_completion_internal
 from ..services.skills_harness import build_harness_source, format_case_preview
-from ..services.skills_challenges import CHALLENGE_TASK_SORT_ORDERS, get_challenge_config
+from ..services.skills_challenges import (
+  get_challenge_config,
+  list_challenge_contracts,
+  list_challenge_ids,
+)
 
 bp = Blueprint("skills", __name__, url_prefix="/skills")
 
 MAX_SOURCE_CODE_CHARS = 20000
-RUN_LIMIT_PER_MINUTE = 40
-SUBMIT_LIMIT_PER_MINUTE = 15
+RUN_LIMIT_PER_MINUTE = 10
+SUBMIT_LIMIT_PER_MINUTE = 2
 RUN_CONCURRENT_LIMIT = 2
 SUBMIT_CONCURRENT_LIMIT = 1
 MAX_CAPTURED_OUTPUT_CHARS = 20000
@@ -116,6 +127,19 @@ def _release_in_flight(user_id: int, action: str) -> None:
 def _rate_limited_response(message: str, retry_after_seconds: int):
   response = jsonify({"error": message, "retry_after_seconds": retry_after_seconds})
   response.status_code = 429
+  response.headers["Retry-After"] = str(retry_after_seconds)
+  return response
+
+
+def _judge_timeout_response(message: str, retry_after_seconds: int = 2):
+  response = jsonify(
+    {
+      "error": message,
+      "code": "judge_processing_timeout",
+      "retry_after_seconds": retry_after_seconds,
+    }
+  )
+  response.status_code = 503
   response.headers["Retry-After"] = str(retry_after_seconds)
   return response
 
@@ -242,14 +266,17 @@ def _evaluate_test_group(
 
 
 def _resolve_challenge_task(*, challenge_id: str, coding_module_id: int) -> Task | None:
-  sort_order = CHALLENGE_TASK_SORT_ORDERS.get(challenge_id)
-  if sort_order is None:
-    return None
   return Task.query.filter_by(
     module_id=coding_module_id,
-    sort_order=sort_order,
+    challenge_id=challenge_id,
     is_active=True,
   ).first()
+
+
+@bp.get("/challenges")
+@jwt_required()
+def challenges():
+  return jsonify({"challenges": list_challenge_contracts()})
 
 
 @bp.get("/progress")
@@ -263,7 +290,7 @@ def progress():
   challenge_completion: dict[str, bool] = {}
   completed_count = 0
 
-  for challenge_id in CHALLENGE_TASK_SORT_ORDERS:
+  for challenge_id in list_challenge_ids():
     task = _resolve_challenge_task(challenge_id=challenge_id, coding_module_id=coding_module.id)
     if task is None:
       challenge_completion[challenge_id] = False
@@ -277,7 +304,7 @@ def progress():
     if is_completed:
       completed_count += 1
 
-  total = len(CHALLENGE_TASK_SORT_ORDERS)
+  total = len(list_challenge_ids())
   return jsonify(
     {
       "challenge_completion": challenge_completion,
@@ -346,6 +373,8 @@ def run_challenge(challenge_id: str):
         cpu_time_limit=cpu_time_limit,
         stop_on_first_failure=False,
       )
+    except Judge0ProcessingTimeout as err:
+      return _judge_timeout_response(str(err))
     except Judge0Error as err:
       return jsonify({"error": str(err)}), 502
 
@@ -417,6 +446,8 @@ def submit_challenge(challenge_id: str):
         cpu_time_limit=cpu_time_limit,
         stop_on_first_failure=True,
       )
+    except Judge0ProcessingTimeout as err:
+      return _judge_timeout_response(str(err))
     except Judge0Error as err:
       return jsonify({"error": str(err)}), 502
 

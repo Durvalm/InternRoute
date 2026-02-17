@@ -43,6 +43,14 @@ type ChallengeUI = {
   whatToReturn: string;
 };
 
+type ChallengeContract = {
+  id: string;
+  order: number;
+  function_name: string;
+  parameters: ChallengeParameter[];
+  return_type: "string";
+};
+
 type LanguageOption = {
   id: number;
   name: string;
@@ -58,6 +66,10 @@ type CodingTasksResponse = {
 
 type LanguagesResponse = {
   languages: LanguageOption[];
+};
+
+type ChallengeContractsResponse = {
+  challenges: ChallengeContract[];
 };
 
 type RunResponse = {
@@ -87,7 +99,7 @@ type SubmitResponse = {
   memory_kb: number | null;
 };
 
-const CHALLENGES: ChallengeUI[] = [
+const CHALLENGE_FALLBACKS: ChallengeUI[] = [
   {
     id: "string_reversal",
     order: 1,
@@ -170,6 +182,50 @@ const CHALLENGES: ChallengeUI[] = [
     whatToReturn: "Return \"YES\" if a valid pair exists, otherwise \"NO\"."
   }
 ];
+
+function titleFromChallengeId(challengeId: string): string {
+  return challengeId
+    .split("_")
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(" ");
+}
+
+function mergeChallengesWithContracts(contracts: ChallengeContract[]): ChallengeUI[] {
+  if (!contracts.length) {
+    return CHALLENGE_FALLBACKS;
+  }
+
+  const fallbackById = new Map(CHALLENGE_FALLBACKS.map((challenge) => [challenge.id, challenge]));
+  const merged = contracts.map((contract) => {
+    const fallback = fallbackById.get(contract.id);
+    if (!fallback) {
+      return {
+        id: contract.id,
+        order: contract.order,
+        title: titleFromChallengeId(contract.id),
+        description: "Solve the challenge by implementing the required function.",
+        hint: "Start with a simple correct solution, then improve.",
+        functionName: contract.function_name,
+        parameters: contract.parameters,
+        returnType: contract.return_type,
+        constraints: [],
+        examples: [],
+        whatToReturn: "Return the expected string value."
+      } satisfies ChallengeUI;
+    }
+
+    return {
+      ...fallback,
+      order: contract.order,
+      functionName: contract.function_name,
+      parameters: contract.parameters,
+      returnType: contract.return_type
+    } satisfies ChallengeUI;
+  });
+
+  merged.sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+  return merged;
+}
 
 const PREFERRED_LANGUAGE_ORDER = [
   "python",
@@ -440,7 +496,8 @@ function starterCodeForChallenge(challenge: ChallengeUI, family: string | undefi
 }
 
 export default function SkillsPage() {
-  const [activeChallengeId, setActiveChallengeId] = useState(CHALLENGES[0].id);
+  const [challenges, setChallenges] = useState<ChallengeUI[]>(CHALLENGE_FALLBACKS);
+  const [activeChallengeId, setActiveChallengeId] = useState(CHALLENGE_FALLBACKS[0].id);
   const [languages, setLanguages] = useState<LanguageOption[]>([]);
   const [selectedLanguageId, setSelectedLanguageId] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -454,8 +511,8 @@ export default function SkillsPage() {
   const [apiError, setApiError] = useState<string | null>(null);
 
   const activeChallenge = useMemo(
-    () => CHALLENGES.find((challenge) => challenge.id === activeChallengeId) || CHALLENGES[0],
-    [activeChallengeId]
+    () => challenges.find((challenge) => challenge.id === activeChallengeId) || challenges[0] || CHALLENGE_FALLBACKS[0],
+    [activeChallengeId, challenges]
   );
 
   const selectedLanguage = useMemo(
@@ -467,8 +524,8 @@ export default function SkillsPage() {
 
   const draftKey = `${activeChallenge.id}:${selectedLanguageId ?? "none"}`;
   const currentCode = drafts[draftKey] ?? "";
-  const totalChallenges = CHALLENGES.length;
-  const completedCount = CHALLENGES.reduce(
+  const totalChallenges = challenges.length;
+  const completedCount = challenges.reduce(
     (count, challenge) => count + (completionMap[challenge.id] ? 1 : 0),
     0
   );
@@ -477,7 +534,7 @@ export default function SkillsPage() {
     setLoadingProgress(true);
     try {
       const data = await apiRequest<CodingTasksResponse>("/skills/progress");
-      const nextMap = CHALLENGES.reduce<Record<string, boolean>>((acc, challenge) => {
+      const nextMap = challenges.reduce<Record<string, boolean>>((acc, challenge) => {
         acc[challenge.id] = Boolean(data.challenge_completion[challenge.id]);
         return acc;
       }, {});
@@ -487,7 +544,7 @@ export default function SkillsPage() {
     } finally {
       setLoadingProgress(false);
     }
-  }, []);
+  }, [challenges]);
 
   useEffect(() => {
     let mounted = true;
@@ -509,12 +566,35 @@ export default function SkillsPage() {
       }
     };
 
-    void Promise.all([loadLanguages(), refreshCodingProgress()]);
+    const loadChallenges = async () => {
+      try {
+        const data = await apiRequest<ChallengeContractsResponse>("/skills/challenges");
+        if (!mounted) return;
+        const nextChallenges = mergeChallengesWithContracts(data.challenges ?? []);
+        setChallenges(nextChallenges);
+      } catch {
+        // Fallback content remains available when challenge-contract endpoint is unavailable.
+      }
+    };
+
+    void Promise.all([loadLanguages(), loadChallenges()]);
 
     return () => {
       mounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    void refreshCodingProgress();
   }, [refreshCodingProgress]);
+
+  useEffect(() => {
+    if (!challenges.length) return;
+    const hasActiveChallenge = challenges.some((challenge) => challenge.id === activeChallengeId);
+    if (!hasActiveChallenge) {
+      setActiveChallengeId(challenges[0].id);
+    }
+  }, [activeChallengeId, challenges]);
 
   useEffect(() => {
     if (!selectedLanguage) return;
@@ -740,7 +820,7 @@ export default function SkillsPage() {
               <div className="h-3 flex-1 rounded-full bg-slate-100 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-indigo-500"
-                  style={{ width: `${(completedCount / totalChallenges) * 100}%` }}
+                  style={{ width: `${totalChallenges > 0 ? (completedCount / totalChallenges) * 100 : 0}%` }}
                 />
               </div>
             </div>
@@ -754,7 +834,7 @@ export default function SkillsPage() {
                 Problem List
               </div>
               <div>
-                {CHALLENGES.map((challenge) => {
+                {challenges.map((challenge) => {
                   const active = challenge.id === activeChallenge.id;
                   const completed = completionMap[challenge.id];
                   return (

@@ -3,14 +3,14 @@ from __future__ import annotations
 from typing import Any
 
 
-CHALLENGE_TASK_SORT_ORDERS: dict[str, int] = {
-  "string_reversal": 1,
-  "fizzbuzz_logic": 2,
-  "list_filtering": 3,
-  "dictionary_basics": 4,
-  "palindrome_check": 5,
-  "sum_of_two": 6,
-}
+CHALLENGE_IDS: list[str] = [
+  "string_reversal",
+  "fizzbuzz_logic",
+  "list_filtering",
+  "dictionary_basics",
+  "palindrome_check",
+  "sum_of_two",
+]
 
 
 CHALLENGE_CONFIGS: dict[str, dict[str, Any]] = {
@@ -128,3 +128,25 @@ CHALLENGE_CONFIGS: dict[str, dict[str, Any]] = {
 
 def get_challenge_config(challenge_id: str) -> dict[str, Any] | None:
   return CHALLENGE_CONFIGS.get(challenge_id)
+
+
+def list_challenge_ids() -> list[str]:
+  return list(CHALLENGE_IDS)
+
+
+def list_challenge_contracts() -> list[dict[str, Any]]:
+  contracts: list[dict[str, Any]] = []
+  for index, challenge_id in enumerate(CHALLENGE_IDS, start=1):
+    challenge = CHALLENGE_CONFIGS.get(challenge_id)
+    if challenge is None:
+      continue
+    contracts.append(
+      {
+        "id": challenge_id,
+        "order": index,
+        "function_name": challenge["function_name"],
+        "parameters": challenge["parameters"],
+        "return_type": challenge["return_type"],
+      }
+    )
+  return contracts
