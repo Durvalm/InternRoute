@@ -18,9 +18,14 @@ bp = Blueprint("skills", __name__, url_prefix="/skills")
 MAX_SOURCE_CODE_CHARS = 20000
 RUN_LIMIT_PER_MINUTE = 40
 SUBMIT_LIMIT_PER_MINUTE = 15
+RUN_CONCURRENT_LIMIT = 2
+SUBMIT_CONCURRENT_LIMIT = 1
+MAX_CAPTURED_OUTPUT_CHARS = 20000
 
 _RATE_LIMIT_EVENTS: dict[str, list[float]] = {}
 _RATE_LIMIT_LOCK = Lock()
+_IN_FLIGHT_REQUESTS: dict[str, int] = {}
+_IN_FLIGHT_LOCK = Lock()
 
 
 def _normalize_output(value: str | None) -> str:
@@ -38,6 +43,14 @@ def _preview(value: str | None, *, max_len: int = 200) -> str:
   if len(value) <= max_len:
     return value
   return f"{value[:max_len]}..."
+
+
+def _cap_output(value: str | None, *, max_len: int = MAX_CAPTURED_OUTPUT_CHARS) -> tuple[str, bool]:
+  if value is None:
+    return "", False
+  if len(value) <= max_len:
+    return value, False
+  return value[:max_len], True
 
 
 def _to_ms(time_value: Any) -> int | None:
@@ -80,17 +93,41 @@ def _check_rate_limit(user_id: int, action: str, limit: int, *, window_seconds: 
   return None
 
 
+def _acquire_in_flight(user_id: int, action: str, limit: int) -> bool:
+  key = f"{user_id}:{action}"
+  with _IN_FLIGHT_LOCK:
+    current = _IN_FLIGHT_REQUESTS.get(key, 0)
+    if current >= limit:
+      return False
+    _IN_FLIGHT_REQUESTS[key] = current + 1
+  return True
+
+
+def _release_in_flight(user_id: int, action: str) -> None:
+  key = f"{user_id}:{action}"
+  with _IN_FLIGHT_LOCK:
+    current = _IN_FLIGHT_REQUESTS.get(key, 0)
+    if current <= 1:
+      _IN_FLIGHT_REQUESTS.pop(key, None)
+    else:
+      _IN_FLIGHT_REQUESTS[key] = current - 1
+
+
+def _rate_limited_response(message: str, retry_after_seconds: int):
+  response = jsonify({"error": message, "retry_after_seconds": retry_after_seconds})
+  response.status_code = 429
+  response.headers["Retry-After"] = str(retry_after_seconds)
+  return response
+
+
 def _evaluate_case(
   source_code: str,
   language_id: int,
+  language_family: str,
   challenge: dict[str, Any],
   test_case: dict[str, Any],
   cpu_time_limit: float,
 ) -> dict[str, Any]:
-  language_family = get_language_family(language_id)
-  if not language_family:
-    raise Judge0Error("Unsupported Judge0 language for function mode.")
-
   try:
     wrapped_source = build_harness_source(
       family=language_family,
@@ -113,9 +150,15 @@ def _evaluate_case(
   status_id = int(status.get("id") or 0)
   status_description = str(status.get("description") or "Unknown")
 
-  stdout = result.get("stdout") or ""
-  compile_output = result.get("compile_output") or ""
-  stderr = result.get("stderr") or ""
+  stdout, stdout_truncated = _cap_output(str(result.get("stdout") or ""))
+  compile_output, compile_output_truncated = _cap_output(str(result.get("compile_output") or ""))
+  stderr, stderr_truncated = _cap_output(str(result.get("stderr") or ""))
+  if stdout_truncated:
+    stderr = f"{stderr}\n[Output truncated after {MAX_CAPTURED_OUTPUT_CHARS} chars]".strip()
+  if compile_output_truncated:
+    compile_output = f"{compile_output}\n[Compile output truncated after {MAX_CAPTURED_OUTPUT_CHARS} chars]".strip()
+  if stderr_truncated:
+    stderr = f"{stderr}\n[Stderr truncated after {MAX_CAPTURED_OUTPUT_CHARS} chars]".strip()
 
   normalized_actual = _normalize_output(stdout)
   normalized_expected = _normalize_output(str(test_case["expected"]))
@@ -143,6 +186,7 @@ def _evaluate_case(
 def _evaluate_test_group(
   source_code: str,
   language_id: int,
+  language_family: str,
   challenge: dict[str, Any],
   tests: list[dict[str, Any]],
   cpu_time_limit: float,
@@ -157,7 +201,7 @@ def _evaluate_test_group(
   peak_memory_kb = 0
 
   for test_case in tests:
-    case = _evaluate_case(source_code, language_id, challenge, test_case, cpu_time_limit)
+    case = _evaluate_case(source_code, language_id, language_family, challenge, test_case, cpu_time_limit)
     case_results.append(case)
 
     if case["compile_output"] and not compile_output:
@@ -265,7 +309,7 @@ def run_challenge(challenge_id: str):
   user_id = int(get_jwt_identity())
   retry_after = _check_rate_limit(user_id, "run", RUN_LIMIT_PER_MINUTE)
   if retry_after is not None:
-    return jsonify({"error": "Rate limit exceeded. Try again soon.", "retry_after_seconds": retry_after}), 429
+    return _rate_limited_response("Rate limit exceeded. Try again soon.", retry_after)
 
   challenge = get_challenge_config(challenge_id)
   if challenge is None:
@@ -281,43 +325,53 @@ def run_challenge(challenge_id: str):
     return jsonify({"error": f"source_code exceeds {MAX_SOURCE_CODE_CHARS} characters"}), 400
   if not isinstance(language_id, int):
     return jsonify({"error": "language_id must be an integer"}), 400
+  language_family = get_language_family(language_id)
+  if not language_family:
+    return jsonify({"error": "Unsupported language_id"}), 400
+
+  if not _acquire_in_flight(user_id, "run", RUN_CONCURRENT_LIMIT):
+    return _rate_limited_response("Too many run requests in progress. Please wait.", 1)
 
   sample_tests = challenge["sample_cases"]
   cpu_time_limit = float(challenge.get("cpu_time_limit") or 2.0)
 
   try:
-    evaluation = _evaluate_test_group(
-      source_code=source_code,
-      language_id=language_id,
-      challenge=challenge,
-      tests=sample_tests,
-      cpu_time_limit=cpu_time_limit,
-      stop_on_first_failure=False,
+    try:
+      evaluation = _evaluate_test_group(
+        source_code=source_code,
+        language_id=language_id,
+        language_family=language_family,
+        challenge=challenge,
+        tests=sample_tests,
+        cpu_time_limit=cpu_time_limit,
+        stop_on_first_failure=False,
+      )
+    except Judge0Error as err:
+      return jsonify({"error": str(err)}), 502
+
+    sample_results = [
+      {
+        "passed": result["passed"],
+        "input_preview": _preview(result["stdin"]),
+        "expected_preview": _preview(result["expected_output"]),
+        "actual_preview": _preview(result["actual_output"]),
+        "status": result["status_kind"],
+      }
+      for result in evaluation["case_results"]
+    ]
+
+    return jsonify(
+      {
+        "status": evaluation["status"],
+        "sample_results": sample_results,
+        "compile_output": evaluation["compile_output"],
+        "stderr": evaluation["stderr"],
+        "time_ms": evaluation["time_ms"],
+        "memory_kb": evaluation["memory_kb"],
+      }
     )
-  except Judge0Error as err:
-    return jsonify({"error": str(err)}), 502
-
-  sample_results = [
-    {
-      "passed": result["passed"],
-      "input_preview": _preview(result["stdin"]),
-      "expected_preview": _preview(result["expected_output"]),
-      "actual_preview": _preview(result["actual_output"]),
-      "status": result["status_kind"],
-    }
-    for result in evaluation["case_results"]
-  ]
-
-  return jsonify(
-    {
-      "status": evaluation["status"],
-      "sample_results": sample_results,
-      "compile_output": evaluation["compile_output"],
-      "stderr": evaluation["stderr"],
-      "time_ms": evaluation["time_ms"],
-      "memory_kb": evaluation["memory_kb"],
-    }
-  )
+  finally:
+    _release_in_flight(user_id, "run")
 
 
 @bp.post("/challenges/<challenge_id>/submit")
@@ -326,7 +380,7 @@ def submit_challenge(challenge_id: str):
   user_id = int(get_jwt_identity())
   retry_after = _check_rate_limit(user_id, "submit", SUBMIT_LIMIT_PER_MINUTE)
   if retry_after is not None:
-    return jsonify({"error": "Rate limit exceeded. Try again soon.", "retry_after_seconds": retry_after}), 429
+    return _rate_limited_response("Rate limit exceeded. Try again soon.", retry_after)
 
   challenge = get_challenge_config(challenge_id)
   if challenge is None:
@@ -342,43 +396,53 @@ def submit_challenge(challenge_id: str):
     return jsonify({"error": f"source_code exceeds {MAX_SOURCE_CODE_CHARS} characters"}), 400
   if not isinstance(language_id, int):
     return jsonify({"error": "language_id must be an integer"}), 400
+  language_family = get_language_family(language_id)
+  if not language_family:
+    return jsonify({"error": "Unsupported language_id"}), 400
+
+  if not _acquire_in_flight(user_id, "submit", SUBMIT_CONCURRENT_LIMIT):
+    return _rate_limited_response("A submit is already in progress. Please wait.", 1)
 
   hidden_tests = challenge["hidden_cases"]
   cpu_time_limit = float(challenge.get("cpu_time_limit") or 2.0)
 
   try:
-    evaluation = _evaluate_test_group(
-      source_code=source_code,
-      language_id=language_id,
-      challenge=challenge,
-      tests=hidden_tests,
-      cpu_time_limit=cpu_time_limit,
-      stop_on_first_failure=True,
+    try:
+      evaluation = _evaluate_test_group(
+        source_code=source_code,
+        language_id=language_id,
+        language_family=language_family,
+        challenge=challenge,
+        tests=hidden_tests,
+        cpu_time_limit=cpu_time_limit,
+        stop_on_first_failure=True,
+      )
+    except Judge0Error as err:
+      return jsonify({"error": str(err)}), 502
+
+    passed_all_hidden = evaluation["passed_count"] == evaluation["total"]
+    task_completed = False
+
+    if passed_all_hidden:
+      coding_module = Module.query.filter_by(key="coding").first()
+      if coding_module:
+        task = _resolve_challenge_task(challenge_id=challenge_id, coding_module_id=coding_module.id)
+        if task:
+          set_task_completion_internal(user_id, task.id, True)
+          task_completed = True
+
+    return jsonify(
+      {
+        "status": evaluation["status"],
+        "passed_all_hidden": passed_all_hidden,
+        "hidden_pass_count": evaluation["passed_count"],
+        "hidden_total": evaluation["total"],
+        "task_completed": task_completed,
+        "compile_output": evaluation["compile_output"],
+        "stderr": evaluation["stderr"],
+        "time_ms": evaluation["time_ms"],
+        "memory_kb": evaluation["memory_kb"],
+      }
     )
-  except Judge0Error as err:
-    return jsonify({"error": str(err)}), 502
-
-  passed_all_hidden = evaluation["passed_count"] == evaluation["total"]
-  task_completed = False
-
-  if passed_all_hidden:
-    coding_module = Module.query.filter_by(key="coding").first()
-    if coding_module:
-      task = _resolve_challenge_task(challenge_id=challenge_id, coding_module_id=coding_module.id)
-      if task:
-        set_task_completion_internal(user_id, task.id, True)
-        task_completed = True
-
-  return jsonify(
-    {
-      "status": evaluation["status"],
-      "passed_all_hidden": passed_all_hidden,
-      "hidden_pass_count": evaluation["passed_count"],
-      "hidden_total": evaluation["total"],
-      "task_completed": task_completed,
-      "compile_output": evaluation["compile_output"],
-      "stderr": evaluation["stderr"],
-      "time_ms": evaluation["time_ms"],
-      "memory_kb": evaluation["memory_kb"],
-    }
-  )
+  finally:
+    _release_in_flight(user_id, "submit")
