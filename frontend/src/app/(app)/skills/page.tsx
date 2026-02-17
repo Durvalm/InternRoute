@@ -23,6 +23,8 @@ type ChallengeExample = {
 };
 
 type ChallengeParamType = "string" | "int" | "int_list" | "string_list";
+type ChallengeReturnType = "string" | "int" | "float" | "string_list" | "int_list" | "string_list_list";
+type LanguageFamily = "python" | "javascript" | "typescript" | "java" | "cpp" | "csharp" | "go" | "rust" | "kotlin" | "swift" | "php" | "ruby" | "c";
 
 type ChallengeParameter = {
   name: string;
@@ -36,8 +38,10 @@ type ChallengeUI = {
   description: string;
   functionName: string;
   parameters: ChallengeParameter[];
+  returnType: ChallengeReturnType;
   examples: ChallengeExample[];
   whatToReturn: string;
+  supportedFamilies: LanguageFamily[];
 };
 
 type ChallengeContract = {
@@ -45,6 +49,8 @@ type ChallengeContract = {
   order: number;
   function_name: string;
   parameters: ChallengeParameter[];
+  return_type: ChallengeReturnType;
+  supported_families: LanguageFamily[];
 };
 
 type LanguageOption = {
@@ -95,67 +101,86 @@ type SubmitResponse = {
 
 const CHALLENGE_FALLBACKS: ChallengeUI[] = [
   {
-    id: "string_reversal",
+    id: "clean_username",
     order: 1,
-    title: "The String Reversal",
-    description: "Implement a function that returns the reversed version of the input string.",
-    functionName: "string_reversal",
+    title: "Clean Username",
+    description: "Remove leading/trailing spaces, lowercase the text, then replace spaces with underscores.",
+    functionName: "clean_username",
     parameters: [{ name: "s", type: "string" }],
-    examples: [{ input: "s = \"hello\"", output: "\"olleh\"" }],
-    whatToReturn: "Return the reversed string."
+    returnType: "string",
+    examples: [{ input: "s = \"  John Doe  \"", output: "\"john_doe\"" }],
+    whatToReturn: "Return the cleaned username string.",
+    supportedFamilies: ["python", "javascript", "typescript", "java", "cpp", "csharp", "go", "rust", "kotlin", "swift", "php", "ruby", "c"]
   },
   {
-    id: "fizzbuzz_logic",
+    id: "word_counter",
     order: 2,
-    title: "FizzBuzz Logic",
-    description: "Return the FizzBuzz sequence from 1 to n as a single space-separated string.",
-    functionName: "fizzbuzz_logic",
-    parameters: [{ name: "n", type: "int" }],
-    examples: [{ input: "n = 5", output: "\"1 2 Fizz 4 Buzz\"" }],
-    whatToReturn: "Return one string containing the sequence separated by spaces."
-  },
-  {
-    id: "list_filtering",
-    order: 3,
-    title: "List Filtering",
-    description: "Return all even numbers in original order as a space-separated string, or NONE.",
-    functionName: "list_filtering",
-    parameters: [{ name: "nums", type: "int_list" }],
-    examples: [{ input: "nums = [1, 2, 3, 4, 5, 6]", output: "\"2 4 6\"" }],
-    whatToReturn: "Return \"NONE\" when there are no even values."
-  },
-  {
-    id: "dictionary_basics",
-    order: 4,
-    title: "Dictionary Basics",
-    description: "Return \"word count\" for the most frequent word. Break ties with lexicographically smallest word.",
-    functionName: "dictionary_basics",
+    title: "Word Counter",
+    description: "Count how many times each word appears in the input list.",
+    functionName: "word_counter",
     parameters: [{ name: "words", type: "string_list" }],
-    examples: [{ input: "words = [\"cat\", \"dog\", \"dog\", \"cat\", \"ant\", \"ant\"]", output: "\"ant 2\"" }],
-    whatToReturn: "Return exactly one string in the format \"word count\"."
+    returnType: "string_list",
+    examples: [{ input: "words = [\"python\", \"python\", \"sql\", \"api\", \"sql\"]", output: "[\"python:2\", \"sql:2\", \"api:1\"]" }],
+    whatToReturn: "Return a list of \"word:count\" strings, in the order each word first appears.",
+    supportedFamilies: ["python", "javascript", "typescript", "java", "cpp", "csharp", "go", "rust", "kotlin", "swift", "php", "ruby"]
   },
   {
-    id: "palindrome_check",
-    order: 5,
-    title: "The Palindrome",
-    description: "Check whether the string is a palindrome and return YES or NO.",
-    functionName: "palindrome_check",
-    parameters: [{ name: "s", type: "string" }],
-    examples: [{ input: "s = \"racecar\"", output: "\"YES\"" }],
-    whatToReturn: "Return \"YES\" if palindrome, otherwise \"NO\"."
-  },
-  {
-    id: "sum_of_two",
-    order: 6,
-    title: "Sum of Two",
-    description: "Determine if any two distinct numbers sum to target.",
-    functionName: "sum_of_two",
+    id: "summarize_orders",
+    order: 3,
+    title: "Build Order Summary",
+    description: "Given aligned user and amount lists, return each user's order count and total amount.",
+    functionName: "summarize_orders",
     parameters: [
-      { name: "nums", type: "int_list" },
-      { name: "target", type: "int" }
+      { name: "users", type: "string_list" },
+      { name: "amounts", type: "int_list" }
     ],
-    examples: [{ input: "nums = [2, 7, 11, 15, 1], target = 9", output: "\"YES\"" }],
-    whatToReturn: "Return \"YES\" if a valid pair exists, otherwise \"NO\"."
+    examples: [
+      {
+        input: "users = [\"u1\", \"u2\", \"u1\"], amounts = [10, 5, 7]",
+        output: "[\"u1:count=2,total=17\", \"u2:count=1,total=5\"]"
+      }
+    ],
+    returnType: "string_list",
+    whatToReturn: "Return one summary string per user in first-appearance order: user:count=<n>,total=<sum>.",
+    supportedFamilies: ["python", "javascript", "typescript", "java", "cpp", "csharp", "go", "rust", "kotlin", "swift", "php", "ruby"]
+  },
+  {
+    id: "cart_total",
+    order: 4,
+    title: "Shopping Cart Total with Coupons",
+    description: "Compute subtotal from aligned prices/qty. Apply SAVE10 always; apply SAVE20 only when subtotal is at least 20.",
+    functionName: "cart_total",
+    parameters: [
+      { name: "prices", type: "int_list" },
+      { name: "qty", type: "int_list" },
+      { name: "coupon", type: "string" }
+    ],
+    examples: [
+      {
+        input: "prices = [10, 2], qty = [2, 3], coupon = \"SAVE10\"",
+        output: "23.4"
+      }
+    ],
+    returnType: "float",
+    whatToReturn: "Return the final numeric total after applying coupon rules. Use coupon=\"NONE\" for no discount.",
+    supportedFamilies: ["python", "javascript", "typescript", "java", "cpp", "csharp", "go", "rust", "kotlin", "swift", "php", "ruby", "c"]
+  },
+  {
+    id: "group_anagrams",
+    order: 5,
+    title: "Group Anagrams",
+    description: "Group words that are anagrams of each other.",
+    functionName: "group_anagrams",
+    parameters: [{ name: "words", type: "string_list" }],
+    returnType: "string_list_list",
+    examples: [
+      {
+        input: "words = [\"eat\", \"tea\", \"tan\", \"ate\", \"nat\", \"bat\"]",
+        output: "[[\"eat\", \"tea\", \"ate\"], [\"tan\", \"nat\"], [\"bat\"]]"
+      }
+    ],
+    whatToReturn: "Return a list of groups, where each group is a list of anagram words.",
+    supportedFamilies: ["python", "javascript", "typescript", "java", "cpp", "csharp", "go", "rust", "kotlin", "swift", "php", "ruby"]
   }
 ];
 
@@ -182,8 +207,10 @@ function mergeChallengesWithContracts(contracts: ChallengeContract[]): Challenge
         description: "Solve the challenge by implementing the required function.",
         functionName: contract.function_name,
         parameters: contract.parameters,
+        returnType: contract.return_type,
         examples: [],
-        whatToReturn: "Return the expected string value."
+        whatToReturn: "Return the expected value.",
+        supportedFamilies: (contract.supported_families || PREFERRED_LANGUAGE_ORDER) as LanguageFamily[]
       } satisfies ChallengeUI;
     }
 
@@ -191,7 +218,9 @@ function mergeChallengesWithContracts(contracts: ChallengeContract[]): Challenge
       ...fallback,
       order: contract.order,
       functionName: contract.function_name,
-      parameters: contract.parameters
+      parameters: contract.parameters,
+      returnType: contract.return_type,
+      supportedFamilies: (contract.supported_families || fallback.supportedFamilies) as LanguageFamily[]
     } satisfies ChallengeUI;
   });
 
@@ -350,25 +379,170 @@ function parameterTypeForSignature(family: string | undefined, type: ChallengePa
   return name;
 }
 
-function returnTypeForSignature(family: string | undefined): string {
-  if (family === "python") return "str";
-  if (family === "typescript") return "string";
+function returnTypeForSignature(family: string | undefined, returnType: ChallengeReturnType): string {
+  if (family === "python") {
+    if (returnType === "string") return "str";
+    if (returnType === "int") return "int";
+    if (returnType === "float") return "float";
+    if (returnType === "string_list") return "list[str]";
+    if (returnType === "int_list") return "list[int]";
+    return "list[list[str]]";
+  }
+  if (family === "typescript") {
+    if (returnType === "string") return "string";
+    if (returnType === "int" || returnType === "float") return "number";
+    if (returnType === "string_list") return "string[]";
+    if (returnType === "int_list") return "number[]";
+    return "string[][]";
+  }
   if (family === "javascript") return "";
-  if (family === "java") return "String";
-  if (family === "cpp") return "std::string";
-  if (family === "csharp") return "string";
-  if (family === "go") return "string";
-  if (family === "rust") return "String";
-  if (family === "kotlin") return "String";
-  if (family === "swift") return "String";
+  if (family === "java") {
+    if (returnType === "string") return "String";
+    if (returnType === "int") return "int";
+    if (returnType === "float") return "double";
+    if (returnType === "string_list") return "java.util.List<String>";
+    if (returnType === "int_list") return "java.util.List<Integer>";
+    return "java.util.List<java.util.List<String>>";
+  }
+  if (family === "cpp") {
+    if (returnType === "string") return "std::string";
+    if (returnType === "int") return "int";
+    if (returnType === "float") return "double";
+    if (returnType === "string_list") return "std::vector<std::string>";
+    if (returnType === "int_list") return "std::vector<int>";
+    return "std::vector<std::vector<std::string>>";
+  }
+  if (family === "csharp") {
+    if (returnType === "string") return "string";
+    if (returnType === "int") return "int";
+    if (returnType === "float") return "double";
+    if (returnType === "string_list") return "List<string>";
+    if (returnType === "int_list") return "List<int>";
+    return "List<List<string>>";
+  }
+  if (family === "go") {
+    if (returnType === "string") return "string";
+    if (returnType === "int") return "int";
+    if (returnType === "float") return "float64";
+    if (returnType === "string_list") return "[]string";
+    if (returnType === "int_list") return "[]int";
+    return "[][]string";
+  }
+  if (family === "rust") {
+    if (returnType === "string") return "String";
+    if (returnType === "int") return "i32";
+    if (returnType === "float") return "f64";
+    if (returnType === "string_list") return "Vec<String>";
+    if (returnType === "int_list") return "Vec<i32>";
+    return "Vec<Vec<String>>";
+  }
+  if (family === "kotlin") {
+    if (returnType === "string") return "String";
+    if (returnType === "int") return "Int";
+    if (returnType === "float") return "Double";
+    if (returnType === "string_list") return "List<String>";
+    if (returnType === "int_list") return "List<Int>";
+    return "List<List<String>>";
+  }
+  if (family === "swift") {
+    if (returnType === "string") return "String";
+    if (returnType === "int") return "Int";
+    if (returnType === "float") return "Double";
+    if (returnType === "string_list") return "[String]";
+    if (returnType === "int_list") return "[Int]";
+    return "[[String]]";
+  }
   if (family === "php" || family === "ruby") return "";
-  if (family === "c") return "const char*";
+  if (family === "c") {
+    if (returnType === "string") return "const char*";
+    if (returnType === "int") return "int";
+    return "double";
+  }
   return "string";
+}
+
+function defaultReturnLiteral(family: string | undefined, returnType: ChallengeReturnType): string {
+  if (family === "python") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int") return "0";
+    if (returnType === "float") return "0.0";
+    return "[]";
+  }
+  if (family === "javascript" || family === "typescript") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int" || returnType === "float") return "0";
+    return "[]";
+  }
+  if (family === "java") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int") return "0";
+    if (returnType === "float") return "0.0";
+    if (returnType === "string_list" || returnType === "int_list" || returnType === "string_list_list") {
+      return "new java.util.ArrayList<>()";
+    }
+  }
+  if (family === "cpp") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int") return "0";
+    if (returnType === "float") return "0.0";
+    return "{}";
+  }
+  if (family === "csharp") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int") return "0";
+    if (returnType === "float") return "0.0";
+    if (returnType === "string_list") return "new List<string>()";
+    if (returnType === "int_list") return "new List<int>()";
+    if (returnType === "string_list_list") return "new List<List<string>>()";
+  }
+  if (family === "go") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int") return "0";
+    if (returnType === "float") return "0";
+    if (returnType === "string_list") return "[]string{}";
+    if (returnType === "int_list") return "[]int{}";
+    if (returnType === "string_list_list") return "[][]string{}";
+  }
+  if (family === "rust") {
+    if (returnType === "string") return "String::new()";
+    if (returnType === "int") return "0";
+    if (returnType === "float") return "0.0";
+    return "Vec::new()";
+  }
+  if (family === "kotlin") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int") return "0";
+    if (returnType === "float") return "0.0";
+    return "emptyList()";
+  }
+  if (family === "swift") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int") return "0";
+    if (returnType === "float") return "0.0";
+    return "[]";
+  }
+  if (family === "php") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int" || returnType === "float") return "0";
+    return "[]";
+  }
+  if (family === "ruby") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int") return "0";
+    if (returnType === "float") return "0.0";
+    return "[]";
+  }
+  if (family === "c") {
+    if (returnType === "string") return "\"\"";
+    if (returnType === "int") return "0";
+    return "0.0";
+  }
+  return "\"\"";
 }
 
 function challengeSignatureText(challenge: ChallengeUI, family: string | undefined): string {
   const params = challenge.parameters.map((param) => parameterTypeForSignature(family, param.type, param.name)).join(", ");
-  const returnType = returnTypeForSignature(family);
+  const returnType = returnTypeForSignature(family, challenge.returnType);
   const name = challenge.functionName;
 
   if (family === "python") return `def ${name}(${params}) -> ${returnType}`;
@@ -389,29 +563,30 @@ function challengeSignatureText(challenge: ChallengeUI, family: string | undefin
 
 function starterCodeForChallenge(challenge: ChallengeUI, family: string | undefined): string {
   const signature = challengeSignatureText(challenge, family);
+  const literal = defaultReturnLiteral(family, challenge.returnType);
 
   if (family === "python") {
-    return [signature + ":", "    # Return the final string result", "    return \"\"", ""].join("\n");
+    return [signature + ":", "    # Return the final result value", `    return ${literal}`, ""].join("\n");
   }
   if (family === "javascript") {
-    return [signature + " {", "  // Return the final string result", "  return \"\";", "}", ""].join("\n");
+    return [signature + " {", "  // Return the final result value", `  return ${literal};`, "}", ""].join("\n");
   }
   if (family === "typescript") {
-    return [signature + " {", "  // Return the final string result", "  return \"\";", "}", ""].join("\n");
+    return [signature + " {", "  // Return the final result value", `  return ${literal};`, "}", ""].join("\n");
   }
   if (family === "java") {
     return [
       "class Solution {",
       `  ${signature} {`,
-      "    // Return the final string result",
-      "    return \"\";",
+      "    // Return the final result value",
+      `    return ${literal};`,
       "  }",
       "}",
       ""
     ].join("\n");
   }
   if (family === "cpp") {
-    return [signature + " {", "  // Return the final string result", "  return \"\";", "}", ""].join("\n");
+    return [signature + " {", "  // Return the final result value", `  return ${literal};`, "}", ""].join("\n");
   }
   if (family === "csharp") {
     return [
@@ -419,52 +594,52 @@ function starterCodeForChallenge(challenge: ChallengeUI, family: string | undefi
       "",
       "public static class Solution {",
       `  ${signature} {`,
-      "    // Return the final string result",
-      "    return \"\";",
+      "    // Return the final result value",
+      `    return ${literal};`,
       "  }",
       "}",
       ""
     ].join("\n");
   }
   if (family === "go") {
-    return [signature + " {", "\t// Return the final string result", "\treturn \"\"", "}", ""].join("\n");
+    return [signature + " {", "\t// Return the final result value", `\treturn ${literal}`, "}", ""].join("\n");
   }
   if (family === "rust") {
-    return [signature + " {", "    // Return the final string result", "    String::new()", "}", ""].join("\n");
+    return [signature + " {", "    // Return the final result value", `    ${literal}`, "}", ""].join("\n");
   }
   if (family === "kotlin") {
     return [
       "object Solution {",
       `    @JvmStatic ${signature} {`,
-      "        // Return the final string result",
-      "        return \"\"",
+      "        // Return the final result value",
+      `        return ${literal}`,
       "    }",
       "}",
       ""
     ].join("\n");
   }
   if (family === "swift") {
-    return [signature + " {", "    // Return the final string result", "    return \"\"", "}", ""].join("\n");
+    return [signature + " {", "    // Return the final result value", `    return ${literal}`, "}", ""].join("\n");
   }
   if (family === "php") {
-    return [signature + " {", "  // Return the final string result", "  return \"\";", "}", ""].join("\n");
+    return [signature + " {", "  // Return the final result value", `  return ${literal};`, "}", ""].join("\n");
   }
   if (family === "ruby") {
-    return [signature, "  # Return the final string result", "  \"\"", "end", ""].join("\n");
+    return [signature, "  # Return the final result value", `  ${literal}`, "end", ""].join("\n");
   }
   if (family === "c") {
     return [
       "#include <stddef.h>",
       "",
       signature + " {",
-      "  // Return a pointer to a string result (e.g., static buffer or string literal).",
-      "  return \"\";",
+      "  // Return the final result value.",
+      `  return ${literal};`,
       "}",
       ""
     ].join("\n");
   }
 
-  return ["// Implement the required function and return a string.", ""].join("\n");
+  return ["// Implement the required function and return the required value.", ""].join("\n");
 }
 
 export default function SkillsPage() {
@@ -487,9 +662,17 @@ export default function SkillsPage() {
     [activeChallengeId, challenges]
   );
 
+  const availableLanguages = useMemo(
+    () => languages.filter((language) => {
+      const family = language.family || inferFamilyFromName(language.name);
+      return Boolean(family && activeChallenge.supportedFamilies.includes(family as LanguageFamily));
+    }),
+    [activeChallenge.supportedFamilies, languages]
+  );
+
   const selectedLanguage = useMemo(
-    () => languages.find((language) => language.id === selectedLanguageId) || null,
-    [languages, selectedLanguageId]
+    () => availableLanguages.find((language) => language.id === selectedLanguageId) || null,
+    [availableLanguages, selectedLanguageId]
   );
   const selectedFamily = getLanguageFamily(selectedLanguage);
   const activeSignature = challengeSignatureText(activeChallenge, selectedFamily);
@@ -567,6 +750,18 @@ export default function SkillsPage() {
       setActiveChallengeId(challenges[0].id);
     }
   }, [activeChallengeId, challenges]);
+
+  useEffect(() => {
+    if (!availableLanguages.length) {
+      setSelectedLanguageId(null);
+      return;
+    }
+    const languageStillAvailable = availableLanguages.some((language) => language.id === selectedLanguageId);
+    if (!languageStillAvailable) {
+      const python = availableLanguages.find((language) => (language.family || inferFamilyFromName(language.name)) === "python");
+      setSelectedLanguageId(python?.id ?? availableLanguages[0].id);
+    }
+  }, [availableLanguages, selectedLanguageId]);
 
   useEffect(() => {
     if (!selectedLanguage) return;
@@ -780,7 +975,7 @@ export default function SkillsPage() {
               <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">Readiness Check</h2>
             </div>
             <p className="mt-1 text-xs md:text-sm text-slate-500">
-              Solve the six fixed challenges to unlock measurable coding progress.
+              Solve the five fixed challenges to unlock measurable coding progress.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 min-w-[210px] shadow-sm">
@@ -880,7 +1075,7 @@ export default function SkillsPage() {
               <div className="p-4 md:p-5 border-b border-slate-200">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <p className="text-xs text-slate-600">
-                    Implement <span className="font-mono font-semibold text-slate-800">{activeChallenge.functionName}(...)</span> and return a string.
+                    Implement <span className="font-mono font-semibold text-slate-800">{activeChallenge.functionName}(...)</span> and return the required value.
                   </p>
                   <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -888,12 +1083,12 @@ export default function SkillsPage() {
                     </label>
                     <select
                       className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700"
-                      disabled={loadingLanguages || !languages.length}
+                      disabled={loadingLanguages || !availableLanguages.length}
                       value={selectedLanguageId ?? ""}
                       onChange={(event) => setSelectedLanguageId(Number(event.target.value))}
                     >
-                      {!languages.length ? <option value="">Loading...</option> : null}
-                      {languages.map((language) => (
+                      {!availableLanguages.length ? <option value="">No compatible language</option> : null}
+                      {availableLanguages.map((language) => (
                         <option key={language.id} value={language.id}>
                           {language.display_name || language.name}
                         </option>
@@ -922,7 +1117,7 @@ export default function SkillsPage() {
                   />
                 ) : (
                   <div className="h-full flex items-center justify-center text-sm text-indigo-100/80">
-                    {loadingLanguages ? "Loading languages..." : "No language available"}
+                    {loadingLanguages ? "Loading languages..." : "No compatible language"}
                   </div>
                 )}
               </div>

@@ -17,12 +17,11 @@ depends_on = None
 
 
 CHALLENGE_TITLES = [
-    "Coding Challenge #1: String Reversal",
-    "Coding Challenge #2: FizzBuzz Logic",
-    "Coding Challenge #3: List Filtering",
-    "Coding Challenge #4: Dictionary Basics",
-    "Coding Challenge #5: Palindrome Check",
-    "Coding Challenge #6: Sum of Two",
+    "Coding Challenge #1: Clean Username",
+    "Coding Challenge #2: Word Counter",
+    "Coding Challenge #3: Build Order Summary",
+    "Coding Challenge #4: Shopping Cart Total with Coupons",
+    "Coding Challenge #5: Group Anagrams",
 ]
 
 
@@ -51,4 +50,3 @@ def upgrade():
 def downgrade():
     # No safe automatic downgrade: we cannot infer which tasks were truly inactive before.
     pass
-

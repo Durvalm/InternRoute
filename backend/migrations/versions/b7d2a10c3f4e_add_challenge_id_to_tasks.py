@@ -17,12 +17,11 @@ depends_on = None
 
 
 CHALLENGE_MAPPINGS = [
-    (1, "string_reversal", "Coding Challenge #1: String Reversal"),
-    (2, "fizzbuzz_logic", "Coding Challenge #2: FizzBuzz Logic"),
-    (3, "list_filtering", "Coding Challenge #3: List Filtering"),
-    (4, "dictionary_basics", "Coding Challenge #4: Dictionary Basics"),
-    (5, "palindrome_check", "Coding Challenge #5: Palindrome Check"),
-    (6, "sum_of_two", "Coding Challenge #6: Sum of Two"),
+    (1, "clean_username", "Coding Challenge #1: Clean Username"),
+    (2, "word_counter", "Coding Challenge #2: Word Counter"),
+    (3, "summarize_orders", "Coding Challenge #3: Build Order Summary"),
+    (4, "cart_total", "Coding Challenge #4: Shopping Cart Total with Coupons"),
+    (5, "group_anagrams", "Coding Challenge #5: Group Anagrams"),
 ]
 
 

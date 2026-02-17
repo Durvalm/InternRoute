@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import math
 import time
 from threading import Lock
 from typing import Any
@@ -17,8 +19,9 @@ from ..services.judge0 import (
   run_submission,
 )
 from ..services.progression import set_task_completion_internal
-from ..services.skills_harness import build_harness_source, format_case_preview
+from ..services.skills_harness import RESULT_MARKER, build_harness_source, format_case_preview
 from ..services.skills_challenges import (
+  challenge_supports_family,
   get_challenge_config,
   list_challenge_contracts,
   list_challenge_ids,
@@ -45,6 +48,130 @@ def _normalize_output(value: str | None) -> str:
   value = value.replace("\r\n", "\n").replace("\r", "\n")
   lines = [line.rstrip() for line in value.split("\n")]
   return "\n".join(lines).strip()
+
+
+def _json_preview(value: Any) -> str:
+  try:
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+  except Exception:
+    return str(value)
+
+
+def _extract_serialized_result(stdout: str) -> str:
+  marker_indexes: list[int] = []
+  offset = 0
+  while True:
+    index = stdout.find(RESULT_MARKER, offset)
+    if index < 0:
+      break
+    marker_indexes.append(index)
+    offset = index + 1
+
+  if not marker_indexes:
+    raise ValueError("Result marker not found in program output.")
+
+  decoder = json.JSONDecoder()
+  for marker_index in reversed(marker_indexes):
+    payload = stdout[marker_index + len(RESULT_MARKER):].strip()
+    if not payload:
+      continue
+    try:
+      _, end_index = decoder.raw_decode(payload)
+    except Exception:
+      continue
+    if payload[end_index:].strip():
+      continue
+    return payload[:end_index]
+
+  raise ValueError("Program returned an invalid result payload.")
+
+
+def _coerce_int(value: Any, *, path: str) -> int:
+  if isinstance(value, bool):
+    raise ValueError(f"Expected integer at {path}.")
+  if isinstance(value, int):
+    return value
+  if isinstance(value, float) and value.is_integer():
+    return int(value)
+  raise ValueError(f"Expected integer at {path}.")
+
+
+def _coerce_value(return_type: str, value: Any, *, path: str = "result") -> Any:
+  if return_type == "string":
+    if not isinstance(value, str):
+      raise ValueError(f"Expected string at {path}.")
+    return value
+
+  if return_type == "int":
+    return _coerce_int(value, path=path)
+
+  if return_type == "float":
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+      raise ValueError(f"Expected float-compatible number at {path}.")
+    return float(value)
+
+  if return_type == "string_list":
+    if not isinstance(value, list):
+      raise ValueError(f"Expected list at {path}.")
+    result: list[str] = []
+    for index, item in enumerate(value):
+      if not isinstance(item, str):
+        raise ValueError(f"Expected string at {path}[{index}].")
+      result.append(item)
+    return result
+
+  if return_type == "int_list":
+    if not isinstance(value, list):
+      raise ValueError(f"Expected list at {path}.")
+    return [_coerce_int(item, path=f"{path}[{index}]") for index, item in enumerate(value)]
+
+  if return_type == "string_list_list":
+    if not isinstance(value, list):
+      raise ValueError(f"Expected list at {path}.")
+    groups: list[list[str]] = []
+    for index, group in enumerate(value):
+      if not isinstance(group, list):
+        raise ValueError(f"Expected list at {path}[{index}].")
+      words: list[str] = []
+      for word_index, word in enumerate(group):
+        if not isinstance(word, str):
+          raise ValueError(f"Expected string at {path}[{index}][{word_index}].")
+        words.append(word)
+      groups.append(words)
+    return groups
+
+  raise ValueError(f"Unsupported return_type: {return_type}")
+
+
+def _group_anagram_signature(group: list[str]) -> tuple[str, ...]:
+  return tuple(sorted(group))
+
+
+def _compare_typed_values(
+  *,
+  challenge: dict[str, Any],
+  actual_value: Any,
+  expected_value: Any,
+) -> bool:
+  return_type = str(challenge.get("return_type") or "")
+  comparator = str(challenge.get("comparator") or "")
+
+  coerced_actual = _coerce_value(return_type, actual_value, path="actual")
+  coerced_expected = _coerce_value(return_type, expected_value, path="expected")
+
+  if return_type == "float":
+    assert isinstance(coerced_actual, float)
+    assert isinstance(coerced_expected, float)
+    return math.isclose(coerced_actual, coerced_expected, rel_tol=1e-9, abs_tol=1e-6)
+
+  if comparator == "group_anagrams":
+    assert isinstance(coerced_actual, list)
+    assert isinstance(coerced_expected, list)
+    actual_signatures = sorted(_group_anagram_signature(group) for group in coerced_actual)
+    expected_signatures = sorted(_group_anagram_signature(group) for group in coerced_expected)
+    return actual_signatures == expected_signatures
+
+  return coerced_actual == coerced_expected
 
 
 def _preview(value: str | None, *, max_len: int = 200) -> str:
@@ -157,6 +284,7 @@ def _evaluate_case(
       family=language_family,
       function_name=str(challenge["function_name"]),
       parameters=list(challenge["parameters"]),
+      return_type=str(challenge.get("return_type") or "string"),
       args=list(test_case["args"]),
       user_source=source_code,
     )
@@ -174,7 +302,8 @@ def _evaluate_case(
   status_id = int(status.get("id") or 0)
   status_description = str(status.get("description") or "Unknown")
 
-  stdout, stdout_truncated = _cap_output(str(result.get("stdout") or ""))
+  raw_stdout = str(result.get("stdout") or "")
+  stdout, stdout_truncated = _cap_output(raw_stdout)
   compile_output, compile_output_truncated = _cap_output(str(result.get("compile_output") or ""))
   stderr, stderr_truncated = _cap_output(str(result.get("stderr") or ""))
   if stdout_truncated:
@@ -184,12 +313,27 @@ def _evaluate_case(
   if stderr_truncated:
     stderr = f"{stderr}\n[Stderr truncated after {MAX_CAPTURED_OUTPUT_CHARS} chars]".strip()
 
-  normalized_actual = _normalize_output(stdout)
-  normalized_expected = _normalize_output(str(test_case["expected"]))
-  passed = status_id == 3 and normalized_actual == normalized_expected
+  normalized_stdout = _normalize_output(stdout)
+  expected_preview = _json_preview(test_case["expected"])
+  actual_preview = normalized_stdout
+
   if status_id == 3:
+    try:
+      payload = _extract_serialized_result(raw_stdout)
+      parsed_actual = json.loads(payload)
+      actual_preview = _json_preview(parsed_actual)
+      passed = _compare_typed_values(
+        challenge=challenge,
+        actual_value=parsed_actual,
+        expected_value=test_case["expected"],
+      )
+    except Exception as err:
+      passed = False
+      actual_preview = normalized_stdout
+      stderr = f"{stderr}\n{err}".strip()
     status_kind = "ok" if passed else "wrong_answer"
   else:
+    passed = False
     status_kind = _status_kind(status_id, status_description)
 
   return {
@@ -197,8 +341,8 @@ def _evaluate_case(
     "status_id": status_id,
     "status_description": status_description,
     "status_kind": status_kind,
-    "actual_output": normalized_actual,
-    "expected_output": normalized_expected,
+    "actual_output": actual_preview,
+    "expected_output": expected_preview,
     "stdin": format_case_preview(list(challenge["parameters"]), list(test_case["args"])),
     "compile_output": compile_output,
     "stderr": stderr,
@@ -355,6 +499,8 @@ def run_challenge(challenge_id: str):
   language_family = get_language_family(language_id)
   if not language_family:
     return jsonify({"error": "Unsupported language_id"}), 400
+  if not challenge_supports_family(challenge, language_family):
+    return jsonify({"error": "Selected language is not available for this challenge"}), 400
 
   if not _acquire_in_flight(user_id, "run", RUN_CONCURRENT_LIMIT):
     return _rate_limited_response("Too many run requests in progress. Please wait.", 1)
@@ -428,6 +574,8 @@ def submit_challenge(challenge_id: str):
   language_family = get_language_family(language_id)
   if not language_family:
     return jsonify({"error": "Unsupported language_id"}), 400
+  if not challenge_supports_family(challenge, language_family):
+    return jsonify({"error": "Selected language is not available for this challenge"}), 400
 
   if not _acquire_in_flight(user_id, "submit", SUBMIT_CONCURRENT_LIMIT):
     return _rate_limited_response("A submit is already in progress. Please wait.", 1)

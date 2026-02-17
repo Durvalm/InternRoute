@@ -2,125 +2,129 @@ from __future__ import annotations
 
 from typing import Any
 
-
-CHALLENGE_IDS: list[str] = [
-  "string_reversal",
-  "fizzbuzz_logic",
-  "list_filtering",
-  "dictionary_basics",
-  "palindrome_check",
-  "sum_of_two",
+ALL_FAMILIES = [
+  "python",
+  "javascript",
+  "typescript",
+  "java",
+  "cpp",
+  "csharp",
+  "go",
+  "rust",
+  "kotlin",
+  "swift",
+  "php",
+  "ruby",
+  "c",
 ]
 
+NON_C_FAMILIES = [family for family in ALL_FAMILIES if family != "c"]
+
+CHALLENGE_IDS: list[str] = [
+  "clean_username",
+  "word_counter",
+  "summarize_orders",
+  "cart_total",
+  "group_anagrams",
+]
 
 CHALLENGE_CONFIGS: dict[str, dict[str, Any]] = {
-  "string_reversal": {
-    "function_name": "string_reversal",
+  "clean_username": {
+    "function_name": "clean_username",
     "parameters": [
       {"name": "s", "type": "string"},
     ],
     "return_type": "string",
     "sample_cases": [
-      {"args": ["hello"], "expected": "olleh"},
-      {"args": ["Internship Route"], "expected": "etuoR pihsnretnI"},
+      {"args": ["  John Doe  "], "expected": "john_doe"},
+      {"args": ["Alice Smith"], "expected": "alice_smith"},
     ],
     "hidden_cases": [
-      {"args": ["a"], "expected": "a"},
-      {"args": ["12345"], "expected": "54321"},
-      {"args": ["racecar"], "expected": "racecar"},
+      {"args": ["  Intern Route  "], "expected": "intern_route"},
+      {"args": ["MIXED Case"], "expected": "mixed_case"},
+      {"args": ["  many   spaces  "], "expected": "many___spaces"},
     ],
+    "supported_families": list(ALL_FAMILIES),
     "cpu_time_limit": 2.0,
   },
-  "fizzbuzz_logic": {
-    "function_name": "fizzbuzz_logic",
-    "parameters": [
-      {"name": "n", "type": "int"},
-    ],
-    "return_type": "string",
-    "sample_cases": [
-      {"args": [5], "expected": "1 2 Fizz 4 Buzz"},
-      {"args": [15], "expected": "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz"},
-    ],
-    "hidden_cases": [
-      {"args": [1], "expected": "1"},
-      {"args": [16], "expected": "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz 16"},
-      {
-        "args": [30],
-        "expected": (
-          "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz "
-          "16 17 Fizz 19 Buzz Fizz 22 23 Fizz Buzz 26 Fizz 28 29 FizzBuzz"
-        ),
-      },
-    ],
-    "cpu_time_limit": 2.0,
-  },
-  "list_filtering": {
-    "function_name": "list_filtering",
-    "parameters": [
-      {"name": "nums", "type": "int_list"},
-    ],
-    "return_type": "string",
-    "sample_cases": [
-      {"args": [[1, 2, 3, 4, 5, 6]], "expected": "2 4 6"},
-      {"args": [[1, 3, 5, 7, 9]], "expected": "NONE"},
-    ],
-    "hidden_cases": [
-      {"args": [[-2, -1, 0, 3]], "expected": "-2 0"},
-      {"args": [[8]], "expected": "8"},
-      {"args": [[11, 13, 15]], "expected": "NONE"},
-    ],
-    "cpu_time_limit": 2.0,
-  },
-  "dictionary_basics": {
-    "function_name": "dictionary_basics",
+  "word_counter": {
+    "function_name": "word_counter",
     "parameters": [
       {"name": "words", "type": "string_list"},
     ],
-    "return_type": "string",
+    "return_type": "string_list",
     "sample_cases": [
-      {"args": [["apple", "banana", "apple", "orange", "banana", "apple", "grape"]], "expected": "apple 3"},
-      {"args": [["cat", "dog", "dog", "cat", "ant", "ant"]], "expected": "ant 2"},
+      {"args": [["intern", "route", "intern"]], "expected": ["intern:2", "route:1"]},
+      {"args": [["python", "python", "sql", "api", "sql"]], "expected": ["python:2", "sql:2", "api:1"]},
     ],
     "hidden_cases": [
-      {"args": [["go", "go", "rust", "rust", "rust"]], "expected": "rust 3"},
-      {"args": [["x", "y", "z", "w"]], "expected": "w 1"},
-      {"args": [["a", "a", "b", "b", "c", "c", "c", "a"]], "expected": "a 3"},
+      {"args": [["a"]], "expected": ["a:1"]},
+      {"args": [["cat", "dog", "cat", "dog", "dog"]], "expected": ["cat:2", "dog:3"]},
+      {"args": [["x", "x", "x", "y", "z", "z"]], "expected": ["x:3", "y:1", "z:2"]},
     ],
+    "supported_families": list(NON_C_FAMILIES),
     "cpu_time_limit": 2.0,
   },
-  "palindrome_check": {
-    "function_name": "palindrome_check",
+  "summarize_orders": {
+    "function_name": "summarize_orders",
     "parameters": [
-      {"name": "s", "type": "string"},
+      {"name": "users", "type": "string_list"},
+      {"name": "amounts", "type": "int_list"},
     ],
-    "return_type": "string",
+    "return_type": "string_list",
     "sample_cases": [
-      {"args": ["racecar"], "expected": "YES"},
-      {"args": ["hello"], "expected": "NO"},
+      {"args": [["u1", "u2", "u1"], [10, 5, 7]], "expected": ["u1:count=2,total=17", "u2:count=1,total=5"]},
+      {"args": [["ana", "ana"], [3, 9]], "expected": ["ana:count=2,total=12"]},
     ],
     "hidden_cases": [
-      {"args": ["abba"], "expected": "YES"},
-      {"args": ["abcba"], "expected": "YES"},
-      {"args": ["intern"], "expected": "NO"},
+      {"args": [["sam", "lee", "sam", "lee"], [1, 2, 3, 4]], "expected": ["sam:count=2,total=4", "lee:count=2,total=6"]},
+      {"args": [["x"], [0]], "expected": ["x:count=1,total=0"]},
+      {
+        "args": [["a", "b", "a", "c"], [5, 5, -2, 1]],
+        "expected": ["a:count=2,total=3", "b:count=1,total=5", "c:count=1,total=1"],
+      },
     ],
+    "supported_families": list(NON_C_FAMILIES),
     "cpu_time_limit": 2.0,
   },
-  "sum_of_two": {
-    "function_name": "sum_of_two",
+  "cart_total": {
+    "function_name": "cart_total",
     "parameters": [
-      {"name": "nums", "type": "int_list"},
-      {"name": "target", "type": "int"},
+      {"name": "prices", "type": "int_list"},
+      {"name": "qty", "type": "int_list"},
+      {"name": "coupon", "type": "string"},
     ],
-    "return_type": "string",
+    "return_type": "float",
     "sample_cases": [
-      {"args": [[2, 7, 11, 15, 1], 9], "expected": "YES"},
-      {"args": [[1, 2, 3, 4], 20], "expected": "NO"},
+      {"args": [[10, 2], [2, 3], "SAVE10"], "expected": 23.4},
+      {"args": [[4, 1], [4, 4], "SAVE20"], "expected": 16.0},
     ],
     "hidden_cases": [
-      {"args": [[1, 9, 5, 5, 3, 7], 10], "expected": "YES"},
-      {"args": [[-2, -1, 0, 4, 10], 1], "expected": "YES"},
-      {"args": [[1, 2, 3], 100], "expected": "NO"},
+      {"args": [[10, 2], [2, 3], "SAVE20"], "expected": 20.8},
+      {"args": [[4, 1], [3, 2], "SAVE20"], "expected": 14.0},
+      {"args": [[5], [4], "NONE"], "expected": 20.0},
+      {"args": [[7, 3], [1, 2], "INVALID"], "expected": 13.0},
     ],
+    "supported_families": list(ALL_FAMILIES),
+    "cpu_time_limit": 2.0,
+  },
+  "group_anagrams": {
+    "function_name": "group_anagrams",
+    "parameters": [
+      {"name": "words", "type": "string_list"},
+    ],
+    "return_type": "string_list_list",
+    "sample_cases": [
+      {"args": [["eat", "tea", "tan", "ate", "nat", "bat"]], "expected": [["eat", "tea", "ate"], ["tan", "nat"], ["bat"]]},
+      {"args": [["abc", "bca", "cab", "foo"]], "expected": [["abc", "bca", "cab"], ["foo"]]},
+    ],
+    "hidden_cases": [
+      {"args": [["listen", "silent", "enlist", "google"]], "expected": [["listen", "silent", "enlist"], ["google"]]},
+      {"args": [["rat", "tar", "art", "star", "tars"]], "expected": [["rat", "tar", "art"], ["star", "tars"]]},
+      {"args": [["a"]], "expected": [["a"]]},
+    ],
+    "comparator": "group_anagrams",
+    "supported_families": list(NON_C_FAMILIES),
     "cpu_time_limit": 2.0,
   },
 }
@@ -128,6 +132,13 @@ CHALLENGE_CONFIGS: dict[str, dict[str, Any]] = {
 
 def get_challenge_config(challenge_id: str) -> dict[str, Any] | None:
   return CHALLENGE_CONFIGS.get(challenge_id)
+
+
+def challenge_supports_family(challenge: dict[str, Any], language_family: str) -> bool:
+  families = challenge.get("supported_families")
+  if not isinstance(families, list) or not families:
+    return True
+  return language_family in families
 
 
 def list_challenge_ids() -> list[str]:
@@ -147,6 +158,7 @@ def list_challenge_contracts() -> list[dict[str, Any]]:
         "function_name": challenge["function_name"],
         "parameters": challenge["parameters"],
         "return_type": challenge["return_type"],
+        "supported_families": challenge.get("supported_families") or list(ALL_FAMILIES),
       }
     )
   return contracts

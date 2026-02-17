@@ -1,8 +1,8 @@
-"""seed coding challenge tasks for skills ide
+"""update coding challenges to five-task lineup
 
-Revision ID: f7e1c2d3a4b5
-Revises: c4a7d9e2f1ab
-Create Date: 2026-02-17 17:20:00.000000
+Revision ID: c9f1b2d3e4a5
+Revises: b7d2a10c3f4e
+Create Date: 2026-02-17 21:25:00.000000
 
 """
 from alembic import op
@@ -10,37 +10,42 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "f7e1c2d3a4b5"
-down_revision = "c4a7d9e2f1ab"
+revision = "c9f1b2d3e4a5"
+down_revision = "b7d2a10c3f4e"
 branch_labels = None
 depends_on = None
 
 
 TASKS = [
     {
+        "challenge_id": "clean_username",
+        "sort_order": 1,
         "title": "Coding Challenge #1: Clean Username",
         "description": "Normalize a username by trimming spaces, lowercasing, and replacing spaces with underscores.",
-        "sort_order": 1,
     },
     {
+        "challenge_id": "word_counter",
+        "sort_order": 2,
         "title": "Coding Challenge #2: Word Counter",
         "description": "Count each word and format counts as sorted word:count pairs.",
-        "sort_order": 2,
     },
     {
+        "challenge_id": "summarize_orders",
+        "sort_order": 3,
         "title": "Coding Challenge #3: Build Order Summary",
         "description": "Aggregate per-user order counts and totals from aligned user and amount lists.",
-        "sort_order": 3,
     },
     {
+        "challenge_id": "cart_total",
+        "sort_order": 4,
         "title": "Coding Challenge #4: Shopping Cart Total with Coupons",
         "description": "Compute cart total from price and quantity lists, then apply SAVE10 or SAVE20 rules.",
-        "sort_order": 4,
     },
     {
+        "challenge_id": "group_anagrams",
+        "sort_order": 5,
         "title": "Coding Challenge #5: Group Anagrams",
         "description": "Group words by anagram key and return the deterministic grouped representation.",
-        "sort_order": 5,
     },
 ]
 
@@ -55,6 +60,7 @@ def upgrade():
         "tasks",
         sa.column("id", sa.Integer()),
         sa.column("module_id", sa.Integer()),
+        sa.column("challenge_id", sa.String(length=64)),
         sa.column("title", sa.String(length=255)),
         sa.column("description", sa.Text()),
         sa.column("weight", sa.Integer()),
@@ -65,11 +71,21 @@ def upgrade():
         sa.column("updated_at", sa.DateTime()),
     )
 
+    conn.execute(
+        tasks_table.update()
+        .where(tasks_table.c.module_id == coding_module_id)
+        .where(tasks_table.c.challenge_id.is_not(None))
+        .values(
+            is_active=False,
+            updated_at=sa.func.now(),
+        )
+    )
+
     for task in TASKS:
         existing_id = conn.execute(
             sa.select(tasks_table.c.id)
             .where(tasks_table.c.module_id == coding_module_id)
-            .where(tasks_table.c.title == task["title"])
+            .where(tasks_table.c.challenge_id == task["challenge_id"])
             .limit(1)
         ).scalar()
 
@@ -77,6 +93,7 @@ def upgrade():
             conn.execute(
                 tasks_table.insert().values(
                     module_id=coding_module_id,
+                    challenge_id=task["challenge_id"],
                     title=task["title"],
                     description=task["description"],
                     weight=100,
@@ -92,6 +109,7 @@ def upgrade():
                 tasks_table.update()
                 .where(tasks_table.c.id == existing_id)
                 .values(
+                    title=task["title"],
                     description=task["description"],
                     weight=100,
                     is_bonus=False,
@@ -108,30 +126,18 @@ def downgrade():
     if coding_module_id is None:
         return
 
+    challenge_ids = [task["challenge_id"] for task in TASKS]
     tasks_table = sa.table(
         "tasks",
-        sa.column("id", sa.Integer()),
         sa.column("module_id", sa.Integer()),
-        sa.column("title", sa.String(length=255)),
+        sa.column("challenge_id", sa.String(length=64)),
+        sa.column("is_active", sa.Boolean()),
+        sa.column("updated_at", sa.DateTime()),
     )
 
-    task_titles = [task["title"] for task in TASKS]
-    if not task_titles:
-        return
-
     conn.execute(
-        tasks_table.delete()
+        tasks_table.update()
         .where(tasks_table.c.module_id == coding_module_id)
-        .where(tasks_table.c.title.in_(task_titles))
-    )
-
-    conn.execute(
-        sa.text(
-            """
-            UPDATE tasks
-            SET is_active = true, updated_at = NOW()
-            WHERE module_id = :module_id
-            """
-        ),
-        {"module_id": coding_module_id},
+        .where(tasks_table.c.challenge_id.in_(challenge_ids))
+        .values(is_active=False, updated_at=sa.func.now())
     )
