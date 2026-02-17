@@ -6,7 +6,6 @@ import {
   BookOpen,
   CheckCircle2,
   ChevronRight,
-  CircleAlert,
   Clock3,
   Code2,
   Loader2,
@@ -20,20 +19,35 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false 
 type ChallengeExample = {
   input: string;
   output: string;
+  explanation?: string;
+};
+
+type ChallengeParamType = "string" | "int" | "int_list" | "string_list";
+
+type ChallengeParameter = {
+  name: string;
+  type: ChallengeParamType;
 };
 
 type ChallengeUI = {
   id: string;
   order: number;
   title: string;
-  prompt: string;
+  description: string;
   hint: string;
+  functionName: string;
+  parameters: ChallengeParameter[];
+  returnType: "string";
+  constraints: string[];
   examples: ChallengeExample[];
+  whatToReturn: string;
 };
 
 type LanguageOption = {
   id: number;
   name: string;
+  family?: string;
+  display_name?: string;
 };
 
 type CodingTasksResponse = {
@@ -78,49 +92,82 @@ const CHALLENGES: ChallengeUI[] = [
     id: "string_reversal",
     order: 1,
     title: "The String Reversal",
-    prompt: "Read a single line string from stdin and print the reversed string to stdout.",
+    description: "Implement a function that returns the reversed version of the input string.",
     hint: "In Python, slicing with [::-1] reverses a string.",
-    examples: [{ input: "hello", output: "olleh" }]
+    functionName: "string_reversal",
+    parameters: [{ name: "s", type: "string" }],
+    returnType: "string",
+    constraints: ["1 <= s.length <= 10^4", "s may contain letters, spaces, and digits"],
+    examples: [{ input: "s = \"hello\"", output: "\"olleh\"" }],
+    whatToReturn: "Return the reversed string."
   },
   {
     id: "fizzbuzz_logic",
     order: 2,
     title: "FizzBuzz Logic",
-    prompt: "Read n from stdin. Print numbers 1..n, replacing multiples of 3 with Fizz, 5 with Buzz, and both with FizzBuzz.",
+    description: "Return the FizzBuzz sequence from 1 to n as a single space-separated string.",
     hint: "Build each token, then join with spaces for final output.",
-    examples: [{ input: "5", output: "1 2 Fizz 4 Buzz" }]
+    functionName: "fizzbuzz_logic",
+    parameters: [{ name: "n", type: "int" }],
+    returnType: "string",
+    constraints: ["1 <= n <= 10^4"],
+    examples: [{ input: "n = 5", output: "\"1 2 Fizz 4 Buzz\"" }],
+    whatToReturn: "Return one string containing the sequence separated by spaces."
   },
   {
     id: "list_filtering",
     order: 3,
     title: "List Filtering",
-    prompt: "Read n and then n integers. Print only even numbers in original order, space-separated. Print NONE if no evens.",
+    description: "Return all even numbers in original order as a space-separated string, or NONE.",
     hint: "Filter first, then handle the empty case explicitly.",
-    examples: [{ input: "6\n1 2 3 4 5 6", output: "2 4 6" }]
+    functionName: "list_filtering",
+    parameters: [{ name: "nums", type: "int_list" }],
+    returnType: "string",
+    constraints: ["1 <= nums.length <= 10^4", "-10^9 <= nums[i] <= 10^9"],
+    examples: [{ input: "nums = [1, 2, 3, 4, 5, 6]", output: "\"2 4 6\"" }],
+    whatToReturn: "Return \"NONE\" when there are no even values."
   },
   {
     id: "dictionary_basics",
     order: 4,
     title: "Dictionary Basics",
-    prompt: "Read n and then n lowercase words. Print the most frequent word and its count. Tie-break by lexicographically smallest word.",
+    description: "Return \"word count\" for the most frequent word. Break ties with lexicographically smallest word.",
     hint: "Use a frequency map, then choose best by (count desc, word asc).",
-    examples: [{ input: "6\ncat dog dog cat ant ant", output: "ant 2" }]
+    functionName: "dictionary_basics",
+    parameters: [{ name: "words", type: "string_list" }],
+    returnType: "string",
+    constraints: ["1 <= words.length <= 10^4", "All words are lowercase ASCII"],
+    examples: [{ input: "words = [\"cat\", \"dog\", \"dog\", \"cat\", \"ant\", \"ant\"]", output: "\"ant 2\"" }],
+    whatToReturn: "Return exactly one string in the format \"word count\"."
   },
   {
     id: "palindrome_check",
     order: 5,
     title: "The Palindrome",
-    prompt: "Read a lowercase string and print YES if it reads the same backward, otherwise NO.",
+    description: "Check whether the string is a palindrome and return YES or NO.",
     hint: "Compare the string with its reverse.",
-    examples: [{ input: "racecar", output: "YES" }]
+    functionName: "palindrome_check",
+    parameters: [{ name: "s", type: "string" }],
+    returnType: "string",
+    constraints: ["1 <= s.length <= 10^5", "s contains lowercase letters only"],
+    examples: [{ input: "s = \"racecar\"", output: "\"YES\"" }],
+    whatToReturn: "Return \"YES\" if palindrome, otherwise \"NO\"."
   },
   {
     id: "sum_of_two",
     order: 6,
     title: "Sum of Two",
-    prompt: "Read n and target on line one, then n integers on line two. Print YES if any pair sums to target, otherwise NO.",
+    description: "Determine if any two distinct numbers sum to target.",
     hint: "Track seen values in a set for O(n) lookup.",
-    examples: [{ input: "5 9\n2 7 11 15 1", output: "YES" }]
+    functionName: "sum_of_two",
+    parameters: [
+      { name: "nums", type: "int_list" },
+      { name: "target", type: "int" }
+    ],
+    returnType: "string",
+    constraints: ["2 <= nums.length <= 10^5", "-10^9 <= nums[i], target <= 10^9"],
+    examples: [{ input: "nums = [2, 7, 11, 15, 1], target = 9", output: "\"YES\"" }],
+    whatToReturn: "Return \"YES\" if a valid pair exists, otherwise \"NO\"."
   }
 ];
 
@@ -129,8 +176,8 @@ const PREFERRED_LANGUAGE_ORDER = [
   "javascript",
   "typescript",
   "java",
-  "c++",
-  "c#",
+  "cpp",
+  "csharp",
   "go",
   "rust",
   "kotlin",
@@ -140,88 +187,256 @@ const PREFERRED_LANGUAGE_ORDER = [
   "c"
 ];
 
-function sortedLanguages(languages: LanguageOption[]): LanguageOption[] {
-  const ranked = [...languages];
-  ranked.sort((a, b) => {
-    const aLower = a.name.toLowerCase();
-    const bLower = b.name.toLowerCase();
-
-    const aRank = PREFERRED_LANGUAGE_ORDER.findIndex((token) => aLower.includes(token));
-    const bRank = PREFERRED_LANGUAGE_ORDER.findIndex((token) => bLower.includes(token));
-
-    if (aRank !== -1 && bRank === -1) return -1;
-    if (aRank === -1 && bRank !== -1) return 1;
-    if (aRank !== -1 && bRank !== -1 && aRank !== bRank) return aRank - bRank;
-    return aLower.localeCompare(bLower);
-  });
-  return ranked;
-}
-
-function toMonacoLanguage(name: string | undefined): string {
+function inferFamilyFromName(name: string | undefined): string | undefined {
   const value = (name || "").toLowerCase();
-  if (value.includes("python")) return "python";
   if (value.includes("typescript")) return "typescript";
-  if (value.includes("javascript")) return "javascript";
-  if (value.includes("java")) return "java";
+  if (value.includes("javascript") || value.includes("node.js")) return "javascript";
+  if (value.includes("python")) return "python";
   if (value.includes("c++")) return "cpp";
-  if (value.includes("c#")) return "csharp";
+  if (value.includes("c#") || value.includes("c-sharp")) return "csharp";
+  if (value.startsWith("c ") || value.startsWith("c(") || value.startsWith("c (")) return "c";
+  if (
+    value === "go"
+    || value.startsWith("go ")
+    || value.startsWith("go(")
+    || value.startsWith("go (")
+    || value.includes("golang")
+  ) {
+    return "go";
+  }
+  if (value.includes("rust")) return "rust";
   if (value.includes("kotlin")) return "kotlin";
   if (value.includes("swift")) return "swift";
   if (value.includes("php")) return "php";
   if (value.includes("ruby")) return "ruby";
-  if (value.includes("go")) return "go";
-  if (value.includes("rust")) return "rust";
-  if (value.includes("c (") || value.includes(" c ")) return "c";
+  if (value.startsWith("java") || value.includes(" java")) return "java";
+  return undefined;
+}
+
+function sortedLanguages(languages: LanguageOption[]): LanguageOption[] {
+  const ranked = [...languages];
+  ranked.sort((a, b) => {
+    const aFamily = a.family || inferFamilyFromName(a.name);
+    const bFamily = b.family || inferFamilyFromName(b.name);
+
+    const aRank = aFamily ? PREFERRED_LANGUAGE_ORDER.findIndex((token) => token === aFamily) : -1;
+    const bRank = bFamily ? PREFERRED_LANGUAGE_ORDER.findIndex((token) => token === bFamily) : -1;
+
+    if (aRank !== -1 && bRank === -1) return -1;
+    if (aRank === -1 && bRank !== -1) return 1;
+    if (aRank !== -1 && bRank !== -1 && aRank !== bRank) return aRank - bRank;
+    return (a.display_name || a.name).toLowerCase().localeCompare((b.display_name || b.name).toLowerCase());
+  });
+  return ranked;
+}
+
+function getLanguageFamily(language: LanguageOption | null): string | undefined {
+  return language?.family || inferFamilyFromName(language?.name);
+}
+
+function toMonacoLanguage(family: string | undefined): string {
+  if (family === "python") return "python";
+  if (family === "typescript") return "typescript";
+  if (family === "javascript") return "javascript";
+  if (family === "java") return "java";
+  if (family === "cpp") return "cpp";
+  if (family === "csharp") return "csharp";
+  if (family === "kotlin") return "kotlin";
+  if (family === "swift") return "swift";
+  if (family === "php") return "php";
+  if (family === "ruby") return "ruby";
+  if (family === "go") return "go";
+  if (family === "rust") return "rust";
+  if (family === "c") return "c";
   return "plaintext";
 }
 
-function starterCodeForLanguage(name: string | undefined): string {
-  const value = (name || "").toLowerCase();
-
-  if (value.includes("python")) {
-    return [
-      "import sys",
-      "",
-      "data = sys.stdin.read().strip()",
-      "# TODO: parse input and print output",
-      "print(data)",
-      ""
-    ].join("\n");
+function parameterTypeForSignature(family: string | undefined, type: ChallengeParamType, name: string): string {
+  if (family === "python") {
+    if (type === "string") return `${name}: str`;
+    if (type === "int") return `${name}: int`;
+    if (type === "int_list") return `${name}: list[int]`;
+    return `${name}: list[str]`;
   }
-
-  if (value.includes("javascript")) {
-    return [
-      "const fs = require('fs');",
-      "",
-      "const input = fs.readFileSync(0, 'utf8').trim();",
-      "// TODO: parse input and print output",
-      "console.log(input);",
-      ""
-    ].join("\n");
+  if (family === "javascript" || family === "typescript") {
+    const tsType = type === "string"
+      ? "string"
+      : type === "int"
+        ? "number"
+        : type === "int_list"
+          ? "number[]"
+          : "string[]";
+    return family === "typescript" ? `${name}: ${tsType}` : name;
   }
+  if (family === "java") {
+    if (type === "string") return `String ${name}`;
+    if (type === "int") return `int ${name}`;
+    if (type === "int_list") return `int[] ${name}`;
+    return `String[] ${name}`;
+  }
+  if (family === "cpp") {
+    if (type === "string") return `const std::string& ${name}`;
+    if (type === "int") return `int ${name}`;
+    if (type === "int_list") return `const std::vector<int>& ${name}`;
+    return `const std::vector<std::string>& ${name}`;
+  }
+  if (family === "csharp") {
+    if (type === "string") return `string ${name}`;
+    if (type === "int") return `int ${name}`;
+    if (type === "int_list") return `List<int> ${name}`;
+    return `List<string> ${name}`;
+  }
+  if (family === "go") {
+    if (type === "string") return `${name} string`;
+    if (type === "int") return `${name} int`;
+    if (type === "int_list") return `${name} []int`;
+    return `${name} []string`;
+  }
+  if (family === "rust") {
+    if (type === "string") return `${name}: String`;
+    if (type === "int") return `${name}: i32`;
+    if (type === "int_list") return `${name}: Vec<i32>`;
+    return `${name}: Vec<String>`;
+  }
+  if (family === "kotlin") {
+    if (type === "string") return `${name}: String`;
+    if (type === "int") return `${name}: Int`;
+    if (type === "int_list") return `${name}: IntArray`;
+    return `${name}: List<String>`;
+  }
+  if (family === "swift") {
+    if (type === "string") return `${name}: String`;
+    if (type === "int") return `${name}: Int`;
+    if (type === "int_list") return `${name}: [Int]`;
+    return `${name}: [String]`;
+  }
+  if (family === "php" || family === "ruby") {
+    return `$${name}`;
+  }
+  if (family === "c") {
+    if (type === "string") return `const char* ${name}`;
+    if (type === "int") return `int ${name}`;
+    if (type === "int_list") return `int ${name}[], int ${name}_len`;
+    return `char* ${name}[], int ${name}_len`;
+  }
+  return name;
+}
 
-  if (value.includes("java")) {
+function returnTypeForSignature(family: string | undefined): string {
+  if (family === "python") return "str";
+  if (family === "typescript") return "string";
+  if (family === "javascript") return "";
+  if (family === "java") return "String";
+  if (family === "cpp") return "std::string";
+  if (family === "csharp") return "string";
+  if (family === "go") return "string";
+  if (family === "rust") return "String";
+  if (family === "kotlin") return "String";
+  if (family === "swift") return "String";
+  if (family === "php" || family === "ruby") return "";
+  if (family === "c") return "const char*";
+  return "string";
+}
+
+function challengeSignatureText(challenge: ChallengeUI, family: string | undefined): string {
+  const params = challenge.parameters.map((param) => parameterTypeForSignature(family, param.type, param.name)).join(", ");
+  const returnType = returnTypeForSignature(family);
+  const name = challenge.functionName;
+
+  if (family === "python") return `def ${name}(${params}) -> ${returnType}`;
+  if (family === "javascript") return `function ${name}(${params})`;
+  if (family === "typescript") return `function ${name}(${params}): ${returnType}`;
+  if (family === "java") return `public static ${returnType} ${name}(${params})`;
+  if (family === "cpp") return `${returnType} ${name}(${params})`;
+  if (family === "csharp") return `public static ${returnType} ${name}(${params})`;
+  if (family === "go") return `func ${name}(${params}) ${returnType}`;
+  if (family === "rust") return `fn ${name}(${params}) -> ${returnType}`;
+  if (family === "kotlin") return `fun ${name}(${params}): ${returnType}`;
+  if (family === "swift") return `func ${name}(${params}) -> ${returnType}`;
+  if (family === "php") return `function ${name}(${params})`;
+  if (family === "ruby") return `def ${name}(${challenge.parameters.map((p) => p.name).join(", ")})`;
+  if (family === "c") return `${returnType} ${name}(${params})`;
+  return `${name}(${params})`;
+}
+
+function starterCodeForChallenge(challenge: ChallengeUI, family: string | undefined): string {
+  const signature = challengeSignatureText(challenge, family);
+
+  if (family === "python") {
+    return [signature + ":", "    # Return the final string result", "    return \"\"", ""].join("\n");
+  }
+  if (family === "javascript") {
+    return [signature + " {", "  // Return the final string result", "  return \"\";", "}", ""].join("\n");
+  }
+  if (family === "typescript") {
+    return [signature + " {", "  // Return the final string result", "  return \"\";", "}", ""].join("\n");
+  }
+  if (family === "java") {
     return [
-      "import java.io.*;",
-      "import java.util.*;",
-      "",
-      "public class Main {",
-      "  public static void main(String[] args) throws Exception {",
-      "    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));",
-      "    String input = br.readLine();",
-      "    // TODO: parse input and print output",
-      "    if (input != null) System.out.println(input);",
+      "class Solution {",
+      `  ${signature} {`,
+      "    // Return the final string result",
+      "    return \"\";",
       "  }",
       "}",
       ""
     ].join("\n");
   }
+  if (family === "cpp") {
+    return [signature + " {", "  // Return the final string result", "  return \"\";", "}", ""].join("\n");
+  }
+  if (family === "csharp") {
+    return [
+      "using System.Collections.Generic;",
+      "",
+      "public static class Solution {",
+      `  ${signature} {`,
+      "    // Return the final string result",
+      "    return \"\";",
+      "  }",
+      "}",
+      ""
+    ].join("\n");
+  }
+  if (family === "go") {
+    return [signature + " {", "\t// Return the final string result", "\treturn \"\"", "}", ""].join("\n");
+  }
+  if (family === "rust") {
+    return [signature + " {", "    // Return the final string result", "    String::new()", "}", ""].join("\n");
+  }
+  if (family === "kotlin") {
+    return [
+      "object Solution {",
+      `    @JvmStatic ${signature} {`,
+      "        // Return the final string result",
+      "        return \"\"",
+      "    }",
+      "}",
+      ""
+    ].join("\n");
+  }
+  if (family === "swift") {
+    return [signature + " {", "    // Return the final string result", "    return \"\"", "}", ""].join("\n");
+  }
+  if (family === "php") {
+    return [signature + " {", "  // Return the final string result", "  return \"\";", "}", ""].join("\n");
+  }
+  if (family === "ruby") {
+    return [signature, "  # Return the final string result", "  \"\"", "end", ""].join("\n");
+  }
+  if (family === "c") {
+    return [
+      "#include <stddef.h>",
+      "",
+      signature + " {",
+      "  // Return a pointer to a string result (e.g., static buffer or string literal).",
+      "  return \"\";",
+      "}",
+      ""
+    ].join("\n");
+  }
 
-  return [
-    "// Read from stdin and print to stdout.",
-    "// Build your solution here.",
-    ""
-  ].join("\n");
+  return ["// Implement the required function and return a string.", ""].join("\n");
 }
 
 export default function SkillsPage() {
@@ -247,6 +462,8 @@ export default function SkillsPage() {
     () => languages.find((language) => language.id === selectedLanguageId) || null,
     [languages, selectedLanguageId]
   );
+  const selectedFamily = getLanguageFamily(selectedLanguage);
+  const activeSignature = challengeSignatureText(activeChallenge, selectedFamily);
 
   const draftKey = `${activeChallenge.id}:${selectedLanguageId ?? "none"}`;
   const currentCode = drafts[draftKey] ?? "";
@@ -278,11 +495,11 @@ export default function SkillsPage() {
     const loadLanguages = async () => {
       setLoadingLanguages(true);
       try {
-        const data = await apiRequest<LanguagesResponse>("/skills/languages");
+        const data = await apiRequest<LanguagesResponse>("/skills/languages?view=compact");
         if (!mounted) return;
         const next = sortedLanguages(data.languages);
         setLanguages(next);
-        const python = next.find((language) => language.name.toLowerCase().includes("python"));
+        const python = next.find((language) => (language.family || inferFamilyFromName(language.name)) === "python");
         setSelectedLanguageId((prev) => prev ?? python?.id ?? next[0]?.id ?? null);
       } catch (err) {
         if (!mounted) return;
@@ -305,10 +522,10 @@ export default function SkillsPage() {
       if (prev[draftKey] !== undefined) return prev;
       return {
         ...prev,
-        [draftKey]: starterCodeForLanguage(selectedLanguage.name)
+        [draftKey]: starterCodeForChallenge(activeChallenge, selectedFamily)
       };
     });
-  }, [draftKey, selectedLanguage]);
+  }, [activeChallenge, draftKey, selectedFamily, selectedLanguage]);
 
   useEffect(() => {
     setRunResult(null);
@@ -531,10 +748,10 @@ export default function SkillsPage() {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-          <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] min-h-[720px]">
-            <div className="border-r border-slate-200 bg-slate-50">
-              <div className="px-5 py-4 border-b border-slate-200 text-sm font-bold uppercase tracking-wider text-slate-500">
-                Challenge List
+          <div className="grid grid-cols-1 lg:grid-cols-[260px_330px_minmax(0,1fr)] min-h-[640px]">
+            <aside className="border-r border-slate-200 bg-slate-50">
+              <div className="px-4 py-3 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+                Problem List
               </div>
               <div>
                 {CHALLENGES.map((challenge) => {
@@ -545,37 +762,76 @@ export default function SkillsPage() {
                       key={challenge.id}
                       type="button"
                       onClick={() => setActiveChallengeId(challenge.id)}
-                      className={`w-full text-left px-5 py-4 border-b border-slate-200 transition-colors ${
-                        active ? "bg-white border-l-4 border-l-indigo-500" : "hover:bg-white/60"
+                      className={`w-full text-left px-4 py-3 border-b border-slate-200 transition-colors ${
+                        active ? "bg-white border-l-4 border-l-indigo-500" : "hover:bg-white/70"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-slate-400">#{challenge.order}</p>
-                          <p className={`text-base font-bold ${active ? "text-indigo-900" : "text-slate-700"}`}>
+                          <p className="text-xs font-semibold text-slate-400">#{challenge.order}</p>
+                          <p className={`text-sm font-bold ${active ? "text-indigo-900" : "text-slate-700"}`}>
                             {challenge.title}
                           </p>
                         </div>
-                        {completed ? <CheckCircle2 size={18} className="text-emerald-600 mt-0.5" /> : null}
+                        {completed ? <CheckCircle2 size={16} className="text-emerald-600 mt-0.5" /> : null}
                       </div>
                     </button>
                   );
                 })}
               </div>
-            </div>
+            </aside>
 
-            <div className="flex flex-col">
-              <div className="p-5 md:p-6 border-b border-slate-200">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900">{activeChallenge.title}</h3>
-                    <p className="mt-2 text-sm text-slate-600 leading-relaxed">{activeChallenge.prompt}</p>
-                    <div className="mt-3 inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-amber-700 text-sm font-semibold">
-                      <CircleAlert size={16} />
-                      Hint: {activeChallenge.hint}
-                    </div>
+            <aside className="border-r border-slate-200 bg-white p-4 md:p-5 space-y-4 overflow-auto">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                      Easy
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500">Problem {activeChallenge.order}</span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-lg font-bold text-slate-900 leading-tight">{activeChallenge.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-600">{activeChallenge.description}</p>
+                </div>
+
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Function Signature</p>
+                  <pre className="mt-1 text-xs font-mono whitespace-pre-wrap break-words text-indigo-800">
+                    {activeSignature}
+                  </pre>
+                </div>
+
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-900">
+                  <p className="font-semibold">What to return</p>
+                  <p className="mt-1">{activeChallenge.whatToReturn}</p>
+                  <p className="mt-2 text-xs text-indigo-700">
+                    Do not print inside your final solution unless the signature says so. Return the value.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Examples</p>
+                  {activeChallenge.examples.map((example, index) => (
+                    <div key={`${activeChallenge.id}-example-${index}`} className="rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-xs font-semibold text-slate-500">Example {index + 1}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-700">Input</p>
+                      <pre className="text-xs font-mono whitespace-pre-wrap break-words text-slate-700">{example.input}</pre>
+                      <p className="mt-2 text-xs font-semibold text-slate-700">Output</p>
+                      <pre className="text-xs font-mono whitespace-pre-wrap break-words text-slate-700">{example.output}</pre>
+                      {example.explanation ? <p className="mt-2 text-xs text-slate-600">{example.explanation}</p> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </aside>
+
+            <div className="flex flex-col min-w-0">
+              <div className="p-4 md:p-5 border-b border-slate-200">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <p className="text-xs md:text-sm text-slate-600">
+                    Implement <span className="font-mono font-semibold text-slate-800">{activeChallenge.functionName}(...)</span> and return a string.
+                  </p>
+                  <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       Language
                     </label>
@@ -588,45 +844,29 @@ export default function SkillsPage() {
                       {!languages.length ? <option value="">Loading...</option> : null}
                       {languages.map((language) => (
                         <option key={language.id} value={language.id}>
-                          {language.name}
+                          {language.display_name || language.name}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
-                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Example I/O</p>
-                  <div className="mt-1 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-700">
-                    <div>
-                      <p className="font-semibold">Input</p>
-                      <pre className="font-mono whitespace-pre-wrap break-words">
-                        {activeChallenge.examples[0].input}
-                      </pre>
-                    </div>
-                    <div>
-                      <p className="font-semibold">Output</p>
-                      <pre className="font-mono whitespace-pre-wrap break-words">
-                        {activeChallenge.examples[0].output}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              <div className="flex-1 bg-[#231f5a] text-indigo-100 p-0 font-mono relative min-h-[320px]">
+              <div className="bg-[#231f5a] text-indigo-100 p-0 font-mono relative h-[330px] md:h-[380px] lg:h-[420px]">
                 {selectedLanguage ? (
                   <MonacoEditor
                     height="100%"
                     theme="vs-dark"
-                    language={toMonacoLanguage(selectedLanguage.name)}
+                    language={toMonacoLanguage(selectedFamily)}
                     value={currentCode}
                     onChange={handleCodeChange}
                     options={{
                       minimap: { enabled: false },
                       scrollBeyondLastLine: false,
-                      fontSize: 14,
+                      fontSize: 13,
                       wordWrap: "on",
-                      automaticLayout: true
+                      automaticLayout: true,
+                      lineNumbersMinChars: 2
                     }}
                   />
                 ) : (
@@ -647,7 +887,7 @@ export default function SkillsPage() {
                       className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-indigo-700 text-sm font-bold hover:bg-indigo-100 transition-colors disabled:opacity-60"
                     >
                       {running ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-                      Run
+                      Run Samples
                     </button>
                     <button
                       type="button"
@@ -685,6 +925,9 @@ export default function SkillsPage() {
                         >
                           <p className="font-semibold">
                             Sample {index + 1}: {result.passed ? "Pass" : "Fail"} ({result.status})
+                          </p>
+                          <p className="text-xs mt-1 text-slate-600">
+                            Input: {result.input_preview || "(none)"}
                           </p>
                           {!result.passed ? (
                             <p className="text-xs text-slate-600 mt-1">

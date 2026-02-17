@@ -15,28 +15,38 @@ CHALLENGE_TASK_SORT_ORDERS: dict[str, int] = {
 
 CHALLENGE_CONFIGS: dict[str, dict[str, Any]] = {
   "string_reversal": {
-    "sample_tests": [
-      {"input": "hello\n", "expected_output": "olleh"},
-      {"input": "Internship Route\n", "expected_output": "etuoR pihsnretnI"},
+    "function_name": "string_reversal",
+    "parameters": [
+      {"name": "s", "type": "string"},
     ],
-    "hidden_tests": [
-      {"input": "a\n", "expected_output": "a"},
-      {"input": "12345\n", "expected_output": "54321"},
-      {"input": "racecar\n", "expected_output": "racecar"},
+    "return_type": "string",
+    "sample_cases": [
+      {"args": ["hello"], "expected": "olleh"},
+      {"args": ["Internship Route"], "expected": "etuoR pihsnretnI"},
+    ],
+    "hidden_cases": [
+      {"args": ["a"], "expected": "a"},
+      {"args": ["12345"], "expected": "54321"},
+      {"args": ["racecar"], "expected": "racecar"},
     ],
     "cpu_time_limit": 2.0,
   },
   "fizzbuzz_logic": {
-    "sample_tests": [
-      {"input": "5\n", "expected_output": "1 2 Fizz 4 Buzz"},
-      {"input": "15\n", "expected_output": "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz"},
+    "function_name": "fizzbuzz_logic",
+    "parameters": [
+      {"name": "n", "type": "int"},
     ],
-    "hidden_tests": [
-      {"input": "1\n", "expected_output": "1"},
-      {"input": "16\n", "expected_output": "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz 16"},
+    "return_type": "string",
+    "sample_cases": [
+      {"args": [5], "expected": "1 2 Fizz 4 Buzz"},
+      {"args": [15], "expected": "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz"},
+    ],
+    "hidden_cases": [
+      {"args": [1], "expected": "1"},
+      {"args": [16], "expected": "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz 16"},
       {
-        "input": "30\n",
-        "expected_output": (
+        "args": [30],
+        "expected": (
           "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz "
           "16 17 Fizz 19 Buzz Fizz 22 23 Fizz Buzz 26 Fizz 28 29 FizzBuzz"
         ),
@@ -45,50 +55,71 @@ CHALLENGE_CONFIGS: dict[str, dict[str, Any]] = {
     "cpu_time_limit": 2.0,
   },
   "list_filtering": {
-    "sample_tests": [
-      {"input": "6\n1 2 3 4 5 6\n", "expected_output": "2 4 6"},
-      {"input": "5\n1 3 5 7 9\n", "expected_output": "NONE"},
+    "function_name": "list_filtering",
+    "parameters": [
+      {"name": "nums", "type": "int_list"},
     ],
-    "hidden_tests": [
-      {"input": "4\n-2 -1 0 3\n", "expected_output": "-2 0"},
-      {"input": "1\n8\n", "expected_output": "8"},
-      {"input": "3\n11 13 15\n", "expected_output": "NONE"},
+    "return_type": "string",
+    "sample_cases": [
+      {"args": [[1, 2, 3, 4, 5, 6]], "expected": "2 4 6"},
+      {"args": [[1, 3, 5, 7, 9]], "expected": "NONE"},
+    ],
+    "hidden_cases": [
+      {"args": [[-2, -1, 0, 3]], "expected": "-2 0"},
+      {"args": [[8]], "expected": "8"},
+      {"args": [[11, 13, 15]], "expected": "NONE"},
     ],
     "cpu_time_limit": 2.0,
   },
   "dictionary_basics": {
-    "sample_tests": [
-      {"input": "7\napple banana apple orange banana apple grape\n", "expected_output": "apple 3"},
-      {"input": "6\ncat dog dog cat ant ant\n", "expected_output": "ant 2"},
+    "function_name": "dictionary_basics",
+    "parameters": [
+      {"name": "words", "type": "string_list"},
     ],
-    "hidden_tests": [
-      {"input": "5\ngo go rust rust rust\n", "expected_output": "rust 3"},
-      {"input": "4\nx y z w\n", "expected_output": "w 1"},
-      {"input": "8\na a b b c c c a\n", "expected_output": "a 3"},
+    "return_type": "string",
+    "sample_cases": [
+      {"args": [["apple", "banana", "apple", "orange", "banana", "apple", "grape"]], "expected": "apple 3"},
+      {"args": [["cat", "dog", "dog", "cat", "ant", "ant"]], "expected": "ant 2"},
+    ],
+    "hidden_cases": [
+      {"args": [["go", "go", "rust", "rust", "rust"]], "expected": "rust 3"},
+      {"args": [["x", "y", "z", "w"]], "expected": "w 1"},
+      {"args": [["a", "a", "b", "b", "c", "c", "c", "a"]], "expected": "a 3"},
     ],
     "cpu_time_limit": 2.0,
   },
   "palindrome_check": {
-    "sample_tests": [
-      {"input": "racecar\n", "expected_output": "YES"},
-      {"input": "hello\n", "expected_output": "NO"},
+    "function_name": "palindrome_check",
+    "parameters": [
+      {"name": "s", "type": "string"},
     ],
-    "hidden_tests": [
-      {"input": "abba\n", "expected_output": "YES"},
-      {"input": "abcba\n", "expected_output": "YES"},
-      {"input": "intern\n", "expected_output": "NO"},
+    "return_type": "string",
+    "sample_cases": [
+      {"args": ["racecar"], "expected": "YES"},
+      {"args": ["hello"], "expected": "NO"},
+    ],
+    "hidden_cases": [
+      {"args": ["abba"], "expected": "YES"},
+      {"args": ["abcba"], "expected": "YES"},
+      {"args": ["intern"], "expected": "NO"},
     ],
     "cpu_time_limit": 2.0,
   },
   "sum_of_two": {
-    "sample_tests": [
-      {"input": "5 9\n2 7 11 15 1\n", "expected_output": "YES"},
-      {"input": "4 20\n1 2 3 4\n", "expected_output": "NO"},
+    "function_name": "sum_of_two",
+    "parameters": [
+      {"name": "nums", "type": "int_list"},
+      {"name": "target", "type": "int"},
     ],
-    "hidden_tests": [
-      {"input": "6 10\n1 9 5 5 3 7\n", "expected_output": "YES"},
-      {"input": "5 1\n-2 -1 0 4 10\n", "expected_output": "YES"},
-      {"input": "3 100\n1 2 3\n", "expected_output": "NO"},
+    "return_type": "string",
+    "sample_cases": [
+      {"args": [[2, 7, 11, 15, 1], 9], "expected": "YES"},
+      {"args": [[1, 2, 3, 4], 20], "expected": "NO"},
+    ],
+    "hidden_cases": [
+      {"args": [[1, 9, 5, 5, 3, 7], 10], "expected": "YES"},
+      {"args": [[-2, -1, 0, 4, 10], 1], "expected": "YES"},
+      {"args": [[1, 2, 3], 100], "expected": "NO"},
     ],
     "cpu_time_limit": 2.0,
   },

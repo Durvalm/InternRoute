@@ -8,8 +8,9 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from ..models import Module, Task
-from ..services.judge0 import Judge0Error, get_languages, run_submission
+from ..services.judge0 import Judge0Error, get_compact_languages, get_language_family, get_languages, run_submission
 from ..services.progression import set_task_completion_internal
+from ..services.skills_harness import build_harness_source, format_case_preview
 from ..services.skills_challenges import CHALLENGE_TASK_SORT_ORDERS, get_challenge_config
 
 bp = Blueprint("skills", __name__, url_prefix="/skills")
@@ -79,11 +80,32 @@ def _check_rate_limit(user_id: int, action: str, limit: int, *, window_seconds: 
   return None
 
 
-def _evaluate_case(source_code: str, language_id: int, test_case: dict[str, str], cpu_time_limit: float) -> dict[str, Any]:
+def _evaluate_case(
+  source_code: str,
+  language_id: int,
+  challenge: dict[str, Any],
+  test_case: dict[str, Any],
+  cpu_time_limit: float,
+) -> dict[str, Any]:
+  language_family = get_language_family(language_id)
+  if not language_family:
+    raise Judge0Error("Unsupported Judge0 language for function mode.")
+
+  try:
+    wrapped_source = build_harness_source(
+      family=language_family,
+      function_name=str(challenge["function_name"]),
+      parameters=list(challenge["parameters"]),
+      args=list(test_case["args"]),
+      user_source=source_code,
+    )
+  except ValueError as err:
+    raise Judge0Error(str(err)) from err
+
   result = run_submission(
-    source_code=source_code,
+    source_code=wrapped_source,
     language_id=language_id,
-    stdin=test_case["input"],
+    stdin="",
     cpu_time_limit=cpu_time_limit,
   )
 
@@ -96,7 +118,7 @@ def _evaluate_case(source_code: str, language_id: int, test_case: dict[str, str]
   stderr = result.get("stderr") or ""
 
   normalized_actual = _normalize_output(stdout)
-  normalized_expected = _normalize_output(test_case["expected_output"])
+  normalized_expected = _normalize_output(str(test_case["expected"]))
   passed = status_id == 3 and normalized_actual == normalized_expected
   if status_id == 3:
     status_kind = "ok" if passed else "wrong_answer"
@@ -110,7 +132,7 @@ def _evaluate_case(source_code: str, language_id: int, test_case: dict[str, str]
     "status_kind": status_kind,
     "actual_output": normalized_actual,
     "expected_output": normalized_expected,
-    "stdin": test_case["input"],
+    "stdin": format_case_preview(list(challenge["parameters"]), list(test_case["args"])),
     "compile_output": compile_output,
     "stderr": stderr,
     "time_ms": _to_ms(result.get("time")),
@@ -121,7 +143,8 @@ def _evaluate_case(source_code: str, language_id: int, test_case: dict[str, str]
 def _evaluate_test_group(
   source_code: str,
   language_id: int,
-  tests: list[dict[str, str]],
+  challenge: dict[str, Any],
+  tests: list[dict[str, Any]],
   cpu_time_limit: float,
   *,
   stop_on_first_failure: bool,
@@ -134,7 +157,7 @@ def _evaluate_test_group(
   peak_memory_kb = 0
 
   for test_case in tests:
-    case = _evaluate_case(source_code, language_id, test_case, cpu_time_limit)
+    case = _evaluate_case(source_code, language_id, challenge, test_case, cpu_time_limit)
     case_results.append(case)
 
     if case["compile_output"] and not compile_output:
@@ -223,8 +246,14 @@ def progress():
 @bp.get("/languages")
 @jwt_required()
 def languages():
+  view = (request.args.get("view") or "compact").strip().lower()
   try:
-    languages_payload = get_languages()
+    if view == "all":
+      languages_payload = get_languages()
+    elif view == "compact":
+      languages_payload = get_compact_languages()
+    else:
+      return jsonify({"error": "Invalid view. Use 'compact' or 'all'."}), 400
   except Judge0Error as err:
     return jsonify({"error": str(err)}), 502
   return jsonify({"languages": languages_payload})
@@ -253,13 +282,14 @@ def run_challenge(challenge_id: str):
   if not isinstance(language_id, int):
     return jsonify({"error": "language_id must be an integer"}), 400
 
-  sample_tests = challenge["sample_tests"]
+  sample_tests = challenge["sample_cases"]
   cpu_time_limit = float(challenge.get("cpu_time_limit") or 2.0)
 
   try:
     evaluation = _evaluate_test_group(
       source_code=source_code,
       language_id=language_id,
+      challenge=challenge,
       tests=sample_tests,
       cpu_time_limit=cpu_time_limit,
       stop_on_first_failure=False,
@@ -313,13 +343,14 @@ def submit_challenge(challenge_id: str):
   if not isinstance(language_id, int):
     return jsonify({"error": "language_id must be an integer"}), 400
 
-  hidden_tests = challenge["hidden_tests"]
+  hidden_tests = challenge["hidden_cases"]
   cpu_time_limit = float(challenge.get("cpu_time_limit") or 2.0)
 
   try:
     evaluation = _evaluate_test_group(
       source_code=source_code,
       language_id=language_id,
+      challenge=challenge,
       tests=hidden_tests,
       cpu_time_limit=cpu_time_limit,
       stop_on_first_failure=True,

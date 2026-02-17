@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -14,6 +15,101 @@ class Judge0Error(RuntimeError):
 
 _LANGUAGE_CACHE: list[dict[str, Any]] | None = None
 _LANGUAGE_CACHE_EXPIRES_AT = 0.0
+
+_COMPACT_LANGUAGE_ORDER = [
+  "python",
+  "javascript",
+  "typescript",
+  "java",
+  "cpp",
+  "csharp",
+  "go",
+  "rust",
+  "kotlin",
+  "swift",
+  "php",
+  "ruby",
+  "c",
+]
+
+_COMPACT_LANGUAGE_DISPLAY_NAMES = {
+  "python": "Python",
+  "javascript": "JavaScript",
+  "typescript": "TypeScript",
+  "java": "Java",
+  "cpp": "C++",
+  "csharp": "C#",
+  "go": "Go",
+  "rust": "Rust",
+  "kotlin": "Kotlin",
+  "swift": "Swift",
+  "php": "PHP",
+  "ruby": "Ruby",
+  "c": "C",
+}
+
+
+def _language_family(name: str) -> str | None:
+  value = name.lower()
+  if "typescript" in value:
+    return "typescript"
+  if "javascript" in value or "node.js" in value:
+    return "javascript"
+  if "python" in value:
+    return "python"
+  if "c++" in value:
+    return "cpp"
+  if "c#" in value or "c-sharp" in value:
+    return "csharp"
+  if value.startswith("c ") or value.startswith("c(") or value.startswith("c ("):
+    return "c"
+  if " java" in value or value.startswith("java"):
+    return "java"
+  if "kotlin" in value:
+    return "kotlin"
+  if "swift" in value:
+    return "swift"
+  if "php" in value:
+    return "php"
+  if "ruby" in value:
+    return "ruby"
+  if "rust" in value:
+    return "rust"
+  if "golang" in value or value.startswith("go ") or value.startswith("go(") or value.startswith("go ("):
+    return "go"
+  if value == "go":
+    return "go"
+  return None
+
+
+def _version_tuple(name: str) -> tuple[int, ...]:
+  match = re.search(r"(\d+(?:\.\d+){0,3})", name)
+  if not match:
+    return ()
+  parts = []
+  for token in match.group(1).split("."):
+    try:
+      parts.append(int(token))
+    except ValueError:
+      return ()
+  return tuple(parts)
+
+
+def _is_pre_release(name: str) -> bool:
+  value = name.lower()
+  return any(token in value for token in ("beta", "rc", "alpha", "nightly", "preview", "dev"))
+
+
+def _candidate_rank(family: str, language_name: str) -> tuple[int, int, tuple[int, ...], str]:
+  version = _version_tuple(language_name)
+  stable_score = 0 if _is_pre_release(language_name) else 1
+
+  if family == "python":
+    major = version[0] if version else 0
+    modern_python = 1 if major >= 3 else 0
+    return (stable_score, modern_python, version, language_name.lower())
+
+  return (stable_score, 1, version, language_name.lower())
 
 
 def _base_url() -> str:
@@ -102,6 +198,43 @@ def get_languages(*, cache_seconds: int = 3600) -> list[dict[str, Any]]:
   _LANGUAGE_CACHE = normalized
   _LANGUAGE_CACHE_EXPIRES_AT = now + cache_seconds
   return normalized
+
+
+def get_compact_languages(*, cache_seconds: int = 3600) -> list[dict[str, Any]]:
+  raw_languages = get_languages(cache_seconds=cache_seconds)
+
+  by_family: dict[str, list[dict[str, Any]]] = {}
+  for language in raw_languages:
+    name = language["name"]
+    family = _language_family(name)
+    if family is None or family not in _COMPACT_LANGUAGE_DISPLAY_NAMES:
+      continue
+    by_family.setdefault(family, []).append(language)
+
+  compact: list[dict[str, Any]] = []
+  for family in _COMPACT_LANGUAGE_ORDER:
+    candidates = by_family.get(family) or []
+    if not candidates:
+      continue
+
+    best = max(candidates, key=lambda item: _candidate_rank(family, item["name"]))
+    compact.append(
+      {
+        "id": best["id"],
+        "name": best["name"],
+        "family": family,
+        "display_name": _COMPACT_LANGUAGE_DISPLAY_NAMES[family],
+      }
+    )
+
+  return compact
+
+
+def get_language_family(language_id: int, *, cache_seconds: int = 3600) -> str | None:
+  for language in get_languages(cache_seconds=cache_seconds):
+    if language["id"] == language_id:
+      return _language_family(language["name"])
+  return None
 
 
 def run_submission(
