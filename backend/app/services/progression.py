@@ -226,12 +226,6 @@ def recompute_and_persist_user_progress(user_id: int, *, commit: bool = True) ->
     "next_action": _next_action(module_states),
   }
 
-
-def get_module_progress_for_user(user_id: int) -> list[dict[str, Any]]:
-  payload = recompute_and_persist_user_progress(user_id, commit=False)
-  return payload["module_progress"]
-
-
 def get_tasks_for_user_module(user_id: int, module_key: str) -> dict[str, Any] | None:
   module = Module.query.filter_by(key=module_key).first()
   if module is None:

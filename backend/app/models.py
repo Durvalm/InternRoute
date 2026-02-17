@@ -50,16 +50,6 @@ class UserProgress(db.Model):
 
   user = db.relationship("User", backref=db.backref("progress", uselist=False))
 
-  def to_dict(self):
-    return {
-      "readiness_score": self.readiness_score,
-      "category_readiness": {
-        "coding": self.category_coding,
-        "projects": self.category_projects,
-        "resume": self.category_resume
-      }
-    }
-
 
 class Module(db.Model):
   __tablename__ = "modules"

@@ -34,11 +34,8 @@ type ChallengeUI = {
   order: number;
   title: string;
   description: string;
-  hint: string;
   functionName: string;
   parameters: ChallengeParameter[];
-  returnType: "string";
-  constraints: string[];
   examples: ChallengeExample[];
   whatToReturn: string;
 };
@@ -48,7 +45,6 @@ type ChallengeContract = {
   order: number;
   function_name: string;
   parameters: ChallengeParameter[];
-  return_type: "string";
 };
 
 type LanguageOption = {
@@ -60,8 +56,6 @@ type LanguageOption = {
 
 type CodingTasksResponse = {
   challenge_completion: Record<string, boolean>;
-  completed_count: number;
-  total: number;
 };
 
 type LanguagesResponse = {
@@ -105,11 +99,8 @@ const CHALLENGE_FALLBACKS: ChallengeUI[] = [
     order: 1,
     title: "The String Reversal",
     description: "Implement a function that returns the reversed version of the input string.",
-    hint: "In Python, slicing with [::-1] reverses a string.",
     functionName: "string_reversal",
     parameters: [{ name: "s", type: "string" }],
-    returnType: "string",
-    constraints: ["1 <= s.length <= 10^4", "s may contain letters, spaces, and digits"],
     examples: [{ input: "s = \"hello\"", output: "\"olleh\"" }],
     whatToReturn: "Return the reversed string."
   },
@@ -118,11 +109,8 @@ const CHALLENGE_FALLBACKS: ChallengeUI[] = [
     order: 2,
     title: "FizzBuzz Logic",
     description: "Return the FizzBuzz sequence from 1 to n as a single space-separated string.",
-    hint: "Build each token, then join with spaces for final output.",
     functionName: "fizzbuzz_logic",
     parameters: [{ name: "n", type: "int" }],
-    returnType: "string",
-    constraints: ["1 <= n <= 10^4"],
     examples: [{ input: "n = 5", output: "\"1 2 Fizz 4 Buzz\"" }],
     whatToReturn: "Return one string containing the sequence separated by spaces."
   },
@@ -131,11 +119,8 @@ const CHALLENGE_FALLBACKS: ChallengeUI[] = [
     order: 3,
     title: "List Filtering",
     description: "Return all even numbers in original order as a space-separated string, or NONE.",
-    hint: "Filter first, then handle the empty case explicitly.",
     functionName: "list_filtering",
     parameters: [{ name: "nums", type: "int_list" }],
-    returnType: "string",
-    constraints: ["1 <= nums.length <= 10^4", "-10^9 <= nums[i] <= 10^9"],
     examples: [{ input: "nums = [1, 2, 3, 4, 5, 6]", output: "\"2 4 6\"" }],
     whatToReturn: "Return \"NONE\" when there are no even values."
   },
@@ -144,11 +129,8 @@ const CHALLENGE_FALLBACKS: ChallengeUI[] = [
     order: 4,
     title: "Dictionary Basics",
     description: "Return \"word count\" for the most frequent word. Break ties with lexicographically smallest word.",
-    hint: "Use a frequency map, then choose best by (count desc, word asc).",
     functionName: "dictionary_basics",
     parameters: [{ name: "words", type: "string_list" }],
-    returnType: "string",
-    constraints: ["1 <= words.length <= 10^4", "All words are lowercase ASCII"],
     examples: [{ input: "words = [\"cat\", \"dog\", \"dog\", \"cat\", \"ant\", \"ant\"]", output: "\"ant 2\"" }],
     whatToReturn: "Return exactly one string in the format \"word count\"."
   },
@@ -157,11 +139,8 @@ const CHALLENGE_FALLBACKS: ChallengeUI[] = [
     order: 5,
     title: "The Palindrome",
     description: "Check whether the string is a palindrome and return YES or NO.",
-    hint: "Compare the string with its reverse.",
     functionName: "palindrome_check",
     parameters: [{ name: "s", type: "string" }],
-    returnType: "string",
-    constraints: ["1 <= s.length <= 10^5", "s contains lowercase letters only"],
     examples: [{ input: "s = \"racecar\"", output: "\"YES\"" }],
     whatToReturn: "Return \"YES\" if palindrome, otherwise \"NO\"."
   },
@@ -170,14 +149,11 @@ const CHALLENGE_FALLBACKS: ChallengeUI[] = [
     order: 6,
     title: "Sum of Two",
     description: "Determine if any two distinct numbers sum to target.",
-    hint: "Track seen values in a set for O(n) lookup.",
     functionName: "sum_of_two",
     parameters: [
       { name: "nums", type: "int_list" },
       { name: "target", type: "int" }
     ],
-    returnType: "string",
-    constraints: ["2 <= nums.length <= 10^5", "-10^9 <= nums[i], target <= 10^9"],
     examples: [{ input: "nums = [2, 7, 11, 15, 1], target = 9", output: "\"YES\"" }],
     whatToReturn: "Return \"YES\" if a valid pair exists, otherwise \"NO\"."
   }
@@ -204,11 +180,8 @@ function mergeChallengesWithContracts(contracts: ChallengeContract[]): Challenge
         order: contract.order,
         title: titleFromChallengeId(contract.id),
         description: "Solve the challenge by implementing the required function.",
-        hint: "Start with a simple correct solution, then improve.",
         functionName: contract.function_name,
         parameters: contract.parameters,
-        returnType: contract.return_type,
-        constraints: [],
         examples: [],
         whatToReturn: "Return the expected string value."
       } satisfies ChallengeUI;
@@ -218,8 +191,7 @@ function mergeChallengesWithContracts(contracts: ChallengeContract[]): Challenge
       ...fallback,
       order: contract.order,
       functionName: contract.function_name,
-      parameters: contract.parameters,
-      returnType: contract.return_type
+      parameters: contract.parameters
     } satisfies ChallengeUI;
   });
 

@@ -20,47 +20,6 @@ def normalize_name(value: str | None) -> str | None:
   name = value.strip()
   return name or None
 
-
-@bp.get("/profile")
-@jwt_required()
-def profile():
-  user_id = int(get_jwt_identity())
-  user = User.query.get_or_404(user_id)
-  return jsonify({"user": user.to_dict()})
-
-@bp.patch("/profile")
-@jwt_required()
-def update_profile():
-  user_id = int(get_jwt_identity())
-  user = User.query.get_or_404(user_id)
-  data = request.get_json() or {}
-
-  if "name" in data:
-    name = normalize_name(data.get("name"))
-    if name is None:
-      return jsonify({"error": "Name cannot be empty"}), 400
-    user.name = name
-
-  if "coding_skill_level" in data:
-    coding_skill_level = data.get("coding_skill_level")
-    if coding_skill_level not in ALLOWED_CODING_SKILL_LEVELS:
-      return jsonify({"error": "Invalid coding_skill_level"}), 400
-    user.coding_skill_level = coding_skill_level
-    if coding_skill_level == "Advanced":
-      set_coding_override_for_advanced(user.id, score=80)
-    else:
-      clear_coding_override(user.id)
-
-  if "graduation_date" in data:
-    try:
-      user.graduation_date = parse_date(data.get("graduation_date"))
-    except ValueError:
-      return jsonify({"error": "Invalid graduation_date format"}), 400
-
-  db.session.commit()
-  recompute_and_persist_user_progress(user.id, commit=True)
-  return jsonify({"user": user.to_dict()})
-
 @bp.post("/onboarding")
 @jwt_required()
 def complete_onboarding():

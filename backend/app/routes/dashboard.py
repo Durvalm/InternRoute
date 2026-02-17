@@ -54,15 +54,6 @@ def summary():
   return jsonify(payload)
 
 
-@bp.get("/modules")
-@jwt_required()
-def modules():
-  user_id = int(get_jwt_identity())
-  user = User.query.get_or_404(user_id)
-  computed = recompute_and_persist_user_progress(user.id, commit=True)
-  return jsonify({"modules": computed["module_progress"]})
-
-
 @bp.get("/tasks")
 @jwt_required()
 def tasks():
