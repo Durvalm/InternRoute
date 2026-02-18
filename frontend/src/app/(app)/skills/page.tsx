@@ -866,15 +866,18 @@ export default function SkillsPage() {
 
               <article className="relative">
                 <span className="absolute -left-[30px] top-1 h-5 w-5 rounded-full bg-indigo-500 ring-4 ring-indigo-100" />
-                <h2 className="text-base md:text-lg font-bold text-indigo-900">1. Programming Language (Python)</h2>
+                <h2 className="text-base md:text-lg font-bold text-indigo-900">1. Programming Language (Python Recommended)</h2>
                 <div className="mt-2 inline-flex items-center gap-2 text-indigo-600 text-xs md:text-sm font-semibold">
                   <Clock3 size={22} />
                   ~2 Months
                 </div>
                 <p className="mt-2 text-xs md:text-sm leading-relaxed text-slate-600">
-                  Your main tool. Used for coding interviews, scripts, and logic.
+                  Your main tool for coding interviews, scripts, and logic. We recommend Python to start faster,
+                  but you can choose any language and follow the exact same learning process.
                 </p>
-                <p className="text-xs md:text-sm font-semibold text-indigo-700">This Module Focuses on This.</p>
+                <p className="text-xs md:text-sm font-semibold text-indigo-700">
+                  This module uses Python examples, but the strategy works for any language.
+                </p>
               </article>
 
               <article className="relative opacity-60">
@@ -898,7 +901,7 @@ export default function SkillsPage() {
             </div>
             <div className="relative z-10">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-lg md:text-xl font-bold">Why Python?</h3>
+                <h3 className="text-lg md:text-xl font-bold">Why Start with Python?</h3>
                 <span className="rounded-full bg-yellow-400 text-slate-900 text-xs font-bold px-3 py-1 uppercase tracking-wide">
                   Recommended
                 </span>
@@ -911,6 +914,10 @@ export default function SkillsPage() {
               </p>
               <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
                 Plus, Python is a common language for coding interviews.
+              </p>
+              <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
+                Recommendation, not restriction: JavaScript, Java, C++, and others are all valid.
+                Whatever plan you follow for Python, you can apply the same plan to any language.
               </p>
             </div>
           </aside>
@@ -933,20 +940,26 @@ export default function SkillsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wider text-amber-600">Top Recommendation (Paid)</p>
-            <h3 className="mt-2 text-lg font-bold text-slate-900">The Art of Doing (Python)</h3>
+            <p className="text-xs font-bold uppercase tracking-wider text-amber-600">Paid Option</p>
+            <h3 className="mt-2 text-lg font-bold text-slate-900">The Art of Doing (Python Course)</h3>
             <p className="mt-3 text-xs leading-relaxed text-slate-600">
-              You&apos;ll build 40 small projects. It&apos;s the best way to learn by doing.
+              Strongly recommended if you can get it. It already includes many challenge-style exercises, and
+              the instructor teaches you how to think through and solve them.
             </p>
             <p className="mt-3 text-xs leading-relaxed text-slate-700">
-              <strong>Optimization Tip:</strong> Skip the OOP section and the last 5 projects.
-              This saves you 8 hours (~20h total).
+              You can do this same challenge-first method for free too. Also, if you prefer another language,
+              find an equivalent course/tutorial and keep the same practice routine.
             </p>
             <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between gap-4">
               <p className="text-xs font-semibold text-slate-500">Udemy Course</p>
-              <button type="button" className="inline-flex items-center gap-1 text-indigo-600 text-sm font-bold">
+              <a
+                href="https://www.udemy.com/course/the-art-of-doing/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-indigo-600 text-sm font-bold"
+              >
                 View Course <ChevronRight size={20} />
-              </button>
+              </a>
             </div>
           </article>
 
@@ -954,17 +967,27 @@ export default function SkillsPage() {
             <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Free Option</p>
             <h3 className="mt-2 text-lg font-bold text-slate-900">FreeCodeCamp Python</h3>
             <p className="mt-3 text-xs leading-relaxed text-slate-600">
-              An excellent, comprehensive video course available for free on YouTube.
-              Great if you are on a budget but still want high-quality instruction.
+              Excellent free full course on YouTube. Learn actively: pause often, run every concept in your IDE,
+              and type everything yourself instead of only watching.
+            </p>
+            <p className="mt-3 text-xs leading-relaxed text-slate-700">
+              This video has some exercises, but add more online challenges while learning to lock in knowledge.
+              That same approach works for Python and for any other language.
             </p>
             <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between gap-4">
               <p className="text-xs font-semibold text-slate-500">YouTube</p>
-              <button type="button" className="inline-flex items-center gap-1 text-indigo-600 text-sm font-bold">
+              <a
+                href="https://www.youtube.com/watch?v=rfscVS0vtbw"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-indigo-600 text-sm font-bold"
+              >
                 Watch Video <ChevronRight size={20} />
-              </button>
+              </a>
             </div>
           </article>
         </div>
+
       </section>
 
       <section id="readiness-check" className="space-y-4">
@@ -993,6 +1016,19 @@ export default function SkillsPage() {
             </div>
           </div>
         </div>
+
+        <article className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 md:p-5 shadow-sm">
+          <h3 className="text-sm md:text-base font-bold text-indigo-900">Challenge Rules (Read This First)</h3>
+          <p className="mt-2 text-xs md:text-sm leading-relaxed text-indigo-900/90">
+            Don&apos;t cheat by copying final solutions. The struggle here is the training that makes projects and interviews possible later.
+          </p>
+          <ul className="mt-3 space-y-2 text-xs md:text-sm text-slate-700 list-disc pl-5">
+            <li>Try your own approach first; only use hints after a real attempt.</li>
+            <li>Implement your code inside the pre-defined function signature shown in the challenge.</li>
+            <li>Use your IDE actively: write code, click Run Code, read errors/output, and iterate.</li>
+            <li>Submit only when your local runs are stable and your output matches the expected behavior.</li>
+          </ul>
+        </article>
 
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
           <div className="grid grid-cols-1 lg:grid-cols-[260px_330px_minmax(0,1fr)] min-h-[640px]">
