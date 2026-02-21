@@ -5,6 +5,7 @@ from .routes.auth import bp as auth_bp
 from .routes.user import bp as user_bp
 from .routes.dashboard import bp as dashboard_bp
 from .routes.skills import bp as skills_bp
+from .routes.projects import bp as projects_bp
 
 
 def create_app():
@@ -29,6 +30,7 @@ def create_app():
   app.register_blueprint(user_bp)
   app.register_blueprint(dashboard_bp)
   app.register_blueprint(skills_bp)
+  app.register_blueprint(projects_bp)
 
   @app.get("/")
   def health():

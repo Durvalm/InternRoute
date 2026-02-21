@@ -100,3 +100,18 @@ class UserTaskCompletion(db.Model):
 
   user = db.relationship("User", backref=db.backref("task_completions", lazy=True))
   task = db.relationship("Task", backref=db.backref("completions", lazy=True))
+
+
+class ProjectSubmission(db.Model):
+  __tablename__ = "project_submissions"
+
+  id = db.Column(db.Integer, primary_key=True)
+  user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+  repo_url = db.Column(db.String(500), nullable=False)
+  deployed_url = db.Column(db.String(500), nullable=True)
+  status = db.Column(db.String(32), nullable=False, default="pending", server_default="pending")
+  review_notes = db.Column(db.Text, nullable=True)
+  created_at = db.Column(db.DateTime, default=datetime.utcnow)
+  updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+  user = db.relationship("User", backref=db.backref("project_submissions", lazy=True))
