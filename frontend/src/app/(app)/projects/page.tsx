@@ -1,18 +1,27 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import Image from "next/image";
 import {
+  AlertTriangle,
   BadgeCheck,
   BookMarked,
+  CheckCircle2,
   CircleDot,
   Clock3,
   Code2,
+  FileText,
   GitBranch,
   FlaskConical,
   Globe,
   Lightbulb,
   Lock,
+  Loader2,
   Plus,
-  Sparkles
+  Sparkles,
+  XCircle
 } from "lucide-react";
+import { apiRequest } from "@/lib/api";
 
 const inspirationProjects = [
   {
@@ -40,7 +49,7 @@ const portfolioCards = [
     title: "Core Project 1",
     subtitle: "Course Outcome",
     description: "First complete project from your learning path. Submit when your backend is solid.",
-    cta: "Submission opens in next phase",
+    cta: "Submit with the form above",
     state: "active"
   },
   {
@@ -92,7 +101,111 @@ const moduleOutcomes = [
   "Optional bonus: one deployed project with real-user signals."
 ];
 
+type SubmissionStatus = "pending" | "pass" | "fail";
+
+type ProjectSubmission = {
+  id: number;
+  repo_url: string;
+  deployed_url: string | null;
+  status: SubmissionStatus;
+  review_notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+type ProjectSubmissionsResponse = {
+  submissions: ProjectSubmission[];
+};
+
+type ProjectSubmissionCreateResponse = {
+  submission: ProjectSubmission;
+};
+
+const statusPillClasses: Record<SubmissionStatus, string> = {
+  pending: "bg-amber-50 border-amber-200 text-amber-700",
+  pass: "bg-emerald-50 border-emerald-200 text-emerald-700",
+  fail: "bg-rose-50 border-rose-200 text-rose-700"
+};
+
+const statusLabel: Record<SubmissionStatus, string> = {
+  pending: "Pending Review",
+  pass: "Pass",
+  fail: "Not Yet"
+};
+
 export default function ProjectsPage() {
+  const [repoUrl, setRepoUrl] = useState("");
+  const [deployedUrl, setDeployedUrl] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [submissions, setSubmissions] = useState<ProjectSubmission[]>([]);
+
+  const loadSubmissions = useCallback(async () => {
+    setIsLoading(true);
+    setListError(null);
+    try {
+      const data = await apiRequest<ProjectSubmissionsResponse>("/projects/submissions");
+      setSubmissions(data.submissions || []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not load submissions.";
+      setListError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSubmissions();
+  }, [loadSubmissions]);
+
+  const statusSummary = useMemo(() => {
+    let pending = 0;
+    let pass = 0;
+    let fail = 0;
+
+    for (const submission of submissions) {
+      if (submission.status === "pass") pass += 1;
+      if (submission.status === "pending") pending += 1;
+      if (submission.status === "fail") fail += 1;
+    }
+    return { pending, pass, fail };
+  }, [submissions]);
+
+  const handleSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFormError(null);
+    setSuccessMessage(null);
+
+    if (!repoUrl.trim()) {
+      setFormError("GitHub repository URL is required.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await apiRequest<ProjectSubmissionCreateResponse>("/projects/submissions", {
+        method: "POST",
+        body: JSON.stringify({
+          repo_url: repoUrl.trim(),
+          deployed_url: deployedUrl.trim() || null
+        })
+      });
+
+      setRepoUrl("");
+      setDeployedUrl("");
+      setSuccessMessage("Project submitted. Status set to pending review.");
+      await loadSubmissions();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not submit project.";
+      setFormError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [deployedUrl, loadSubmissions, repoUrl]);
+
   return (
     <div className="max-w-7xl mx-auto pb-16 space-y-7">
       <section className="rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
@@ -395,12 +508,155 @@ export default function ProjectsPage() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-3xl font-bold text-slate-900">Your Portfolio Board</h2>
-            <p className="mt-1 text-sm text-slate-500">Upload your GitHub links here. Verification workflow comes next phase.</p>
+            <p className="mt-1 text-sm text-slate-500">Submit GitHub links now. Manual review status appears below.</p>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
-            <CircleDot size={14} />
-            Goal: 2 Verified Projects
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <CircleDot size={14} />
+              Goal: 2 Verified Projects
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
+              {statusSummary.pass} pass • {statusSummary.pending} pending • {statusSummary.fail} not yet
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_1.25fr] gap-4">
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="h-9 w-9 rounded-full border flex items-center justify-center mb-4 bg-white">
+              <Plus size={18} className="text-indigo-600" />
+            </div>
+            <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Submit Project</p>
+            <h3 className="mt-1 text-xl font-bold text-slate-900">Add GitHub Repository</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Submit your own project idea. We review backend quality and mark pass/fail.
+            </p>
+
+            <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+              <div>
+                <label htmlFor="repo-url" className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                  GitHub URL
+                </label>
+                <input
+                  id="repo-url"
+                  type="url"
+                  value={repoUrl}
+                  onChange={(event) => setRepoUrl(event.target.value)}
+                  placeholder="https://github.com/owner/repo"
+                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="deployed-url" className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                  Deployed URL (Optional)
+                </label>
+                <input
+                  id="deployed-url"
+                  type="url"
+                  value={deployedUrl}
+                  onChange={(event) => setDeployedUrl(event.target.value)}
+                  placeholder="https://your-app.com"
+                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                />
+              </div>
+
+              {formError ? (
+                <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{formError}</p>
+              ) : null}
+              {successMessage ? (
+                <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                  {successMessage}
+                </p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
+              >
+                {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <GitBranch size={15} />}
+                {isSubmitting ? "Submitting..." : "Submit Project"}
+              </button>
+            </form>
+          </article>
+
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="h-9 w-9 rounded-full border flex items-center justify-center mb-4 bg-white">
+              <FileText size={16} className="text-slate-600" />
+            </div>
+            <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Submission History</p>
+            <h3 className="mt-1 text-xl font-bold text-slate-900">Review Status</h3>
+            <p className="mt-2 text-sm text-slate-600">Statuses update to pending, pass, or not yet after review.</p>
+
+            {listError ? (
+              <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {listError}
+              </div>
+            ) : null}
+
+            {isLoading ? (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-600 inline-flex items-center gap-2">
+                <Loader2 size={15} className="animate-spin" />
+                Loading submissions...
+              </div>
+            ) : null}
+
+            {!isLoading && !listError && submissions.length === 0 ? (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-600">
+                No submissions yet. Submit your first project to start review.
+              </div>
+            ) : null}
+
+            {!isLoading && !listError && submissions.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {submissions.map((submission) => {
+                  const createdAt = submission.created_at
+                    ? new Date(submission.created_at).toLocaleString()
+                    : "Unknown time";
+                  return (
+                    <div key={submission.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <a
+                          href={submission.repo_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm font-semibold text-indigo-700 hover:underline break-all"
+                        >
+                          {submission.repo_url}
+                        </a>
+                        <span className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold ${statusPillClasses[submission.status]}`}>
+                          {submission.status === "pass" ? <CheckCircle2 size={12} className="mr-1" /> : null}
+                          {submission.status === "fail" ? <XCircle size={12} className="mr-1" /> : null}
+                          {submission.status === "pending" ? <AlertTriangle size={12} className="mr-1" /> : null}
+                          {statusLabel[submission.status]}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500">Submitted: {createdAt}</p>
+                      {submission.deployed_url ? (
+                        <a
+                          href={submission.deployed_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-1 inline-flex text-xs font-semibold text-slate-600 hover:text-slate-800 hover:underline"
+                        >
+                          Deployed URL
+                        </a>
+                      ) : null}
+                      {submission.review_notes ? (
+                        <p className="mt-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-600">
+                          Reviewer note: {submission.review_notes}
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-xs text-slate-400">No reviewer note yet.</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+          </article>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
