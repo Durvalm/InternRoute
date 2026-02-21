@@ -14,6 +14,7 @@ type AuthResponse = {
     name: string | null;
     coding_skill_level: string | null;
     graduation_date: string | null;
+    is_superuser: boolean;
     onboarding_completed: boolean;
   };
 };

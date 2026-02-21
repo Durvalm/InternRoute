@@ -19,3 +19,4 @@ class Config:
   )
   SQLALCHEMY_TRACK_MODIFICATIONS = False
   JWT_SECRET_KEY = _require_env("JWT_SECRET_KEY")
+  SUPERUSER_EMAILS = os.getenv("SUPERUSER_EMAILS", "")

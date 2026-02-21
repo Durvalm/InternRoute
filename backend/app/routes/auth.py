@@ -1,10 +1,29 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, current_app, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy.exc import IntegrityError
 from ..extensions import db
 from ..models import User, UserProgress
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
+
+
+def _configured_superuser_emails() -> set[str]:
+  raw = (current_app.config.get("SUPERUSER_EMAILS") or "").strip()
+  if not raw:
+    return set()
+  return {
+    email.strip().lower()
+    for email in raw.split(",")
+    if email.strip()
+  }
+
+
+def _sync_superuser_flag(user: User) -> bool:
+  should_be_superuser = user.email in _configured_superuser_emails()
+  if user.is_superuser == should_be_superuser:
+    return False
+  user.is_superuser = should_be_superuser
+  return True
 
 @bp.post("/register")
 def register():
@@ -23,6 +42,7 @@ def register():
     user.set_password(password)
   except ValueError:
     return jsonify({"error": "Password too long (max 72 bytes)."}), 400
+  _sync_superuser_flag(user)
 
   progress = UserProgress(user=user)
   db.session.add_all([user, progress])
@@ -47,6 +67,9 @@ def login():
   user = User.query.filter_by(email=email).first()
   if not user or not user.check_password(password):
     return jsonify({"error": "Invalid credentials"}), 401
+
+  if _sync_superuser_flag(user):
+    db.session.commit()
 
   token = create_access_token(identity=str(user.id))
   return jsonify({"access_token": token, "user": user.to_dict()})

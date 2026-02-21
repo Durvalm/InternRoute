@@ -5,7 +5,7 @@ from math import floor
 from typing import Any
 
 from ..extensions import db
-from ..models import Module, Task, User, UserProgress, UserTaskCompletion
+from ..models import Module, ProjectSubmission, Task, User, UserProgress, UserTaskCompletion
 
 
 @dataclass
@@ -93,7 +93,7 @@ def _compute_overall_score(module_states: list[ModuleState], modules: list[Modul
 
 def _next_action(module_states: list[ModuleState]) -> str | None:
   for state in module_states:
-    if state.has_tasks and state.score < 100:
+    if state.has_tasks and state.score < state.unlock_threshold:
       return f"Continue {state.module_name}"
   if any(state.has_tasks for state in module_states):
     return "All available tasks are complete."
@@ -243,3 +243,47 @@ def set_task_completion_internal(user_id: int, task_id: int, completed: bool) ->
     db.session.delete(completion)
 
   return recompute_and_persist_user_progress(user_id, commit=True)
+
+
+def sync_projects_submission_progress(user_id: int, *, commit: bool = True) -> dict[str, Any]:
+  module = Module.query.filter_by(key="projects").first()
+  if module is None:
+    return recompute_and_persist_user_progress(user_id, commit=commit)
+
+  keyed_tasks = {
+    task.challenge_id: task
+    for task in Task.query.filter_by(module_id=module.id, is_active=True).all()
+    if task.challenge_id in {"projects_core_1", "projects_core_2", "projects_bonus_real_user"}
+  }
+
+  passed_count = (
+    ProjectSubmission.query
+    .filter_by(user_id=user_id, status="pass")
+    .count()
+  )
+  has_bonus_real_user = (
+    ProjectSubmission.query
+    .filter_by(user_id=user_id, status="pass")
+    .filter(ProjectSubmission.deployed_url.isnot(None))
+    .first()
+    is not None
+  )
+
+  desired_completion_by_task_key = {
+    "projects_core_1": passed_count >= 1,
+    "projects_core_2": passed_count >= 2,
+    "projects_bonus_real_user": has_bonus_real_user,
+  }
+
+  for task_key, is_completed in desired_completion_by_task_key.items():
+    task = keyed_tasks.get(task_key)
+    if task is None:
+      continue
+
+    completion = UserTaskCompletion.query.filter_by(user_id=user_id, task_id=task.id).first()
+    if is_completed and completion is None:
+      db.session.add(UserTaskCompletion(user_id=user_id, task_id=task.id))
+    if not is_completed and completion is not None:
+      db.session.delete(completion)
+
+  return recompute_and_persist_user_progress(user_id, commit=commit)

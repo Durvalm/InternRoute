@@ -12,6 +12,7 @@ class User(db.Model):
   name = db.Column(db.String(120), nullable=True)
   coding_skill_level = db.Column(db.String(50), nullable=True)
   graduation_date = db.Column(db.Date, nullable=True)
+  is_superuser = db.Column(db.Boolean, nullable=False, default=False, server_default=db.text("false"))
   onboarding_completed = db.Column(db.Boolean, nullable=False, default=False, server_default=db.text("false"))
   created_at = db.Column(db.DateTime, default=datetime.utcnow)
   updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -31,6 +32,7 @@ class User(db.Model):
       "name": self.name,
       "coding_skill_level": self.coding_skill_level,
       "graduation_date": self.graduation_date.isoformat() if self.graduation_date else None,
+      "is_superuser": self.is_superuser,
       "onboarding_completed": self.onboarding_completed
     }
 

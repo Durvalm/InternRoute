@@ -37,16 +37,45 @@ export default function ActionItemsWidget({ moduleProgress, nextAction }: Action
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedModuleKey, setSelectedModuleKey] = useState<string | null>(null);
 
-  const currentModule = useMemo(() => {
+  const taskModules = useMemo(
+    () => moduleProgress.filter((module) => module.has_tasks),
+    [moduleProgress]
+  );
+
+  const defaultModule = useMemo(() => {
     if (!moduleProgress.length) return null;
 
-    const actionable = moduleProgress.find((module) => module.has_tasks && module.score < 100);
+    const actionable = moduleProgress.find(
+      (module) => module.has_tasks && module.score < module.unlock_threshold
+    );
     if (actionable) return actionable;
 
     const withTasks = moduleProgress.find((module) => module.has_tasks);
     return withTasks ?? moduleProgress[0];
   }, [moduleProgress]);
+
+  useEffect(() => {
+    if (!defaultModule) {
+      setSelectedModuleKey(null);
+      return;
+    }
+
+    const selectedStillExists = moduleProgress.some((module) => module.module_key === selectedModuleKey);
+    if (!selectedModuleKey || !selectedStillExists) {
+      setSelectedModuleKey(defaultModule.module_key);
+    }
+  }, [defaultModule, moduleProgress, selectedModuleKey]);
+
+  const currentModule = useMemo(() => {
+    if (!moduleProgress.length) return null;
+    if (selectedModuleKey) {
+      const selected = moduleProgress.find((module) => module.module_key === selectedModuleKey);
+      if (selected) return selected;
+    }
+    return defaultModule;
+  }, [defaultModule, moduleProgress, selectedModuleKey]);
 
   useEffect(() => {
     if (!currentModule) {
@@ -87,14 +116,23 @@ export default function ActionItemsWidget({ moduleProgress, nextAction }: Action
 
       <div className="p-4 border-b border-slate-100">
         <div className="flex flex-wrap gap-2">
-          {moduleProgress.map((module) => (
-            <span
-              key={module.module_key}
-              className="text-[11px] px-2 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200"
-            >
-              {module.module_name}: {module.score}%
-            </span>
-          ))}
+          {taskModules.map((module) => {
+            const isSelected = currentModule?.module_key === module.module_key;
+            return (
+              <button
+                key={module.module_key}
+                type="button"
+                onClick={() => setSelectedModuleKey(module.module_key)}
+                className={`text-[11px] px-2 py-1 rounded-full border transition-colors ${
+                  isSelected
+                    ? "bg-indigo-600 text-white border-indigo-600"
+                    : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                }`}
+              >
+                {module.module_name}: {module.score}%
+              </button>
+            );
+          })}
         </div>
       </div>
 
