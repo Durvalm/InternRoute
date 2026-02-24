@@ -402,7 +402,7 @@ export default function ProjectsPage() {
             <h1 className="mt-4 text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
               Backend Mastery
             </h1>
-            <p className="mt-3 max-w-3xl text-xs md:text-sm leading-relaxed text-slate-600">
+            <p className="mt-3 max-w-3xl text-sm md:text-base leading-relaxed text-slate-600">
               This is where you move from coding exercises to software engineering. You will learn to build complete
               backend systems and prove it with projects.
             </p>
@@ -413,11 +413,11 @@ export default function ProjectsPage() {
               <article className="relative opacity-65">
                 <span className="absolute -left-[30px] top-1 h-5 w-5 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
                 <h2 className="text-base md:text-lg font-bold text-slate-800">Phase 1: Programming Language (Python)</h2>
-                <div className="mt-2 inline-flex items-center gap-2 text-emerald-700 text-xs md:text-sm font-semibold">
+                <div className="mt-2 inline-flex items-center gap-2 text-emerald-700 text-sm md:text-base font-semibold">
                   <Clock3 size={16} />
                   2 Months
                 </div>
-                <p className="mt-2 text-xs md:text-sm text-slate-600">
+                <p className="mt-2 text-sm md:text-base text-slate-600">
                   Syntax + logic foundation. This phase is complete and now you apply it to real software.
                 </p>
               </article>
@@ -425,11 +425,11 @@ export default function ProjectsPage() {
               <article className="relative">
                 <span className="absolute -left-[30px] top-1 h-5 w-5 rounded-full bg-indigo-500 ring-4 ring-indigo-100" />
                 <h2 className="text-base md:text-lg font-bold text-indigo-900">Phase 2: Backend Development</h2>
-                <div className="mt-2 inline-flex items-center gap-2 text-indigo-600 text-xs md:text-sm font-semibold">
+                <div className="mt-2 inline-flex items-center gap-2 text-indigo-600 text-sm md:text-base font-semibold">
                   <Clock3 size={16} />
                   4 Months
                 </div>
-                <p className="mt-2 text-xs md:text-sm text-slate-600">
+                <p className="mt-2 text-sm md:text-base text-slate-600">
                   Build APIs, connect databases, and ship projects that can go on your resume.
                 </p>
               </article>
@@ -442,11 +442,11 @@ export default function ProjectsPage() {
             </div>
             <div className="relative z-10">
               <h3 className="text-lg md:text-xl font-bold">Why Backend?</h3>
-              <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
+              <p className="mt-3 text-sm md:text-base leading-relaxed text-indigo-100">
                 These skills matter in almost every direction: full stack, mobile, and even data-focused roles.
                 Most products need a backend foundation to handle logic and data correctly.
               </p>
-              <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
+              <p className="mt-3 text-sm md:text-base leading-relaxed text-indigo-100">
                 If you want mobile, that is fine. Learn backend deeply here and use AI for mobile/frontend speed if needed.
                 What matters most in this phase is proving backend knowledge.
               </p>
@@ -471,11 +471,11 @@ export default function ProjectsPage() {
           <div className="space-y-5">
             <div>
               <h3 className="text-lg font-bold text-slate-900">Why Django for Beginners</h3>
-              <p className="mt-3 text-xs md:text-sm text-slate-600 leading-relaxed">
+              <p className="mt-3 text-sm md:text-base text-slate-600 leading-relaxed">
                 Django is a <strong>backend framework</strong> built with Python. For beginners, it is one of the fastest ways
                 to build real software with useful backend concepts.
               </p>
-              <p className="mt-3 text-xs md:text-sm text-slate-600 leading-relaxed">
+              <p className="mt-3 text-sm md:text-base text-slate-600 leading-relaxed">
                 You can build full projects with minimal setup and learn the core flow: server logic, API endpoints,
                 and database integration. It is a practical way to get your first full-stack project shipped.
               </p>
@@ -490,7 +490,7 @@ export default function ProjectsPage() {
                 ))}
               </div>
               <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
-                <p className="text-xs md:text-sm font-semibold text-amber-900 leading-relaxed">
+                <p className="text-sm md:text-base font-semibold text-amber-900 leading-relaxed">
                   If you use another language or do not want Django, find another backend framework for that language.
                 </p>
               </div>
@@ -502,7 +502,7 @@ export default function ProjectsPage() {
                   <FlaskConical size={17} />
                 </div>
                 <p className="mt-3 text-sm font-bold text-slate-900">Paid Option: Django Practical Guide</p>
-                <p className="mt-2 text-xs md:text-sm text-slate-600 leading-relaxed">
+                <p className="mt-2 text-sm md:text-base text-slate-600 leading-relaxed">
                   In this course you learn Django and build a full-stack Blog project while touching databases, HTML,
                   and backend architecture.
                 </p>
@@ -521,7 +521,7 @@ export default function ProjectsPage() {
                   <Code2 size={17} />
                 </div>
                 <p className="mt-3 text-sm font-bold text-slate-900">Free Option: YouTube Course</p>
-                <p className="mt-2 text-xs md:text-sm text-slate-600 leading-relaxed">
+                <p className="mt-2 text-sm md:text-base text-slate-600 leading-relaxed">
                   Free Django path. Goal is the same: learn backend fundamentals and build one real project with API + data handling.
                 </p>
                 <a
@@ -536,7 +536,7 @@ export default function ProjectsPage() {
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs md:text-sm text-slate-700">
+              <p className="text-sm md:text-base text-slate-700">
                 Already have backend skills and strong projects? Skip the course and submit directly when submissions are enabled.
               </p>
             </div>
@@ -546,7 +546,7 @@ export default function ProjectsPage() {
 
       <section className="rounded-3xl border border-indigo-800 bg-gradient-to-br from-indigo-700 to-indigo-900 p-7 md:p-9 text-white shadow-lg">
         <div className="space-y-4">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-center">Learn First. Then Build. Then Submit.</h2>
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-center">Learn First. Then Build. Then Submit.</h2>
           <p className="text-indigo-100 text-sm md:text-base text-center">
             The order matters. Do a course (or prove equivalent knowledge), then build your own projects, then submit your portfolio.
           </p>
@@ -591,13 +591,13 @@ export default function ProjectsPage() {
           <Lightbulb size={19} className="text-amber-500" />
           <h2 className="text-lg md:text-xl font-bold text-slate-900">Pick Your Project Ideas</h2>
         </div>
-        <p className="text-xs md:text-sm text-slate-500">
+        <p className="text-sm md:text-base text-slate-500">
           Start with ideas that are useful and realistic. Original ideas are better, but it is okay to copy familiar app types to learn faster.
         </p>
 
         <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_1fr] gap-4">
           <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <h3 className="text-base font-bold text-slate-900">How to Pick Well</h3>
+            <h3 className="text-lg font-bold text-slate-900">How to Pick Well</h3>
             <ul className="mt-3 space-y-2">
               {projectIdeaPrompts.map((prompt) => (
                 <li key={prompt} className="flex items-start gap-2 text-sm text-slate-600">
@@ -609,7 +609,7 @@ export default function ProjectsPage() {
           </article>
 
           <article className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h3 className="text-base font-bold text-slate-900">Original Idea Starters</h3>
+            <h3 className="text-lg font-bold text-slate-900">Original Idea Starters</h3>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {projectIdeaExamples.map((idea) => (
                 <div key={idea.title} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -627,7 +627,7 @@ export default function ProjectsPage() {
           <Sparkles size={18} className="text-indigo-500" />
           <h2 className="text-lg md:text-xl font-bold text-slate-900">Some of the First Projects I Built (for reference)</h2>
         </div>
-        <p className="text-xs md:text-sm text-slate-500">
+        <p className="text-sm md:text-base text-slate-500">
           These are examples for direction and scope. Use them as reference, not templates.
         </p>
 
@@ -655,7 +655,7 @@ export default function ProjectsPage() {
               </a>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="mt-3 text-lg font-bold text-slate-900">{project.title}</h3>
+                  <h3 className="mt-3 text-base font-bold text-slate-900">{project.title}</h3>
                   <p className="text-[11px] uppercase tracking-wider text-indigo-600 font-bold">{project.subtitle}</p>
                 </div>
                 <Sparkles size={16} className="text-slate-400 mt-1" />
@@ -688,7 +688,7 @@ export default function ProjectsPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h2 className="text-3xl font-bold text-slate-900">Your Portfolio Board</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900">Your Portfolio Board</h2>
             <p className="mt-1 text-sm text-slate-500">Submit GitHub links now. Manual review status appears below.</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -708,7 +708,7 @@ export default function ProjectsPage() {
               <Plus size={18} className="text-indigo-600" />
             </div>
             <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Submit Project</p>
-            <h3 className="mt-1 text-xl font-bold text-slate-900">Add GitHub Repository</h3>
+            <h3 className="mt-1 text-lg font-bold text-slate-900">Add GitHub Repository</h3>
             <p className="mt-2 text-sm text-slate-600">
               Submit your own project idea. We review backend quality and mark pass/fail.
             </p>
@@ -768,7 +768,7 @@ export default function ProjectsPage() {
               <FileText size={16} className="text-slate-600" />
             </div>
             <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Submission History</p>
-            <h3 className="mt-1 text-xl font-bold text-slate-900">Review Status</h3>
+            <h3 className="mt-1 text-lg font-bold text-slate-900">Review Status</h3>
             <p className="mt-2 text-sm text-slate-600">Statuses update to pending, pass, or not yet after review.</p>
 
             {listError ? (
@@ -845,7 +845,7 @@ export default function ProjectsPage() {
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
                 <p className="text-[11px] uppercase tracking-wider font-bold text-indigo-700">Admin Panel</p>
-                <h3 className="mt-1 text-xl font-bold text-slate-900">Project Review Queue</h3>
+                <h3 className="mt-1 text-lg font-bold text-slate-900">Project Review Queue</h3>
                 <p className="mt-1 text-sm text-slate-600">
                   Review all user submissions and mark pass or not yet with a note.
                 </p>
@@ -1015,7 +1015,7 @@ export default function ProjectsPage() {
                   {card.subtitle}
                 </p>
                 <h3
-                  className={`mt-1 text-xl font-bold ${
+                  className={`mt-1 text-lg font-bold ${
                     isComplete ? "text-emerald-900" : isLocked ? "text-slate-500" : "text-slate-900"
                   }`}
                 >
@@ -1064,7 +1064,7 @@ export default function ProjectsPage() {
         <div className="flex items-start gap-3">
           <Globe size={20} className="text-indigo-600 mt-0.5" />
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Plateauing?</h2>
+            <h2 className="text-lg font-bold text-slate-900">Plateauing?</h2>
             <p className="mt-2 text-slate-600 leading-relaxed">
               Build for real people: family, friends, clubs, or local groups. This forces you to identify what users
               actually want, deploy your app, and iterate based on real feedback.

@@ -158,7 +158,7 @@ export default function ResumePage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div className="text-center">
-        <h1 className="text-xl md:text-2xl font-bold text-slate-900 mb-3">How to Craft a Good Tech Resume</h1>
+        <h1 className="text-lg md:text-xl font-bold text-slate-900 mb-3">How to Craft a Good Tech Resume</h1>
         <p className="text-base text-slate-600 max-w-3xl mx-auto">
           So now you have the skills and at least 2 cool projects built, let&apos;s build a resume that will catch the attention of recruiters.
         </p>
@@ -189,12 +189,12 @@ export default function ResumePage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
                 <Filter className="w-8 h-8 text-blue-600" />
               </div>
-              <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-2">Understanding the First Filter: ATS</h2>
+              <h2 className="text-base md:text-lg font-bold text-slate-900 mb-2">Understanding the First Filter: ATS</h2>
               <p className="text-slate-600">Before any human sees your resume, it goes through a robot first</p>
             </div>
 
             <div className="bg-blue-50 border-l-4 border-blue-600 rounded-r-lg p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-3">Here&apos;s How Resume Screening Actually Works:</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-3">Here&apos;s How Resume Screening Actually Works:</h3>
               <p className="text-slate-700 mb-4">
                 When you apply to jobs nowadays, especially at larger companies, your resume doesn&apos;t go straight to a recruiter.
                 <strong> It first goes through an ATS (Applicant Tracking System)</strong> - basically software that scans and filters resumes automatically.
@@ -206,7 +206,7 @@ export default function ResumePage() {
 
             <div className="space-y-6">
               <div className="bg-white rounded-lg border-2 border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-slate-900 mb-4">What is ATS?</h3>
+                <h3 className="text-base font-bold text-slate-900 mb-4">What is ATS?</h3>
                 <p className="text-slate-700 mb-4">
                   <strong>ATS stands for Applicant Tracking System.</strong> It&apos;s the software companies use to manage job applications.
                   The ATS scans your resume looking for:
@@ -237,7 +237,7 @@ export default function ResumePage() {
                 <div className="flex items-start gap-4">
                   <AlertCircle className="w-8 h-8 text-rose-600 flex-shrink-0" />
                   <div>
-                    <h3 className="text-lg font-bold text-rose-900 mb-3">The Scary Truth About ATS</h3>
+                    <h3 className="text-base font-bold text-rose-900 mb-3">The Scary Truth About ATS</h3>
                     <p className="text-slate-800 mb-3">
                       <strong>If your resume isn&apos;t formatted correctly, the ATS will reject it automatically</strong> - even if you&apos;re the perfect candidate!
                       The robot can&apos;t read fancy graphics, tables, or complex layouts. So it just rejects you.
@@ -250,7 +250,7 @@ export default function ResumePage() {
               </div>
 
               <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg border-2 border-emerald-300 p-6">
-                <h3 className="text-lg font-bold text-slate-900 mb-4">How to Beat the ATS (The Rules)</h3>
+                <h3 className="text-base font-bold text-slate-900 mb-4">How to Beat the ATS (The Rules)</h3>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-1" />
@@ -331,17 +331,17 @@ export default function ResumePage() {
         )}
 
         {activeTab === "philosophy" && (
-          <div className="space-y-6 max-w-4xl mx-auto">
+          <div className="space-y-6 max-w-4xl mx-auto text-sm">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
                 <Sparkles className="w-8 h-8 text-indigo-600" />
               </div>
-              <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-2">The Resume Philosophy</h2>
+              <h2 className="text-sm md:text-base font-bold text-slate-900 mb-2">The Resume Philosophy</h2>
               <p className="text-slate-600">What you need to understand about resumes</p>
             </div>
 
             <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-600 rounded-r-lg p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-3">The Truth About Resumes</h3>
+              <h3 className="text-sm md:text-base font-bold text-slate-900 mb-3">The Truth About Resumes</h3>
               <p className="text-slate-800 font-medium mb-3">
                 Remember, your resume is where you can show off everything you have been working hard for. <strong>Don&apos;t be humble.</strong>
               </p>
@@ -357,13 +357,13 @@ export default function ResumePage() {
               <div className="flex items-start gap-4">
                 <Clock3 className="w-10 h-10 text-amber-600 flex-shrink-0" />
                 <div>
-                  <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-4">The 7-Second Rule</h3>
-                  <p className="text-slate-700 mb-4 text-base">
+                  <h3 className="text-sm md:text-base font-bold text-slate-900 mb-4">The 7-Second Rule</h3>
+                  <p className="text-slate-700 mb-4 text-sm">
                     <strong>A recruiter checks your resume for only 7 seconds on average.</strong> Yes, just 7 seconds.
                   </p>
                   <div className="bg-white rounded-lg border-2 border-amber-500 p-6 mb-5 shadow-sm">
-                    <p className="text-center text-slate-800 font-semibold mb-2 text-base">Your resume will only be ready when this happens:</p>
-                    <p className="text-center text-base md:text-lg font-bold text-amber-900 mb-2">&quot;Wow, this person is really technical!&quot;</p>
+                    <p className="text-center text-slate-800 font-semibold mb-2 text-sm">Your resume will only be ready when this happens:</p>
+                    <p className="text-center text-sm font-bold text-amber-900 mb-2">&quot;Wow, this person is really technical!&quot;</p>
                     <p className="text-center text-slate-700">
                       When you glance at your resume for 5 seconds, that&apos;s what you should think.
                       <strong> If you don&apos;t get that feeling, it&apos;s not ready yet.</strong> Keep iterating.
@@ -380,8 +380,8 @@ export default function ResumePage() {
               <div className="flex items-start gap-4 mb-6">
                 <Star className="w-10 h-10 text-indigo-600 flex-shrink-0" />
                 <div>
-                  <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2">Embellishing: The Art of Looking Better</h3>
-                  <p className="text-slate-700 text-base mb-4">
+                  <h3 className="text-sm md:text-base font-bold text-slate-900 mb-2">Embellishing: The Art of Looking Better</h3>
+                  <p className="text-slate-700 text-sm mb-4">
                     This is the most important skill. You need to make your experiences look way more impressive than they are. Here&apos;s how:
                   </p>
                 </div>
@@ -391,7 +391,7 @@ export default function ResumePage() {
                 <div className="bg-white rounded-lg border-2 border-purple-200 p-6">
                   <div className="flex items-start gap-3 mb-3">
                     <Sparkles className="w-6 h-6 text-purple-600 flex-shrink-0" />
-                    <h4 className="text-lg font-bold text-slate-900">1. Project Titles Matter A LOT</h4>
+                    <h4 className="text-sm md:text-base font-bold text-slate-900">1. Project Titles Matter A LOT</h4>
                   </div>
                   <p className="text-slate-700 mb-4">
                     Don&apos;t call your project a &quot;WhatsApp Clone&quot; or &quot;Twitter Clone&quot;. That sounds like you just followed a tutorial.
@@ -424,7 +424,7 @@ export default function ResumePage() {
                 <div className="bg-white rounded-lg border-2 border-purple-200 p-6">
                   <div className="flex items-start gap-3 mb-3">
                     <Target className="w-6 h-6 text-purple-600 flex-shrink-0" />
-                    <h4 className="text-lg font-bold text-slate-900">2. Add Numbers to Everything</h4>
+                    <h4 className="text-sm md:text-base font-bold text-slate-900">2. Add Numbers to Everything</h4>
                   </div>
                   <p className="text-slate-700 mb-4">Numbers make things sound real and impressive.</p>
                   <div className="space-y-3">
@@ -446,7 +446,7 @@ export default function ResumePage() {
                 <div className="bg-white rounded-lg border-2 border-purple-200 p-6">
                   <div className="flex items-start gap-3 mb-3">
                     <Zap className="w-6 h-6 text-purple-600 flex-shrink-0" />
-                    <h4 className="text-lg font-bold text-slate-900">3. Label Projects as Experiences</h4>
+                    <h4 className="text-sm md:text-base font-bold text-slate-900">3. Label Projects as Experiences</h4>
                   </div>
                   <p className="text-slate-700">
                     When you&apos;re starting out and don&apos;t have internships yet, you can call them Experience or Software Development Experience.
@@ -457,7 +457,7 @@ export default function ResumePage() {
                 <div className="bg-white rounded-lg border-2 border-purple-200 p-6">
                   <div className="flex items-start gap-3 mb-3">
                     <Code2 className="w-6 h-6 text-purple-600 flex-shrink-0" />
-                    <h4 className="text-lg font-bold text-slate-900">4. Make Technologies Sound Advanced</h4>
+                    <h4 className="text-sm md:text-base font-bold text-slate-900">4. Make Technologies Sound Advanced</h4>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-start gap-2">
@@ -477,7 +477,7 @@ export default function ResumePage() {
               </div>
 
               <div className="mt-6 bg-purple-100 border-2 border-purple-400 rounded-lg p-6">
-                <p className="font-bold text-purple-900 mb-2 text-center text-base">The Golden Rule of Embellishing:</p>
+                <p className="font-bold text-purple-900 mb-2 text-center text-sm">The Golden Rule of Embellishing:</p>
                 <p className="text-slate-800 text-center">
                   You&apos;re not lying about what you did - you&apos;re describing it in the most impressive way possible.
                 </p>
@@ -488,7 +488,7 @@ export default function ResumePage() {
               <div className="flex items-start gap-3">
                 <RefreshCw className="w-6 h-6 text-slate-600 flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">Iterate Every Week</h3>
+                  <h3 className="text-sm md:text-base font-bold text-slate-900 mb-2">Iterate Every Week</h3>
                   <p className="text-slate-700">
                     The way to have a great resume is to <strong>check it every week and improve continuously.</strong>
                     Every time you iterate, check if it looks more impressive at first sight.
@@ -522,13 +522,13 @@ export default function ResumePage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4">
                 <FileText className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-2">The Template You Should Use</h2>
+              <h2 className="text-base md:text-lg font-bold text-slate-900 mb-2">The Template You Should Use</h2>
               <p className="text-slate-600">Don&apos;t reinvent the wheel - use what works</p>
             </div>
 
             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-300 p-8">
               <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-lg md:text-xl font-bold text-slate-900">Jake&apos;s Overleaf Resume Template</h3>
+                <h3 className="text-base md:text-lg font-bold text-slate-900">Jake&apos;s Overleaf Resume Template</h3>
                 <span className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-full uppercase">Required</span>
               </div>
 
@@ -538,7 +538,7 @@ export default function ResumePage() {
               </p>
 
               <div className="bg-white rounded-lg p-6 border-2 border-indigo-200 mb-6">
-                <h4 className="font-bold text-slate-900 mb-3 text-lg">What is This Template?</h4>
+                <h4 className="font-bold text-slate-900 mb-3 text-base">What is This Template?</h4>
                 <p className="text-slate-700 mb-4">
                   It&apos;s a LaTeX template on Overleaf. You can use it in your browser, no installation needed.
                 </p>
@@ -548,7 +548,7 @@ export default function ResumePage() {
               </div>
 
               <div className="bg-emerald-50 rounded-lg p-6 border-2 border-emerald-300 mb-6">
-                <h4 className="font-bold text-slate-900 mb-4 text-lg">Why This Template is Perfect:</h4>
+                <h4 className="font-bold text-slate-900 mb-4 text-base">Why This Template is Perfect:</h4>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
@@ -628,14 +628,14 @@ export default function ResumePage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
                 <Target className="w-8 h-8 text-purple-600" />
               </div>
-              <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-2">Writing Great Resume Content</h2>
+              <h2 className="text-base md:text-lg font-bold text-slate-900 mb-2">Writing Great Resume Content</h2>
               <p className="text-slate-600">How to write bullet points that actually impress people</p>
             </div>
 
             <div className="bg-purple-50 border-2 border-purple-400 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-purple-900 mb-4 text-center">The Bullet Point Formula</h3>
+              <h3 className="text-base font-bold text-purple-900 mb-4 text-center">The Bullet Point Formula</h3>
               <div className="bg-white rounded-lg p-6 border-2 border-purple-300 text-center mb-6">
-                <p className="text-base md:text-lg font-bold text-slate-900 mb-2">Action Verb + What You Did + Result/Impact</p>
+                <p className="text-sm md:text-base font-bold text-slate-900 mb-2">Action Verb + What You Did + Result/Impact</p>
                 <p className="text-slate-600">(with a number if possible)</p>
               </div>
 
@@ -667,7 +667,7 @@ export default function ResumePage() {
             </div>
 
             <div className="bg-white rounded-lg border-2 border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Use Strong Action Verbs</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-4">Use Strong Action Verbs</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 {["Built", "Developed", "Designed", "Implemented", "Optimized", "Engineered", "Architected", "Deployed"].map((verb) => (
                   <div key={verb} className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center font-semibold text-slate-700">
@@ -683,7 +683,7 @@ export default function ResumePage() {
             </div>
 
             <div className="bg-indigo-50 rounded-lg border border-indigo-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-3">How to Find Numbers/Metrics</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-3">How to Find Numbers/Metrics</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-2">
                   <ChevronRight className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
@@ -710,7 +710,7 @@ export default function ResumePage() {
             </div>
 
             <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3">How to Fill Your Resume (No Internship Yet)</h3>
+              <h3 className="text-sm md:text-base font-bold text-slate-900 mb-3">How to Fill Your Resume (No Internship Yet)</h3>
 
               <div className="bg-amber-50 rounded-lg border border-amber-200 p-3 mb-3">
                 <div className="flex items-start gap-3">
@@ -759,7 +759,7 @@ export default function ResumePage() {
             </div>
 
             <div className="bg-gradient-to-br from-slate-50 to-indigo-50 rounded-lg border border-indigo-200 p-5">
-              <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3">Plateaued at 2 projects? How to level up from there</h3>
+              <h3 className="text-sm md:text-base font-bold text-slate-900 mb-3">Plateaued at 2 projects? How to level up from there</h3>
               <p className="text-slate-700 mb-4">
                 If you already have two solid projects and feel stuck, this is where you add higher-signal experiences.
                 These usually take longer, but they can change your interview outcomes.
@@ -819,7 +819,7 @@ export default function ResumePage() {
             </div>
 
             <div className="bg-cyan-50 rounded-lg border border-cyan-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-3">Resume Tailoring (Advanced Strategy)</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-3">Resume Tailoring (Advanced Strategy)</h3>
               <p className="text-slate-700 mb-4">
                 Tailoring your resume for certain job posts can be <strong>very beneficial.</strong> Some companies hire very team-based and
                 are interested in an exact match between the skills you know and what their team uses.
@@ -856,7 +856,7 @@ export default function ResumePage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-pink-100 rounded-full mb-4">
                 <Eye className="w-8 h-8 text-pink-600" />
               </div>
-              <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-2">My Resume Journey</h2>
+              <h2 className="text-base md:text-lg font-bold text-slate-900 mb-2">My Resume Journey</h2>
               <p className="text-slate-600">Real examples from my first resume to FAANG interviews</p>
             </div>
 
@@ -990,7 +990,7 @@ export default function ResumePage() {
                 <div className="bg-emerald-50 border-2 border-emerald-300 rounded-lg p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="w-6 h-6 text-emerald-600" />
-                    <span className="font-bold text-emerald-900 text-lg">Major Improvements Made</span>
+                    <span className="font-bold text-emerald-900 text-base">Major Improvements Made</span>
                   </div>
 
                   <div className="space-y-3">
@@ -1058,7 +1058,7 @@ export default function ResumePage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full mb-4">
                 <Trophy className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-2">Score Your Resume</h2>
+              <h2 className="text-base md:text-lg font-bold text-slate-900 mb-2">Score Your Resume</h2>
               <p className="text-slate-600">Get instant feedback on what&apos;s working and what needs improvement</p>
             </div>
 
@@ -1076,7 +1076,7 @@ export default function ResumePage() {
                     <div className="mx-auto w-20 h-20 bg-slate-100 group-hover:bg-indigo-100 rounded-full flex items-center justify-center mb-4 transition-colors">
                       <Upload className="w-10 h-10 text-slate-400 group-hover:text-indigo-600 transition-colors" />
                     </div>
-                    <p className="text-lg font-semibold text-slate-900 mb-2">{uploadedFile ? uploadedFile.name : "Upload Your Resume"}</p>
+                    <p className="text-base font-semibold text-slate-900 mb-2">{uploadedFile ? uploadedFile.name : "Upload Your Resume"}</p>
                     <p className="text-sm text-slate-500">PDF format - Max 5MB</p>
                   </label>
                 </div>
@@ -1098,13 +1098,13 @@ export default function ResumePage() {
                 <div className="text-center">
                   <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full mb-4 border ${getScoreBg(score?.overall ?? 0)}`}>
                     <div>
-                      <div className={`text-4xl font-bold ${getScoreColor(score?.overall ?? 0)}`}>{score?.overall}</div>
+                      <div className={`text-3xl font-bold ${getScoreColor(score?.overall ?? 0)}`}>{score?.overall}</div>
                       <div className="text-sm text-slate-600 font-medium">
                         {(score?.overall ?? 0) >= 80 ? "Excellent!" : (score?.overall ?? 0) >= 60 ? "Good" : "Needs Work"}
                       </div>
                     </div>
                   </div>
-                  <h3 className="text-base md:text-lg font-bold text-slate-900 mb-2">Resume Analysis Complete</h3>
+                  <h3 className="text-sm md:text-base font-bold text-slate-900 mb-2">Resume Analysis Complete</h3>
                   <p className="text-slate-600">Here&apos;s how your resume performs across key metrics</p>
                 </div>
 
@@ -1119,7 +1119,7 @@ export default function ResumePage() {
                     return (
                       <div key={item.label} className="bg-slate-50 rounded-lg p-4 text-center border border-slate-200">
                         <Icon className="w-5 h-5 text-slate-400 mx-auto mb-2" />
-                        <div className={`text-xl md:text-2xl font-bold mb-1 ${getScoreColor(item.value)}`}>{item.value}</div>
+                        <div className={`text-lg md:text-xl font-bold mb-1 ${getScoreColor(item.value)}`}>{item.value}</div>
                         <div className="text-xs text-slate-600 font-medium">{item.label}</div>
                       </div>
                     );
