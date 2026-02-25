@@ -1,0 +1,121 @@
+from io import BytesIO
+
+from app.models import ResumeSubmission, UserTaskCompletion
+from app.routes import resume as resume_route
+from app.services.resume_scoring import PreparedResumeContent
+
+
+class _PassingProvider:
+  provider_name = "anthropic"
+  model_name = "fake-mid-tier"
+
+  def score_resume(self, *, resume_text: str, page_count: int):
+    return {
+      "formatting": 84,
+      "content": 88,
+      "ats": 82,
+      "impact": 85,
+      "strengths": [
+        "Strong technical project content.",
+        "Clear skills and tooling signal.",
+      ],
+      "improvements": [
+        "Add two bullets with concrete metrics.",
+        "Make impact phrasing more specific.",
+        "Highlight ownership for key deliverables.",
+      ],
+    }
+
+
+class _MalformedProvider:
+  provider_name = "anthropic"
+  model_name = "fake-mid-tier"
+
+  def score_resume(self, *, resume_text: str, page_count: int):
+    return {"unexpected": "payload"}
+
+
+def test_score_resume_success_persists_submission_and_updates_progress(client, auth_headers, app, monkeypatch):
+  monkeypatch.setattr(resume_route, "build_resume_scoring_provider", lambda: _PassingProvider())
+  monkeypatch.setattr(
+    resume_route,
+    "prepare_resume_content",
+    lambda _: PreparedResumeContent(
+      text_for_prompt="student@example.com https://github.com/student",
+      page_count=1,
+      extracted_char_count=48,
+    ),
+  )
+
+  response = client.post(
+    "/resume/score",
+    headers=auth_headers,
+    data={"file": (BytesIO(b"%PDF-1.4 fake"), "resume.pdf")},
+    content_type="multipart/form-data",
+  )
+  assert response.status_code == 200
+  payload = response.get_json()
+  assert payload["overall_score"] >= 80
+  assert payload["progression"]["resume_task_completed"] is True
+
+  with app.app_context():
+    saved = ResumeSubmission.query.order_by(ResumeSubmission.id.desc()).first()
+    assert saved is not None
+    assert saved.status == "succeeded"
+    assert saved.overall_score is not None
+
+    completion = UserTaskCompletion.query.filter_by(
+      user_id=app.config["TEST_USER_ID"],
+      task_id=app.config["TEST_RESUME_TASK_ID"],
+    ).first()
+    assert completion is not None
+
+
+def test_score_resume_with_malformed_provider_payload_returns_controlled_error(client, auth_headers, app, monkeypatch):
+  monkeypatch.setattr(resume_route, "build_resume_scoring_provider", lambda: _MalformedProvider())
+  monkeypatch.setattr(
+    resume_route,
+    "prepare_resume_content",
+    lambda _: PreparedResumeContent(
+      text_for_prompt="student@example.com https://github.com/student",
+      page_count=1,
+      extracted_char_count=48,
+    ),
+  )
+
+  response = client.post(
+    "/resume/score",
+    headers=auth_headers,
+    data={"file": (BytesIO(b"%PDF-1.4 fake"), "resume.pdf")},
+    content_type="multipart/form-data",
+  )
+  assert response.status_code == 502
+  payload = response.get_json()
+  assert payload["error_code"] == "provider_response_invalid"
+
+  with app.app_context():
+    saved = ResumeSubmission.query.order_by(ResumeSubmission.id.desc()).first()
+    assert saved is not None
+    assert saved.status == "failed"
+    assert saved.error_code == "provider_response_invalid"
+
+
+def test_score_resume_requires_authentication(client):
+  response = client.post(
+    "/resume/score",
+    data={"file": (BytesIO(b"%PDF-1.4 fake"), "resume.pdf")},
+    content_type="multipart/form-data",
+  )
+  assert response.status_code == 401
+
+
+def test_score_resume_rejects_invalid_file_type(client, auth_headers):
+  response = client.post(
+    "/resume/score",
+    headers=auth_headers,
+    data={"file": (BytesIO(b"not-a-pdf"), "resume.txt")},
+    content_type="multipart/form-data",
+  )
+  assert response.status_code == 400
+  payload = response.get_json()
+  assert payload["error_code"] == "invalid_file_type"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import Image from "next/image";
 import {
   AlertCircle,
@@ -28,6 +28,7 @@ import {
   Zap
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { apiRequest } from "@/lib/api";
 
 type ResumeScore = {
   overall: number;
@@ -35,6 +36,54 @@ type ResumeScore = {
   content: number;
   ats: number;
   impact: number;
+};
+
+type ResumeScoreResponse = {
+  submission_id: number;
+  overall_score: number;
+  dimension_scores: {
+    formatting: number;
+    content: number;
+    ats: number;
+    impact: number;
+  };
+  strengths: string[];
+  improvements: string[];
+  metadata: {
+    page_count: number | null;
+    provider: string;
+    model: string;
+    prompt_version: string;
+  };
+  progression: {
+    resume_task_completed: boolean;
+    category_resume: number;
+    pass_threshold: number;
+  };
+};
+
+type ResumeSubmissionHistoryItem = {
+  id: number;
+  status: "succeeded" | "failed";
+  overall_score: number | null;
+  dimension_scores: {
+    formatting: number;
+    content: number;
+    ats: number;
+    impact: number;
+  } | null;
+  metadata: {
+    provider: string | null;
+    model: string | null;
+    prompt_version: string | null;
+  };
+  error_code: string | null;
+  error_message: string | null;
+  created_at: string | null;
+};
+
+type ResumeSubmissionsResponse = {
+  submissions: ResumeSubmissionHistoryItem[];
 };
 
 type FeedbackItem = {
@@ -51,29 +100,6 @@ const tabs: Array<{ id: TabType; label: string; icon: LucideIcon }> = [
   { id: "content", label: "Writing Content", icon: Target },
   { id: "examples", label: "Real Examples", icon: Eye },
   { id: "scorer", label: "Score It", icon: Trophy }
-];
-
-const mockScore: ResumeScore = {
-  overall: 78,
-  formatting: 85,
-  content: 72,
-  ats: 80,
-  impact: 75
-};
-
-const mockFeedback: FeedbackItem[] = [
-  { category: "Formatting", type: "success", message: "Clean single-column layout detected - great for ATS!" },
-  { category: "Content", type: "warning", message: "Only 2 out of 6 bullet points include quantified results. Aim for 70%+." },
-  {
-    category: "Content",
-    type: "error",
-    message: "Project titles are too generic. Embellish: 'WhatsApp Clone' -> 'Real-time Chat Application with WebSocket Protocol'"
-  },
-  { category: "ATS", type: "success", message: "No images or complex formatting - ATS-friendly" },
-  { category: "ATS", type: "warning", message: "Missing keywords from typical CS job descriptions" },
-  { category: "Impact", type: "error", message: "Projects lack GitHub links. Add repository URLs" },
-  { category: "Content", type: "warning", message: "Resume is 0.65 pages. Fill one full page for better impact" },
-  { category: "Content", type: "error", message: "Detected 'About Me' section - remove it, recruiters skip this" }
 ];
 
 function getScoreColor(score: number) {
@@ -109,6 +135,27 @@ function getFeedbackTone(type: FeedbackItem["type"]) {
   };
 }
 
+function buildFeedback(response: ResumeScoreResponse): FeedbackItem[] {
+  const strengths = (response.strengths ?? []).slice(0, 2).map((message) => ({
+    category: "Strength",
+    type: "success" as const,
+    message
+  }));
+  const improvements = (response.improvements ?? []).slice(0, 3).map((message, index) => ({
+    category: "Improvement",
+    type: index < 2 ? ("warning" as const) : ("error" as const),
+    message
+  }));
+  return [...strengths, ...improvements];
+}
+
+function getDateLabel(isoDate: string | null): string {
+  if (!isoDate) return "Unknown time";
+  const parsed = new Date(isoDate);
+  if (Number.isNaN(parsed.getTime())) return "Unknown time";
+  return parsed.toLocaleString();
+}
+
 export default function ResumePage() {
   const [activeTab, setActiveTab] = useState<TabType>("ats");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -117,12 +164,86 @@ export default function ResumePage() {
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [score, setScore] = useState<ResumeScore | null>(null);
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
+  const [submissionId, setSubmissionId] = useState<number | null>(null);
+  const [scoreMetadata, setScoreMetadata] = useState<ResumeScoreResponse["metadata"] | null>(null);
+  const [progression, setProgression] = useState<ResumeScoreResponse["progression"] | null>(null);
+  const [submissionHistory, setSubmissionHistory] = useState<ResumeSubmissionHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+
+  const loadSubmissionHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const response = await apiRequest<ResumeSubmissionsResponse>("/resume/submissions");
+      setSubmissionHistory(response.submissions ?? []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load resume scoring history.";
+      setHistoryError(message);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== "scorer" || !isHistoryExpanded) {
+      return;
+    }
+    void loadSubmissionHistory();
+  }, [activeTab, isHistoryExpanded, loadSubmissionHistory]);
+
+  const scoreResume = async (file: File) => {
+    setUploadedFile(file);
+    setUploadError(null);
+    setIsAnalyzing(true);
+    setAnalysisComplete(false);
+    setScore(null);
+    setFeedback([]);
+    setScoreMetadata(null);
+    setProgression(null);
+    setSubmissionId(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await apiRequest<ResumeScoreResponse>("/resume/score", {
+        method: "POST",
+        body: formData
+      });
+
+      setScore({
+        overall: response.overall_score,
+        formatting: response.dimension_scores.formatting,
+        content: response.dimension_scores.content,
+        ats: response.dimension_scores.ats,
+        impact: response.dimension_scores.impact
+      });
+      setFeedback(buildFeedback(response));
+      setSubmissionId(response.submission_id);
+      setScoreMetadata(response.metadata);
+      setProgression(response.progression);
+      setAnalysisComplete(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to analyze resume.";
+      setUploadError(message);
+      setAnalysisComplete(false);
+      setFeedback([]);
+      setScore(null);
+    } finally {
+      setIsAnalyzing(false);
+      if (isHistoryExpanded) {
+        void loadSubmissionHistory();
+      }
+    }
+  };
 
   const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "application/pdf") {
+    const isPdfType = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    if (!isPdfType) {
       setUploadError("Please upload a PDF file.");
       return;
     }
@@ -132,17 +253,8 @@ export default function ResumePage() {
       return;
     }
 
-    setUploadError(null);
-    setUploadedFile(file);
-    setIsAnalyzing(true);
-    setAnalysisComplete(false);
-
-    window.setTimeout(() => {
-      setScore(mockScore);
-      setFeedback(mockFeedback);
-      setIsAnalyzing(false);
-      setAnalysisComplete(true);
-    }, 2500);
+    void scoreResume(file);
+    event.target.value = "";
   };
 
   const resetAnalysis = () => {
@@ -151,6 +263,9 @@ export default function ResumePage() {
     setAnalysisComplete(false);
     setScore(null);
     setFeedback([]);
+    setScoreMetadata(null);
+    setProgression(null);
+    setSubmissionId(null);
   };
 
   return (
@@ -1255,7 +1370,21 @@ export default function ResumePage() {
                   </div>
                   <h3 className="text-sm md:text-base font-bold text-slate-900 mb-2">Resume Analysis Complete</h3>
                   <p className="text-slate-600">Here&apos;s how your resume performs across key metrics</p>
+                  {submissionId ? (
+                    <p className="text-xs text-slate-500 mt-2">Submission #{submissionId}</p>
+                  ) : null}
                 </div>
+
+                {progression ? (
+                  <div className={`rounded-lg border p-4 ${progression.resume_task_completed ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
+                    <p className={`text-sm font-semibold ${progression.resume_task_completed ? "text-emerald-800" : "text-amber-800"}`}>
+                      {progression.resume_task_completed
+                        ? "Resume progression task completed."
+                        : `Reach ${progression.pass_threshold} to complete the resume progression task.`}
+                    </p>
+                    <p className="text-xs text-slate-600 mt-1">Resume category readiness: {progression.category_resume}%</p>
+                  </div>
+                ) : null}
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
@@ -1300,8 +1429,56 @@ export default function ResumePage() {
                   <RefreshCw className="w-4 h-4" />
                   Upload New Resume
                 </button>
+
+                {scoreMetadata ? (
+                  <div className="text-xs text-slate-500 text-center">
+                    Evaluated by {scoreMetadata.provider}:{scoreMetadata.model} ({scoreMetadata.prompt_version})
+                    {typeof scoreMetadata.page_count === "number" ? ` • ${scoreMetadata.page_count} page(s)` : ""}
+                  </div>
+                ) : null}
               </div>
             )}
+
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setIsHistoryExpanded((prev) => !prev)}
+                aria-expanded={isHistoryExpanded}
+                aria-controls="recent-scoring-attempts"
+                className="w-full flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+              >
+                <span className="font-semibold text-slate-900 text-base">Recent Scoring Attempts</span>
+                <ChevronRight className={`w-5 h-5 text-slate-500 transition-transform ${isHistoryExpanded ? "rotate-90" : ""}`} />
+              </button>
+
+              {isHistoryExpanded ? (
+                <div id="recent-scoring-attempts" className="space-y-3">
+                  {historyLoading ? <p className="text-sm text-slate-500">Loading history...</p> : null}
+                  {historyError ? <p className="text-sm text-rose-600">{historyError}</p> : null}
+                  {!historyLoading && !historyError && submissionHistory.length === 0 ? (
+                    <p className="text-sm text-slate-500">No previous resume submissions yet.</p>
+                  ) : null}
+                  {!historyLoading && !historyError && submissionHistory.length > 0 ? (
+                    <div className="space-y-2">
+                      {submissionHistory.slice(0, 5).map((item) => (
+                        <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 flex items-center justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">
+                              Submission #{item.id} • {item.status === "succeeded" ? "Scored" : "Failed"}
+                            </p>
+                            <p className="text-xs text-slate-500">{getDateLabel(item.created_at)}</p>
+                            {item.error_message ? <p className="text-xs text-rose-600 mt-1">{item.error_message}</p> : null}
+                          </div>
+                          <div className={`text-lg font-bold ${getScoreColor(item.overall_score ?? 0)}`}>
+                            {item.overall_score ?? "—"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
 
             <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-6">
               <h3 className="font-bold text-amber-900 mb-2 text-base">Before 100-300 Applications</h3>

@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from passlib.hash import bcrypt
 from .extensions import db
@@ -117,3 +118,55 @@ class ProjectSubmission(db.Model):
   updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
   user = db.relationship("User", backref=db.backref("project_submissions", lazy=True))
+
+
+class ResumeSubmission(db.Model):
+  __tablename__ = "resume_submissions"
+
+  id = db.Column(db.Integer, primary_key=True)
+  user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+  file_name = db.Column(db.String(255), nullable=False)
+  file_size_bytes = db.Column(db.Integer, nullable=False)
+  page_count = db.Column(db.Integer, nullable=True)
+  extracted_char_count = db.Column(db.Integer, nullable=True)
+  status = db.Column(db.String(32), nullable=False, default="failed", server_default="failed")
+  provider = db.Column(db.String(64), nullable=True)
+  model = db.Column(db.String(120), nullable=True)
+  prompt_version = db.Column(db.String(64), nullable=True)
+  overall_score = db.Column(db.Integer, nullable=True)
+  formatting_score = db.Column(db.Integer, nullable=True)
+  content_score = db.Column(db.Integer, nullable=True)
+  ats_score = db.Column(db.Integer, nullable=True)
+  impact_score = db.Column(db.Integer, nullable=True)
+  strengths_json = db.Column(db.Text, nullable=True)
+  improvements_json = db.Column(db.Text, nullable=True)
+  error_code = db.Column(db.String(64), nullable=True)
+  error_message = db.Column(db.String(500), nullable=True)
+  created_at = db.Column(db.DateTime, default=datetime.utcnow)
+  updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+  user = db.relationship("User", backref=db.backref("resume_submissions", lazy=True))
+
+  @property
+  def strengths(self) -> list[str]:
+    if not self.strengths_json:
+      return []
+    try:
+      parsed = json.loads(self.strengths_json)
+    except Exception:
+      return []
+    if not isinstance(parsed, list):
+      return []
+    return [str(item) for item in parsed if isinstance(item, str)]
+
+  @property
+  def improvements(self) -> list[str]:
+    if not self.improvements_json:
+      return []
+    try:
+      parsed = json.loads(self.improvements_json)
+    except Exception:
+      return []
+    if not isinstance(parsed, list):
+      return []
+    return [str(item) for item in parsed if isinstance(item, str)]

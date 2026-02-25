@@ -5,7 +5,7 @@ from math import floor
 from typing import Any
 
 from ..extensions import db
-from ..models import Module, ProjectSubmission, Task, User, UserProgress, UserTaskCompletion
+from ..models import Module, ProjectSubmission, ResumeSubmission, Task, User, UserProgress, UserTaskCompletion
 
 
 @dataclass
@@ -285,5 +285,34 @@ def sync_projects_submission_progress(user_id: int, *, commit: bool = True) -> d
       db.session.add(UserTaskCompletion(user_id=user_id, task_id=task.id))
     if not is_completed and completion is not None:
       db.session.delete(completion)
+
+  return recompute_and_persist_user_progress(user_id, commit=commit)
+
+
+def sync_resume_submission_progress(user_id: int, *, commit: bool = True) -> dict[str, Any]:
+  module = Module.query.filter_by(key="resume").first()
+  if module is None:
+    return recompute_and_persist_user_progress(user_id, commit=commit)
+
+  task = (
+    Task.query
+    .filter_by(module_id=module.id, is_active=True, challenge_id="resume_pass_threshold")
+    .first()
+  )
+  if task is None:
+    return recompute_and_persist_user_progress(user_id, commit=commit)
+
+  best_successful_score = (
+    db.session.query(db.func.max(ResumeSubmission.overall_score))
+    .filter(ResumeSubmission.user_id == user_id, ResumeSubmission.status == "succeeded")
+    .scalar()
+  )
+  is_completed = (best_successful_score or 0) >= 80
+
+  completion = UserTaskCompletion.query.filter_by(user_id=user_id, task_id=task.id).first()
+  if is_completed and completion is None:
+    db.session.add(UserTaskCompletion(user_id=user_id, task_id=task.id))
+  if not is_completed and completion is not None:
+    db.session.delete(completion)
 
   return recompute_and_persist_user_progress(user_id, commit=commit)
