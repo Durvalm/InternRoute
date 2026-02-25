@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Clock3,
   Code2,
-  ExternalLink,
   Eye,
   FileText,
   Filter,
@@ -44,12 +43,11 @@ type FeedbackItem = {
   message: string;
 };
 
-type TabType = "ats" | "philosophy" | "template" | "content" | "examples" | "scorer";
+type TabType = "ats" | "philosophy" | "content" | "examples" | "scorer";
 
 const tabs: Array<{ id: TabType; label: string; icon: LucideIcon }> = [
-  { id: "ats", label: "ATS Filter", icon: Filter },
+  { id: "ats", label: "ATS + Template", icon: Filter },
   { id: "philosophy", label: "The Philosophy", icon: Sparkles },
-  { id: "template", label: "The Template", icon: FileText },
   { id: "content", label: "Writing Content", icon: Target },
   { id: "examples", label: "Real Examples", icon: Eye },
   { id: "scorer", label: "Score It", icon: Trophy }
@@ -189,8 +187,8 @@ export default function ResumePage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
                 <Filter className="w-8 h-8 text-blue-600" />
               </div>
-              <h2 className="text-base md:text-lg font-bold text-slate-900 mb-2">Understanding the First Filter: ATS</h2>
-              <p className="text-slate-600">Before any human sees your resume, it goes through a robot first</p>
+              <h2 className="text-base md:text-lg font-bold text-slate-900 mb-2">Pass ATS + Use the Right Template</h2>
+              <p className="text-slate-600">Before any human sees your resume, it goes through a robot first.</p>
             </div>
 
             <div className="bg-blue-50 border-l-4 border-blue-600 rounded-r-lg p-6">
@@ -249,57 +247,76 @@ export default function ResumePage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg border-2 border-emerald-300 p-6">
-                <h3 className="text-base font-bold text-slate-900 mb-4">How to Beat the ATS (The Rules)</h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-slate-900">Use a Simple, Single-Column Format</p>
-                      <p className="text-sm text-slate-700">
-                        No fancy two-column layouts, no graphics, no text boxes. Keep it simple and clean.
-                      </p>
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-400 p-7">
+                <div className="flex items-center gap-3 mb-3">
+                  <h3 className="text-base md:text-lg font-bold text-slate-900">Jake&apos;s Overleaf Resume Template</h3>
+                  <span className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-full uppercase">Use This</span>
+                </div>
+
+                <p className="text-slate-700 text-sm md:text-base mb-4">
+                  Seriously, just use this template. Don&apos;t waste time trying to make your resume &quot;unique&quot; with fancy designs.
+                  <strong> Jake&apos;s template is proven to work at FAANG companies and used by thousands of students.</strong>
+                </p>
+
+                <div className="bg-white rounded-lg p-5 border-2 border-indigo-200 mb-4">
+                  <h4 className="font-bold text-slate-900 mb-3 text-sm md:text-base">Why this template is perfect:</h4>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                      <p className="font-semibold text-slate-900 text-sm">ATS Can Parse It Perfectly</p>
+                      <p className="text-xs text-slate-700 mt-1">Single-column, clean formatting that robots can parse without issues.</p>
+                    </div>
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                      <p className="font-semibold text-slate-900 text-sm">Fits Everything on One Page</p>
+                      <p className="text-xs text-slate-700 mt-1">Optimized spacing so you can fit experiences without looking cramped.</p>
+                    </div>
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                      <p className="font-semibold text-slate-900 text-sm">Clean and Professional Look</p>
+                      <p className="text-xs text-slate-700 mt-1">Recruiters recognize and trust this layout.</p>
+                    </div>
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                      <p className="font-semibold text-slate-900 text-sm">Proven to Work at FAANG</p>
+                      <p className="text-xs text-slate-700 mt-1">Students using this template have landed top internship interviews.</p>
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-slate-900">Use Standard Section Headers</p>
-                      <p className="text-sm text-slate-700">
-                        Stick with: Experience, Education, Projects, Skills. Don&apos;t get creative like &quot;My Journey&quot; - ATS might not recognize it.
-                      </p>
-                    </div>
+                <div className="flex flex-wrap gap-3">
+                  <a
+                    href="https://www.overleaf.com/latex/templates/jakes-resume/syzfjbzwjncs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold text-sm"
+                  >
+                    Open Jake&apos;s Template
+                  </a>
+                  <div className="inline-flex items-center rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-slate-700">
+                    Pro tip: open template -&gt; click Copy -&gt; start filling sections.
                   </div>
+                </div>
+              </div>
 
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-slate-900">Avoid Images, Graphics, Tables</p>
-                      <p className="text-sm text-slate-700">
-                        That beautiful infographic resume in Canva? ATS can&apos;t read it. Stick to plain text formatting.
-                      </p>
-                    </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <h3 className="text-sm md:text-base font-bold text-slate-900 mb-3">ATS checklist (quick version)</h3>
+                <div className="grid md:grid-cols-2 gap-2 text-sm text-slate-700">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    Use one-column layout
                   </div>
-
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-slate-900">Include Keywords from Job Descriptions</p>
-                      <p className="text-sm text-slate-700">
-                        If the job asks for a keyword, try to match the exact wording where honest and relevant.
-                      </p>
-                    </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    Keep standard headers
                   </div>
-
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-slate-900">Save as PDF (Usually)</p>
-                      <p className="text-sm text-slate-700">
-                        Unless the application specifically asks for .docx, use PDF to preserve formatting.
-                      </p>
-                    </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    Avoid images/tables/text boxes
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    Match keywords honestly
+                  </div>
+                  <div className="flex items-start gap-2 md:col-span-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    Export PDF unless the application asks for ".docx"
                   </div>
                 </div>
               </div>
@@ -315,6 +332,31 @@ export default function ResumePage() {
                     </p>
                   </div>
                 </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl p-6 text-white">
+                <p className="text-base font-bold mb-2">Section complete once these are done:</p>
+                <div className="space-y-2 text-sm text-indigo-100 mb-4">
+                  <p className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-white" />
+                    You understand what ATS checks and why formatting matters.
+                  </p>
+                  <p className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-white" />
+                    You opened Jake&apos;s template and created your own copy.
+                  </p>
+                  <p className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-white" />
+                    No need to fully write your resume yet. That comes next.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab("philosophy")}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-indigo-700 rounded-lg hover:bg-indigo-50 transition-colors font-semibold text-sm"
+                >
+                  Done - Continue to The Philosophy
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -500,112 +542,6 @@ export default function ResumePage() {
             <div className="flex justify-between pt-4">
               <button
                 onClick={() => setActiveTab("ats")}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-semibold"
-              >
-                <ArrowRight className="w-5 h-5 rotate-180" />
-                Back
-              </button>
-              <button
-                onClick={() => setActiveTab("template")}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold"
-              >
-                Next: The Template
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "template" && (
-          <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4">
-                <FileText className="w-8 h-8 text-white" />
-              </div>
-              <h2 className="text-base md:text-lg font-bold text-slate-900 mb-2">The Template You Should Use</h2>
-              <p className="text-slate-600">Don&apos;t reinvent the wheel - use what works</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-300 p-8">
-              <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-base md:text-lg font-bold text-slate-900">Jake&apos;s Overleaf Resume Template</h3>
-                <span className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-full uppercase">Required</span>
-              </div>
-
-              <p className="text-slate-700 text-base mb-6">
-                Seriously, just use this template. Don&apos;t waste time trying to make your resume unique with fancy designs.
-                <strong> Jake&apos;s template is proven to work at FAANG companies</strong> and used by thousands of students.
-              </p>
-
-              <div className="bg-white rounded-lg p-6 border-2 border-indigo-200 mb-6">
-                <h4 className="font-bold text-slate-900 mb-3 text-base">What is This Template?</h4>
-                <p className="text-slate-700 mb-4">
-                  It&apos;s a LaTeX template on Overleaf. You can use it in your browser, no installation needed.
-                </p>
-                <p className="text-slate-700">
-                  Overleaf gives you a live preview, so you can see exactly what your resume looks like as you type.
-                </p>
-              </div>
-
-              <div className="bg-emerald-50 rounded-lg p-6 border-2 border-emerald-300 mb-6">
-                <h4 className="font-bold text-slate-900 mb-4 text-base">Why This Template is Perfect:</h4>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-slate-900">ATS Can Parse It Perfectly</p>
-                      <p className="text-sm text-slate-700">Single-column, clean formatting that robots can read without issues</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-slate-900">Fits Everything on One Page</p>
-                      <p className="text-sm text-slate-700">Optimized spacing so you can fit experiences without looking cramped</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-slate-900">Clean and Professional Look</p>
-                      <p className="text-sm text-slate-700">Recruiters recognize and trust this format</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-slate-900">Proven to Work at FAANG</p>
-                      <p className="text-sm text-slate-700">Students using this template have gotten offers at top companies</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-4">
-                <a
-                  href="https://www.overleaf.com/latex/templates/jakes-resume/syzfjbzwjncs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold shadow-sm text-base"
-                >
-                  <ExternalLink className="w-5 h-5" />
-                  Open Jake&apos;s Template in Overleaf
-                </a>
-              </div>
-
-              <div className="mt-6 bg-amber-50 rounded-lg border border-amber-300 p-6">
-                <div className="flex items-start gap-3">
-                  <Lightbulb className="w-5 h-5 text-amber-600 flex-shrink-0 mt-1" />
-                  <div className="text-sm text-slate-700">
-                    <strong>Pro tip:</strong> Once you open the template in Overleaf, click Copy to create your own version.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-between pt-4">
-              <button
-                onClick={() => setActiveTab("philosophy")}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-semibold"
               >
                 <ArrowRight className="w-5 h-5 rotate-180" />
@@ -833,7 +769,7 @@ export default function ResumePage() {
 
             <div className="flex justify-between pt-4">
               <button
-                onClick={() => setActiveTab("template")}
+                onClick={() => setActiveTab("philosophy")}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-semibold"
               >
                 <ArrowRight className="w-5 h-5 rotate-180" />
@@ -1182,6 +1118,23 @@ export default function ResumePage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-6">
+              <h3 className="font-bold text-amber-900 mb-2 text-base">Before 100-300 Applications</h3>
+              <p className="text-sm text-slate-700 mb-3">
+                Sending 100-300 applications with a weak resume is usually wasted effort. Fix the resume first, then apply hard.
+              </p>
+              <p className="text-sm text-slate-700 mb-4">
+                Use your score and feedback here to tighten the resume, then move into the Applications module with confidence.
+              </p>
+              <a
+                href="/applications"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-semibold text-sm"
+              >
+                Go to Applications Module
+                <ArrowRight className="w-4 h-4" />
+              </a>
             </div>
 
             <div className="flex justify-start pt-4">
