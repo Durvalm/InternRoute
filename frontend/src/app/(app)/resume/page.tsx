@@ -169,9 +169,8 @@ export default function ResumePage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
-                activeTab === tab.id ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-              }`}
+              className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${activeTab === tab.id ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+                }`}
             >
               <Icon className="w-4 h-4" />
               <span className="hidden sm:inline">{tab.label}</span>
@@ -388,10 +387,10 @@ export default function ResumePage() {
                 Remember, your resume is where you can show off everything you have been working hard for. <strong>Don&apos;t be humble.</strong>
               </p>
               <p className="text-slate-700">
-                The best thing you can do is to <strong>embellish your experiences so they look more impressive than what they actually are.</strong>
+                The best thing you can do is to <strong>embellish your experiences so they look more impressive than what they actually are. </strong>
                 At the end of the day, it doesn&apos;t matter your skill level - someone is checking a piece of paper (your resume).
-                I&apos;ve seen many folks who were average technically getting top tier internships, and when I checked their resume,
-                I thought they were the best coders ever.
+                I&apos;ve seen many friends who were not that good technically getting top tier internships, and when I checked their resume,
+                I was like "wow".
               </p>
             </div>
 
@@ -526,6 +525,29 @@ export default function ResumePage() {
               </div>
             </div>
 
+            <div className="bg-white rounded-lg border-2 border-indigo-200 p-6">
+              <h3 className="text-sm md:text-base font-bold text-slate-900 mb-4">Same Work, Better Framing</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
+                  <p className="font-bold text-rose-900 mb-2">Not Embellished</p>
+                  <div className="space-y-2 text-sm text-slate-700">
+                    <p>- Built a todo app with React</p>
+                    <p>- Made authentication for users</p>
+                  </div>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                  <p className="font-bold text-emerald-900 mb-2">Embellished (Truthful)</p>
+                  <div className="space-y-2 text-sm text-slate-700">
+                    <p>- Developed a task management platform with React + Firebase, supporting 120+ weekly active users</p>
+                    <p>- Implemented JWT-based authentication and role-based access across 6 protected routes</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600 mt-3">
+                Same underlying project, better wording, clearer technical depth, and measurable impact.
+              </p>
+            </div>
+
             <div className="bg-slate-50 rounded-lg border border-slate-200 p-6">
               <div className="flex items-start gap-3">
                 <RefreshCw className="w-6 h-6 text-slate-600 flex-shrink-0 mt-1" />
@@ -537,6 +559,31 @@ export default function ResumePage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl p-6 text-white">
+              <p className="text-base font-bold mb-2">Section complete once these are done:</p>
+              <div className="space-y-2 text-sm text-indigo-100 mb-4">
+                <p className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-white" />
+                  You understand the 5-7 second first-impression test.
+                </p>
+                <p className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-white" />
+                  You can embellish truthfully by adding stronger wording, tech detail, and numbers.
+                </p>
+                <p className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-white" />
+                  You understand the strategy now; no need to fully write your resume yet.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveTab("content")}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-indigo-700 rounded-lg hover:bg-indigo-50 transition-colors font-semibold text-sm"
+              >
+                Done - Start Writing Content
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="flex justify-between pt-4">
@@ -566,6 +613,28 @@ export default function ResumePage() {
               </div>
               <h2 className="text-base md:text-lg font-bold text-slate-900 mb-2">Writing Great Resume Content</h2>
               <p className="text-slate-600">How to write bullet points that actually impress people</p>
+            </div>
+
+            <div className="bg-white rounded-lg border-2 border-slate-200 p-6">
+              <h3 className="text-base font-bold text-slate-900 mb-4">Resume Structure (Start Here)</h3>
+              <p className="text-slate-700 mb-4">
+                Before writing bullets, decide section order. For internship resumes, this is a common order:
+              </p>
+              <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 mb-4">
+                <div className="space-y-2 text-sm text-slate-700">
+                  <p>1. Education</p>
+                  <p>2. Experience (you can include project work here as an embellishment strategy)</p>
+                  <p>3. Projects</p>
+                  <p>4. Skills</p>
+                  <p>5. Other Sections</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-700 mb-2">
+                Use your own judgment. Education was my weakest section when I was beginning, I placed it in the bottom and moved stronger sections up.
+              </p>
+              <p className="text-sm text-slate-600 italic">
+                You&apos;ll see concrete structure examples in the next section.
+              </p>
             </div>
 
             <div className="bg-purple-50 border-2 border-purple-400 rounded-xl p-6">
@@ -643,10 +712,13 @@ export default function ResumePage() {
                   </div>
                 </div>
               </div>
+              <p className="mt-4 text-sm text-slate-600">
+                If you can&apos;t find numbers for every bullet, that&apos;s totally fine. Try your best to quantify where it honestly makes sense.
+              </p>
             </div>
 
             <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <h3 className="text-sm md:text-base font-bold text-slate-900 mb-3">How to Fill Your Resume (No Internship Yet)</h3>
+              <h3 className="text-sm md:text-base font-bold text-slate-900 mb-3">How to Add More Relevant Content (Without Forcing It)</h3>
 
               <div className="bg-amber-50 rounded-lg border border-amber-200 p-3 mb-3">
                 <div className="flex items-start gap-3">
@@ -672,33 +744,43 @@ export default function ResumePage() {
               </div>
 
               <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-                <p className="font-semibold text-slate-900 mb-2">Fast additions that can become Projects/Experience entries:</p>
+                <p className="font-semibold text-slate-900 mb-2">Besides your main projects, look for existing work you can legitimately add:</p>
                 <div className="grid md:grid-cols-2 gap-2 text-sm text-slate-700">
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    Small Python programs you already built (automation scripts, parsers, data cleaners)
+                    Small Python programs you already built
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    Class projects/labs you can polish with a clear README, GitHub link, and deployed demo
+                    Class projects you built
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    Final course projects where you can show stack, features, and measurable impact
+                    Other experiences you find relevant
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    Any script/tool already used by classmates, friends, or family (even small usage counts)
+                    Any additional technical work you already did
                   </div>
                 </div>
+                <p className="mt-3 text-xs text-slate-600">
+                  Also check whether current bullets can be split into stronger bullets with clearer impact. As a last resort, slightly increasing font size is okay.
+                </p>
               </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-300 rounded-lg p-4">
+              <p className="font-bold text-amber-900 mb-1 text-sm md:text-base">Learn this now, apply later</p>
+              <p className="text-sm text-slate-700">
+                You do not need this to start. Use these strategies later when you want to push for better outcomes.
+              </p>
             </div>
 
             <div className="bg-gradient-to-br from-slate-50 to-indigo-50 rounded-lg border border-indigo-200 p-5">
               <h3 className="text-sm md:text-base font-bold text-slate-900 mb-3">Plateaued at 2 projects? How to level up from there</h3>
               <p className="text-slate-700 mb-4">
-                If you already have two solid projects and feel stuck, this is where you add higher-signal experiences.
-                These usually take longer, but they can change your interview outcomes.
+                <strong>This is a future strategy, not something you need to do right now.</strong> If you already have two solid projects and later feel stuck,
+                this is where you add higher-signal experiences. These usually take longer, but they can change your interview outcomes.
               </p>
 
               <div className="grid md:grid-cols-2 gap-3">
@@ -757,14 +839,45 @@ export default function ResumePage() {
             <div className="bg-cyan-50 rounded-lg border border-cyan-200 p-6">
               <h3 className="text-base font-bold text-slate-900 mb-3">Resume Tailoring (Advanced Strategy)</h3>
               <p className="text-slate-700 mb-4">
-                Tailoring your resume for certain job posts can be <strong>very beneficial.</strong> Some companies hire very team-based and
-                are interested in an exact match between the skills you know and what their team uses.
+                Tailoring your resume for certain job posts can be <strong>very beneficial</strong> in some cases.
+                For example, if a role emphasizes SQL and Python, include more of that SQL/Python work in your resume
+                and reflect what the job description is asking for.
               </p>
               <p className="text-slate-700 mb-3">
-                <strong>That was the case for me with Tesla.</strong> Tailoring your resume shows you&apos;re a perfect match for that team/project,
-                and can significantly boost your chances.
+                But don&apos;t get too fixated on manual tailoring for every application. It takes a lot of effort and often gives only a small lift.
+                Use it when you really care about a role or when the match is obvious.
               </p>
-              <p className="text-sm text-slate-600 italic">I&apos;ll share tools for this in the Applications module.</p>
+              <p className="text-sm text-slate-600 italic">
+                In the Applications module, I&apos;ll show a paid tool that can tailor resumes automatically.
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl p-6 text-white">
+              <p className="text-base font-bold mb-2">Section complete once these are done:</p>
+              <div className="space-y-2 text-sm text-indigo-100 mb-4">
+                <p className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-white" />
+                  You can write bullets using Action Verb + What You Did + Result/Impact.
+                </p>
+                <p className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-white" />
+                  You know how to add numbers when possible (and it&apos;s okay when some bullets have no numbers).
+                </p>
+                <p className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-white" />
+                  You know what relevant content to include and what to avoid.
+                </p>
+              </div>
+              <p className="text-sm text-indigo-100 mb-4">
+                You have enough to draft strong content now. Next, use real examples to calibrate quality.
+              </p>
+              <button
+                onClick={() => setActiveTab("examples")}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-indigo-700 rounded-lg hover:bg-indigo-50 transition-colors font-semibold text-sm"
+              >
+                Done - Go to Real Examples
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="flex justify-between pt-4">
@@ -779,7 +892,7 @@ export default function ResumePage() {
                 onClick={() => setActiveTab("examples")}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold"
               >
-                Next: Real Examples
+                Next: Real Examples (Calibrate Quality)
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
@@ -794,6 +907,57 @@ export default function ResumePage() {
               </div>
               <h2 className="text-base md:text-lg font-bold text-slate-900 mb-2">My Resume Journey</h2>
               <p className="text-slate-600">Real examples from my first resume to FAANG interviews</p>
+            </div>
+
+            <div className="relative overflow-hidden rounded-xl border-2 border-rose-300 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 p-6">
+              <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-rose-200/40" />
+              <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-amber-200/40" />
+
+              <div className="relative">
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                  <div className="px-3 py-1.5 bg-rose-600 text-white rounded-full font-bold text-xs uppercase tracking-wide">What not to do</div>
+                  <h3 className="text-base md:text-lg font-bold text-slate-900">Really Bad Resume Example</h3>
+                </div>
+
+                <p className="text-sm text-slate-700 mb-4">
+                  Start by reviewing this bad example, then compare it with the improved resumes below.
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                  <div className="bg-white rounded-lg border border-rose-200 p-4">
+                    <p className="font-semibold text-rose-900 mb-2">Major issues in this resume:</p>
+                    <ul className="space-y-2 text-sm text-slate-700">
+                      <li className="flex items-start gap-2">
+                        <XCircle className="w-4 h-4 text-rose-600 mt-0.5 flex-shrink-0" />
+                        Useless &quot;About Me&quot; section.
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <XCircle className="w-4 h-4 text-rose-600 mt-0.5 flex-shrink-0" />
+                        Useless soft-skills-heavy content that recruiters usually don&apos;t care about.
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <XCircle className="w-4 h-4 text-rose-600 mt-0.5 flex-shrink-0" />
+                        These sections take space away from your skills and projects and weaken your technical signal.
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-white rounded-lg border border-amber-200 p-4">
+                    <p className="font-semibold text-slate-900 mb-2">Why this comparison matters:</p>
+                    <p className="text-sm text-slate-700 mb-3">
+                      It shows exactly how a resume can look busy but still not signal strong technical impact.
+                    </p>
+                    <a
+                      href="/resume-examples/bad_resume_example.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors font-semibold text-sm"
+                    >
+                      Open Bad Resume (PDF)
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-10">
@@ -826,7 +990,7 @@ export default function ResumePage() {
                       I focused heavily on the 7-second rule. With only 2 projects, I made sure a recruiter would be immediately impressed.
                     </p>
                     <p className="text-slate-700">
-                      When you look at this resume for 5 seconds, it looks like I&apos;m a genius programmer. I also used coursework creatively
+                      When you look at this resume for 5 seconds, it looks like I&apos;m a genius programmer. I also used coursework from Udemy
                       because I didn&apos;t have CS classes yet.
                     </p>
                   </div>
@@ -969,6 +1133,55 @@ export default function ResumePage() {
               </div>
             </div>
 
+            <div className="relative overflow-hidden rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 p-7 text-white shadow-lg">
+              <div className="absolute -top-16 -right-10 h-40 w-40 rounded-full bg-white/10" />
+              <div className="absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-white/10" />
+
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wide mb-4">
+                  Build Phase
+                </div>
+                <h3 className="text-lg md:text-xl font-extrabold mb-2">Now it&apos;s time to build your resume</h3>
+                <p className="text-sm md:text-base text-indigo-100 mb-5">
+                  Use these learnings below in your resume. Revisit previous sections if needed, then build your resume now.
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-3 mb-5">
+                  <div className="rounded-lg border border-white/30 bg-white/10 p-3">
+                    <p className="font-semibold text-sm">7-second rule</p>
+                    <p className="text-xs text-indigo-100">Looks really technical at first glance.</p>
+                  </div>
+                  <div className="rounded-lg border border-white/30 bg-white/10 p-3">
+                    <p className="font-semibold text-sm">Uses embellishment</p>
+                    <p className="text-xs text-indigo-100">Frame your work strongly without lying.</p>
+                  </div>
+                  <div className="rounded-lg border border-white/30 bg-white/10 p-3">
+                    <p className="font-semibold text-sm">Don&apos;t be humble</p>
+                    <p className="text-xs text-indigo-100">Strong bullet points that elevate your profile.</p>
+                  </div>
+                  <div className="rounded-lg border border-white/30 bg-white/10 p-3">
+                    <p className="font-semibold text-sm">ATS compliant</p>
+                    <p className="text-xs text-indigo-100">Template and formatting should pass ATS.</p>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-amber-300/70 bg-amber-50/95 p-4 text-slate-800 mb-5">
+                  <p className="font-bold text-sm mb-1">Only advance after this:</p>
+                  <p className="text-sm">
+                    Build your resume first. In the next tab, you&apos;ll upload it and score it to see how strong it is.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setActiveTab("scorer")}
+                  className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-indigo-700 transition-colors hover:bg-indigo-50"
+                >
+                  I Built My Resume - Score It
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
             <div className="flex justify-between pt-4">
               <button
                 onClick={() => setActiveTab("content")}
@@ -1089,36 +1302,6 @@ export default function ResumePage() {
                 </button>
               </div>
             )}
-
-            <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-xl border-2 border-indigo-200 p-6">
-              <h3 className="font-bold text-slate-900 mb-4 text-base">Key Takeaways:</h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-1" />
-                  <p className="text-slate-700">
-                    <strong>Embellish your resume</strong> and make it look like you&apos;re more skilled than you are.
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-1" />
-                  <p className="text-slate-700">
-                    <strong>Format is critical.</strong> A great resume in the wrong format gets rejected.
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-1" />
-                  <p className="text-slate-700">
-                    <strong>Focus on what matters:</strong> Experience, Projects, Skills on top. Skip About Me sections.
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-1" />
-                  <p className="text-slate-700">
-                    <strong>Keep iterating.</strong> Check your resume every week and improve continuously.
-                  </p>
-                </div>
-              </div>
-            </div>
 
             <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-6">
               <h3 className="font-bold text-amber-900 mb-2 text-base">Before 100-300 Applications</h3>
