@@ -6,32 +6,24 @@ from app.services.resume_scoring import PreparedResumeContent
 
 
 class _PassingProvider:
-  provider_name = "anthropic"
+  provider_name = "openai"
   model_name = "fake-mid-tier"
 
-  def score_resume(self, *, resume_text: str, page_count: int):
+  def score_resume(self, *, resume_text: str, page_count: int, pdf_bytes: bytes, file_name: str):
     return {
-      "formatting": 84,
-      "content": 88,
-      "ats": 82,
-      "impact": 85,
-      "strengths": [
-        "Strong technical project content.",
-        "Clear skills and tooling signal.",
-      ],
-      "improvements": [
-        "Add two bullets with concrete metrics.",
-        "Make impact phrasing more specific.",
-        "Highlight ownership for key deliverables.",
-      ],
+      "overall_score": 84,
+      "bullet_quality_impact": 30,
+      "technical_demonstration": 25,
+      "writing_communication": 12,
+      "formatting_ats": 16,
     }
 
 
 class _MalformedProvider:
-  provider_name = "anthropic"
+  provider_name = "openai"
   model_name = "fake-mid-tier"
 
-  def score_resume(self, *, resume_text: str, page_count: int):
+  def score_resume(self, *, resume_text: str, page_count: int, pdf_bytes: bytes, file_name: str):
     return {"unexpected": "payload"}
 
 

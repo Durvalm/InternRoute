@@ -165,6 +165,8 @@ def score_resume():
     scored = score_prepared_resume(
       prepared_content=prepared_content,
       provider=provider,
+      pdf_bytes=file_bytes,
+      file_name=file_name,
     )
 
     submission.status = "succeeded"

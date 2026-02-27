@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import io
-import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -21,12 +20,6 @@ DIMENSION_WEIGHTS = {
   "formatting": 0.20,
   "ats": 0.20,
 }
-
-_EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
-_PHONE_RE = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)")
-_GITHUB_RE = re.compile(r"\b(?:https?://)?(?:www\.)?github\.com/[A-Z0-9_.-]+", re.IGNORECASE)
-_LINKEDIN_RE = re.compile(r"\b(?:https?://)?(?:www\.)?linkedin\.com/(?:in|pub)/[A-Z0-9_.-]+", re.IGNORECASE)
-_URL_RE = re.compile(r"\bhttps?://[^\s)]+", re.IGNORECASE)
 
 
 class ResumeScoringError(RuntimeError):
@@ -64,16 +57,6 @@ class PreparedResumeContent:
 
 
 @dataclass
-class ResumeDeterministicSignals:
-  page_count: int
-  has_email: bool
-  has_phone: bool
-  has_github: bool
-  has_linkedin: bool
-  has_any_url: bool
-
-
-@dataclass
 class ResumeScoringResult:
   overall_score: int
   formatting_score: int
@@ -82,7 +65,6 @@ class ResumeScoringResult:
   impact_score: int
   strengths: list[str]
   improvements: list[str]
-  signals: ResumeDeterministicSignals
 
   @property
   def dimension_scores(self) -> dict[str, int]:
@@ -155,52 +137,104 @@ def prepare_resume_content(pdf_bytes: bytes) -> PreparedResumeContent:
   )
 
 
-def detect_signals(*, resume_text: str, page_count: int) -> ResumeDeterministicSignals:
-  return ResumeDeterministicSignals(
-    page_count=page_count,
-    has_email=bool(_EMAIL_RE.search(resume_text)),
-    has_phone=bool(_PHONE_RE.search(resume_text)),
-    has_github=bool(_GITHUB_RE.search(resume_text)),
-    has_linkedin=bool(_LINKEDIN_RE.search(resume_text)),
-    has_any_url=bool(_URL_RE.search(resume_text)),
-  )
-
-
-def _coerce_int_score(raw: Any, *, field_name: str) -> int:
+def _coerce_int_score(raw: Any, *, field_name: str, max_value: int = 100) -> int:
   if isinstance(raw, bool):
-    raise ResumeResponseValidationError(f"{field_name} must be an integer between 0 and 100.")
+    raise ResumeResponseValidationError(f"{field_name} must be an integer between 0 and {max_value}.")
   if isinstance(raw, int):
-    if 0 <= raw <= 100:
+    if 0 <= raw <= max_value:
       return raw
-    raise ResumeResponseValidationError(f"{field_name} must be between 0 and 100.")
+    raise ResumeResponseValidationError(f"{field_name} must be between 0 and {max_value}.")
   if isinstance(raw, float) and raw.is_integer():
     as_int = int(raw)
-    if 0 <= as_int <= 100:
+    if 0 <= as_int <= max_value:
       return as_int
-    raise ResumeResponseValidationError(f"{field_name} must be between 0 and 100.")
-  raise ResumeResponseValidationError(f"{field_name} must be an integer between 0 and 100.")
+    raise ResumeResponseValidationError(f"{field_name} must be between 0 and {max_value}.")
+  raise ResumeResponseValidationError(f"{field_name} must be an integer between 0 and {max_value}.")
 
 
-def _extract_score(payload: dict[str, Any], *, names: list[str], field_name: str) -> int:
+def _extract_score(
+  payload: dict[str, Any],
+  *,
+  names: list[str],
+  field_name: str,
+  max_value: int = 100,
+) -> int:
   for name in names:
     if name in payload:
-      return _coerce_int_score(payload.get(name), field_name=field_name)
+      return _coerce_int_score(payload.get(name), field_name=field_name, max_value=max_value)
   raise ResumeResponseValidationError(f"Provider payload missing {field_name}.")
 
 
-def _extract_feedback_list(payload: dict[str, Any], *, key: str, expected_len: int) -> list[str]:
+def _extract_feedback_list(payload: dict[str, Any], *, key: str, max_len: int) -> list[str]:
   raw = payload.get(key)
+  if raw is None:
+    return []
   if not isinstance(raw, list):
-    raise ResumeResponseValidationError(f"Provider payload {key} must be a list.")
+    raise ResumeResponseValidationError(f"Provider payload {key} must be a list when provided.")
   normalized = [item.strip() for item in raw if isinstance(item, str) and item.strip()]
-  if len(normalized) < expected_len:
-    raise ResumeResponseValidationError(f"Provider payload {key} must contain {expected_len} items.")
-  return normalized[:expected_len]
+  return normalized[:max_len]
 
 
-def parse_provider_payload(payload: dict[str, Any]) -> tuple[dict[str, int], list[str], list[str]]:
+def _normalize_score(raw_score: int, max_points: int) -> int:
+  if max_points <= 0:
+    return 0
+  return clamp_score(round((raw_score / max_points) * 100))
+
+
+def parse_provider_payload(payload: dict[str, Any]) -> tuple[dict[str, int], list[str], list[str], int | None]:
   if not isinstance(payload, dict):
     raise ResumeResponseValidationError("Provider payload must be an object.")
+
+  strengths = _extract_feedback_list(payload, key="strengths", max_len=2)
+  improvements = _extract_feedback_list(payload, key="improvements", max_len=3)
+
+  has_v2_shape = all(
+    key in payload
+    for key in [
+      "overall_score",
+      "bullet_quality_impact",
+      "technical_demonstration",
+      "writing_communication",
+      "formatting_ats",
+    ]
+  )
+  if has_v2_shape:
+    overall_score = _coerce_int_score(payload.get("overall_score"), field_name="overall_score")
+    bullet_quality_impact = _extract_score(
+      payload,
+      names=["bullet_quality_impact"],
+      field_name="bullet_quality_impact",
+      max_value=35,
+    )
+    technical_demonstration = _extract_score(
+      payload,
+      names=["technical_demonstration"],
+      field_name="technical_demonstration",
+      max_value=30,
+    )
+    writing_communication = _extract_score(
+      payload,
+      names=["writing_communication"],
+      field_name="writing_communication",
+      max_value=15,
+    )
+    formatting_ats = _extract_score(
+      payload,
+      names=["formatting_ats"],
+      field_name="formatting_ats",
+      max_value=20,
+    )
+
+    formatting_score = _normalize_score(formatting_ats, 20)
+    content_score = _normalize_score(technical_demonstration + writing_communication, 45)
+    impact_score = _normalize_score(bullet_quality_impact, 35)
+    scores = {
+      "formatting": formatting_score,
+      "content": content_score,
+      "ats": formatting_score,
+      "impact": impact_score,
+    }
+    return scores, strengths, improvements, overall_score
 
   dimension_payload: dict[str, Any]
   nested = payload.get("dimension_scores")
@@ -231,71 +265,11 @@ def parse_provider_payload(payload: dict[str, Any]) -> tuple[dict[str, int], lis
       field_name="impact",
     ),
   }
+  overall_score = None
+  if "overall_score" in dimension_payload:
+    overall_score = _coerce_int_score(dimension_payload.get("overall_score"), field_name="overall_score")
 
-  strengths = _extract_feedback_list(payload, key="strengths", expected_len=2)
-  improvements = _extract_feedback_list(payload, key="improvements", expected_len=3)
-  return scores, strengths, improvements
-
-
-def _bounded_adjustment(value: int) -> int:
-  return max(-12, min(6, value))
-
-
-def apply_deterministic_adjustments(
-  *,
-  scores: dict[str, int],
-  signals: ResumeDeterministicSignals,
-) -> tuple[dict[str, int], list[str]]:
-  adjustments = {
-    "formatting": 0,
-    "content": 0,
-    "ats": 0,
-    "impact": 0,
-  }
-  deterministic_improvements: list[str] = []
-
-  if signals.page_count > 1:
-    if signals.page_count == 2:
-      adjustments["formatting"] -= 4
-      adjustments["ats"] -= 3
-    else:
-      adjustments["formatting"] -= 8
-      adjustments["ats"] -= 6
-    deterministic_improvements.append(
-      "Keep your resume to one page for internship recruiting unless you have unusually extensive experience."
-    )
-
-  if not signals.has_email:
-    adjustments["formatting"] -= 4
-    adjustments["ats"] -= 5
-    deterministic_improvements.append(
-      "Add a professional email in your header so recruiters can contact you immediately."
-    )
-
-  if not signals.has_phone:
-    adjustments["formatting"] -= 2
-    deterministic_improvements.append(
-      "Add a phone number in the header to make recruiter outreach easier."
-    )
-
-  if not signals.has_github and not signals.has_linkedin and not signals.has_any_url:
-    adjustments["impact"] -= 4
-    adjustments["ats"] -= 3
-    deterministic_improvements.append(
-      "Include at least one professional link (GitHub and/or LinkedIn) in the header."
-    )
-  elif not signals.has_github:
-    adjustments["impact"] -= 2
-    deterministic_improvements.append(
-      "Add a GitHub link so reviewers can verify your technical work quickly."
-    )
-
-  adjusted = {}
-  for key in {"formatting", "content", "ats", "impact"}:
-    delta = _bounded_adjustment(adjustments.get(key, 0))
-    adjusted[key] = clamp_score(scores[key] + delta)
-
-  return adjusted, deterministic_improvements
+  return scores, strengths, improvements, overall_score
 
 
 def _dedupe_preserve_order(items: list[str]) -> list[str]:
@@ -327,45 +301,30 @@ def score_prepared_resume(
   *,
   prepared_content: PreparedResumeContent,
   provider: ResumeScoringProvider,
+  pdf_bytes: bytes,
+  file_name: str,
 ) -> ResumeScoringResult:
-  signals = detect_signals(
-    resume_text=prepared_content.text_for_prompt,
-    page_count=prepared_content.page_count,
-  )
   try:
     provider_payload = provider.score_resume(
       resume_text=prepared_content.text_for_prompt,
       page_count=prepared_content.page_count,
+      pdf_bytes=pdf_bytes,
+      file_name=file_name,
     )
   except ResumeProviderError as err:
     raise ResumeProviderRequestError(str(err)) from err
 
-  llm_scores, strengths, improvements = parse_provider_payload(provider_payload)
-  adjusted_scores, deterministic_improvements = apply_deterministic_adjustments(
-    scores=llm_scores,
-    signals=signals,
-  )
+  llm_scores, strengths, improvements, overall_from_provider = parse_provider_payload(provider_payload)
+  merged_improvements = _dedupe_preserve_order(improvements)[:3]
+  merged_strengths = _dedupe_preserve_order(strengths)[:2]
 
-  merged_improvements = _dedupe_preserve_order(deterministic_improvements + improvements)
-  if len(merged_improvements) < 3:
-    raise ResumeResponseValidationError("Could not build 3 actionable improvements from scoring result.")
-  merged_improvements = merged_improvements[:3]
-
-  merged_strengths = _dedupe_preserve_order(strengths)
-  if len(merged_strengths) < 2:
-    merged_strengths = strengths
-  if len(merged_strengths) < 2:
-    raise ResumeResponseValidationError("Provider strengths list must contain 2 non-empty items.")
-  merged_strengths = merged_strengths[:2]
-
-  overall_score = _weighted_overall(adjusted_scores)
+  overall_score = overall_from_provider if overall_from_provider is not None else _weighted_overall(llm_scores)
   return ResumeScoringResult(
     overall_score=overall_score,
-    formatting_score=adjusted_scores["formatting"],
-    content_score=adjusted_scores["content"],
-    ats_score=adjusted_scores["ats"],
-    impact_score=adjusted_scores["impact"],
+    formatting_score=llm_scores["formatting"],
+    content_score=llm_scores["content"],
+    ats_score=llm_scores["ats"],
+    impact_score=llm_scores["impact"],
     strengths=merged_strengths,
     improvements=merged_improvements,
-    signals=signals,
   )

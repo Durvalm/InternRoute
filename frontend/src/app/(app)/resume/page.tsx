@@ -47,8 +47,8 @@ type ResumeScoreResponse = {
     ats: number;
     impact: number;
   };
-  strengths: string[];
-  improvements: string[];
+  strengths?: string[];
+  improvements?: string[];
   metadata: {
     page_count: number | null;
     provider: string;
@@ -1404,23 +1404,25 @@ export default function ResumePage() {
                   })}
                 </div>
 
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-slate-900 text-base">Detailed Feedback</h4>
-                  <div className="space-y-2 max-h-80 overflow-y-auto">
-                    {feedback.map((item, idx) => {
-                      const tone = getFeedbackTone(item.type);
-                      return (
-                        <div key={idx} className={`flex items-start gap-3 p-4 rounded-lg border ${tone.shell}`}>
-                          {tone.icon}
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-slate-900">{item.category}</div>
-                            <div className="text-sm text-slate-700">{item.message}</div>
+                {feedback.length > 0 ? (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-slate-900 text-base">Detailed Feedback</h4>
+                    <div className="space-y-2 max-h-80 overflow-y-auto">
+                      {feedback.map((item, idx) => {
+                        const tone = getFeedbackTone(item.type);
+                        return (
+                          <div key={idx} className={`flex items-start gap-3 p-4 rounded-lg border ${tone.shell}`}>
+                            {tone.icon}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-slate-900">{item.category}</div>
+                              <div className="text-sm text-slate-700">{item.message}</div>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                ) : null}
 
                 <button
                   onClick={resetAnalysis}
