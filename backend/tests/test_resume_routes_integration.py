@@ -27,6 +27,32 @@ class _MalformedProvider:
     return {"unexpected": "payload"}
 
 
+class _SequentialProvider:
+  provider_name = "openai"
+  model_name = "fake-mid-tier"
+
+  def __init__(self):
+    self.calls = 0
+
+  def score_resume(self, *, resume_text: str, page_count: int, pdf_bytes: bytes, file_name: str):
+    self.calls += 1
+    if self.calls == 1:
+      return {
+        "overall_score": 84,
+        "bullet_quality_impact": 30,
+        "technical_demonstration": 25,
+        "writing_communication": 12,
+        "formatting_ats": 16,
+      }
+    return {
+      "overall_score": 72,
+      "bullet_quality_impact": 24,
+      "technical_demonstration": 21,
+      "writing_communication": 11,
+      "formatting_ats": 14,
+    }
+
+
 def test_score_resume_success_persists_submission_and_updates_progress(client, auth_headers, app, monkeypatch):
   monkeypatch.setattr(resume_route, "build_resume_scoring_provider", lambda: _PassingProvider())
   monkeypatch.setattr(
@@ -49,6 +75,7 @@ def test_score_resume_success_persists_submission_and_updates_progress(client, a
   payload = response.get_json()
   assert payload["overall_score"] >= 80
   assert payload["progression"]["resume_task_completed"] is True
+  assert payload["progression"]["category_resume"] == payload["overall_score"]
 
   with app.app_context():
     saved = ResumeSubmission.query.order_by(ResumeSubmission.id.desc()).first()
@@ -111,3 +138,50 @@ def test_score_resume_rejects_invalid_file_type(client, auth_headers):
   assert response.status_code == 400
   payload = response.get_json()
   assert payload["error_code"] == "invalid_file_type"
+
+
+def test_resume_dashboard_uses_latest_score_while_pass_keeps_best(client, auth_headers, monkeypatch):
+  provider = _SequentialProvider()
+  monkeypatch.setattr(resume_route, "build_resume_scoring_provider", lambda: provider)
+  monkeypatch.setattr(
+    resume_route,
+    "prepare_resume_content",
+    lambda _: PreparedResumeContent(
+      text_for_prompt="student@example.com https://github.com/student",
+      page_count=1,
+      extracted_char_count=48,
+    ),
+  )
+
+  first = client.post(
+    "/resume/score",
+    headers=auth_headers,
+    data={"file": (BytesIO(b"%PDF-1.4 fake"), "resume.pdf")},
+    content_type="multipart/form-data",
+  )
+  assert first.status_code == 200
+  first_payload = first.get_json()
+  assert first_payload["overall_score"] == 84
+  assert first_payload["progression"]["resume_task_completed"] is True
+
+  second = client.post(
+    "/resume/score",
+    headers=auth_headers,
+    data={"file": (BytesIO(b"%PDF-1.4 fake"), "resume.pdf")},
+    content_type="multipart/form-data",
+  )
+  assert second.status_code == 200
+  second_payload = second.get_json()
+  assert second_payload["overall_score"] == 72
+  assert second_payload["progression"]["category_resume"] == 72
+  assert second_payload["progression"]["resume_task_completed"] is True
+
+  dashboard = client.get("/dashboard/summary", headers=auth_headers)
+  assert dashboard.status_code == 200
+  dashboard_payload = dashboard.get_json()
+  assert dashboard_payload["category_readiness"]["resume"] == 72
+  resume_module = next(
+    module for module in dashboard_payload["module_progress"]
+    if module["module_key"] == "resume"
+  )
+  assert resume_module["score"] == 72

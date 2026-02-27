@@ -100,6 +100,30 @@ def _next_action(module_states: list[ModuleState]) -> str | None:
   return "No tasks available yet"
 
 
+def _latest_successful_resume_score(user_id: int) -> int:
+  latest_score = (
+    db.session.query(ResumeSubmission.overall_score)
+    .filter(
+      ResumeSubmission.user_id == user_id,
+      ResumeSubmission.status == "succeeded",
+      ResumeSubmission.overall_score.isnot(None),
+    )
+    .order_by(ResumeSubmission.created_at.desc(), ResumeSubmission.id.desc())
+    .limit(1)
+    .scalar()
+  )
+  return max(0, min(100, int(latest_score or 0)))
+
+
+def _best_successful_resume_score(user_id: int) -> int:
+  best_score = (
+    db.session.query(db.func.max(ResumeSubmission.overall_score))
+    .filter(ResumeSubmission.user_id == user_id, ResumeSubmission.status == "succeeded")
+    .scalar()
+  )
+  return max(0, min(100, int(best_score or 0)))
+
+
 def _build_module_states(user: User, progress: UserProgress) -> list[ModuleState]:
   modules = Module.query.order_by(Module.sort_order.asc()).all()
   if not modules:
@@ -137,7 +161,10 @@ def _build_module_states(user: User, progress: UserProgress) -> list[ModuleState
     has_tasks_by_module_id[module.id] = has_tasks
     has_bonus_by_module_id[module.id] = has_bonus
 
-    if has_tasks:
+    if module.key == "resume":
+      # Resume module readiness should reflect the latest scored resume.
+      score = _latest_successful_resume_score(user.id)
+    elif has_tasks:
       total_weight = sum(max(0, task.weight) for task in module_tasks)
       completed_weight = sum(max(0, task.weight) for task in module_tasks if task.id in completed_ids)
       score = _score_from_weights(total_weight, completed_weight)
@@ -302,12 +329,8 @@ def sync_resume_submission_progress(user_id: int, *, commit: bool = True) -> dic
   if task is None:
     return recompute_and_persist_user_progress(user_id, commit=commit)
 
-  best_successful_score = (
-    db.session.query(db.func.max(ResumeSubmission.overall_score))
-    .filter(ResumeSubmission.user_id == user_id, ResumeSubmission.status == "succeeded")
-    .scalar()
-  )
-  is_completed = (best_successful_score or 0) >= 80
+  best_successful_score = _best_successful_resume_score(user_id)
+  is_completed = best_successful_score >= 80
 
   completion = UserTaskCompletion.query.filter_by(user_id=user_id, task_id=task.id).first()
   if is_completed and completion is None:

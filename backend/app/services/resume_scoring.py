@@ -13,6 +13,7 @@ MAX_RESUME_FILE_SIZE_BYTES = 5 * 1024 * 1024
 MAX_EXTRACTED_TEXT_CHARS = 18000
 PROMPT_VERSION = "resume_v1"
 PASS_THRESHOLD_SCORE = 80
+MAX_PROVIDER_ATTEMPTS = 2
 
 DIMENSION_WEIGHTS = {
   "content": 0.35,
@@ -297,6 +298,25 @@ def _weighted_overall(scores: dict[str, int]) -> int:
   return clamp_score(round(weighted))
 
 
+def _is_retryable_provider_failure(error: ResumeScoringError) -> bool:
+  if error.code == "provider_request_failed":
+    text = str(error).lower()
+    return (
+      "timeout" in text
+      or "connection error" in text
+      or "not valid json" in text
+      or "missing output text" in text
+      or "http 429" in text
+      or "http 500" in text
+      or "http 502" in text
+      or "http 503" in text
+      or "http 504" in text
+    )
+  if error.code == "provider_response_invalid":
+    return True
+  return False
+
+
 def score_prepared_resume(
   *,
   prepared_content: PreparedResumeContent,
@@ -304,17 +324,40 @@ def score_prepared_resume(
   pdf_bytes: bytes,
   file_name: str,
 ) -> ResumeScoringResult:
-  try:
-    provider_payload = provider.score_resume(
-      resume_text=prepared_content.text_for_prompt,
-      page_count=prepared_content.page_count,
-      pdf_bytes=pdf_bytes,
-      file_name=file_name,
-    )
-  except ResumeProviderError as err:
-    raise ResumeProviderRequestError(str(err)) from err
+  llm_scores: dict[str, int] | None = None
+  strengths: list[str] = []
+  improvements: list[str] = []
+  overall_from_provider: int | None = None
+  last_error: ResumeScoringError | None = None
 
-  llm_scores, strengths, improvements, overall_from_provider = parse_provider_payload(provider_payload)
+  for attempt in range(MAX_PROVIDER_ATTEMPTS):
+    try:
+      provider_payload = provider.score_resume(
+        resume_text=prepared_content.text_for_prompt,
+        page_count=prepared_content.page_count,
+        pdf_bytes=pdf_bytes,
+        file_name=file_name,
+      )
+      llm_scores, strengths, improvements, overall_from_provider = parse_provider_payload(provider_payload)
+      last_error = None
+      break
+    except ResumeProviderError as err:
+      last_error = ResumeProviderRequestError(str(err))
+    except ResumeResponseValidationError as err:
+      last_error = err
+
+    if last_error is None:
+      break
+    if attempt >= (MAX_PROVIDER_ATTEMPTS - 1):
+      break
+    if not _is_retryable_provider_failure(last_error):
+      break
+
+  if last_error is not None:
+    raise last_error
+  if llm_scores is None:
+    raise ResumeProviderRequestError("Failed to score resume after retries.")
+
   merged_improvements = _dedupe_preserve_order(improvements)[:3]
   merged_strengths = _dedupe_preserve_order(strengths)[:2]
 

@@ -67,6 +67,12 @@ def _submission_error_payload(message: str, *, error_code: str | None = None) ->
   return payload
 
 
+def _public_error_message(err: ResumeScoringError) -> str:
+  if err.code in {"provider_request_failed", "provider_response_invalid"}:
+    return "Resume scoring is temporarily unstable. Please retry in a moment."
+  return str(err)
+
+
 def _serialize_submission(submission: ResumeSubmission) -> dict[str, Any]:
   payload: dict[str, Any] = {
     "id": submission.id,
@@ -180,11 +186,16 @@ def score_resume():
     submission.error_code = None
     submission.error_message = None
 
-    computed = sync_resume_submission_progress(user_id, commit=False)
+    sync_resume_submission_progress(user_id, commit=False)
     db.session.commit()
 
-    resume_category = int((computed.get("category_readiness") or {}).get("resume") or 0)
-    resume_task_completed = resume_category >= 100
+    best_successful_score = (
+      db.session.query(db.func.max(ResumeSubmission.overall_score))
+      .filter(ResumeSubmission.user_id == user_id, ResumeSubmission.status == "succeeded")
+      .scalar()
+    )
+    resume_task_completed = int(best_successful_score or 0) >= PASS_THRESHOLD_SCORE
+    resume_category = scored.overall_score
     elapsed_ms = int((time.perf_counter() - start) * 1000)
     logger.info(
       "resume_score_succeeded user_id=%s submission_id=%s provider=%s model=%s overall=%s page_count=%s size=%s elapsed_ms=%s",
@@ -219,9 +230,10 @@ def score_resume():
       }
     )
   except ResumeScoringError as err:
+    public_message = _public_error_message(err)
     submission.status = "failed"
     submission.error_code = err.code
-    submission.error_message = str(err)[:500]
+    submission.error_message = public_message[:500]
     db.session.commit()
     logger.warning(
       "resume_score_failed user_id=%s submission_id=%s code=%s message=%s",
@@ -230,7 +242,7 @@ def score_resume():
       err.code,
       str(err),
     )
-    return jsonify(_submission_error_payload(str(err), error_code=err.code)), err.status_code
+    return jsonify(_submission_error_payload(public_message, error_code=err.code)), err.status_code
   except ResumeProviderError as err:
     submission.status = "failed"
     submission.error_code = "provider_config_error"

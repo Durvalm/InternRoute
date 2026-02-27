@@ -165,7 +165,6 @@ export default function ResumePage() {
   const [score, setScore] = useState<ResumeScore | null>(null);
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [submissionId, setSubmissionId] = useState<number | null>(null);
-  const [scoreMetadata, setScoreMetadata] = useState<ResumeScoreResponse["metadata"] | null>(null);
   const [progression, setProgression] = useState<ResumeScoreResponse["progression"] | null>(null);
   const [submissionHistory, setSubmissionHistory] = useState<ResumeSubmissionHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -200,7 +199,6 @@ export default function ResumePage() {
     setAnalysisComplete(false);
     setScore(null);
     setFeedback([]);
-    setScoreMetadata(null);
     setProgression(null);
     setSubmissionId(null);
 
@@ -221,7 +219,6 @@ export default function ResumePage() {
       });
       setFeedback(buildFeedback(response));
       setSubmissionId(response.submission_id);
-      setScoreMetadata(response.metadata);
       setProgression(response.progression);
       setAnalysisComplete(true);
     } catch (err) {
@@ -263,7 +260,6 @@ export default function ResumePage() {
     setAnalysisComplete(false);
     setScore(null);
     setFeedback([]);
-    setScoreMetadata(null);
     setProgression(null);
     setSubmissionId(null);
   };
@@ -1431,13 +1427,6 @@ export default function ResumePage() {
                   <RefreshCw className="w-4 h-4" />
                   Upload New Resume
                 </button>
-
-                {scoreMetadata ? (
-                  <div className="text-xs text-slate-500 text-center">
-                    Evaluated by {scoreMetadata.provider}:{scoreMetadata.model} ({scoreMetadata.prompt_version})
-                    {typeof scoreMetadata.page_count === "number" ? ` • ${scoreMetadata.page_count} page(s)` : ""}
-                  </div>
-                ) : null}
               </div>
             )}
 
@@ -1480,6 +1469,15 @@ export default function ResumePage() {
                   ) : null}
                 </div>
               ) : null}
+            </div>
+
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+              <p className="text-sm text-blue-900">
+                This scorer is relies on LLM guidance, not a perfect or final recruiter decision. Use it as a strong baseline, not absolute truth.
+              </p>
+              <p className="text-xs text-blue-800 mt-1">
+                Scores may vary between attempts. Target at least 80%. If you already have internship experience, target 85%+.
+              </p>
             </div>
 
             <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-6">

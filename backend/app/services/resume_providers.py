@@ -310,6 +310,11 @@ def _extract_json_text(raw_text: str) -> str:
     lines = cleaned.splitlines()
     if len(lines) >= 3 and lines[-1].strip() == "```":
       cleaned = "\n".join(lines[1:-1]).strip()
+  if cleaned and (not cleaned.startswith("{") or not cleaned.endswith("}")):
+    first = cleaned.find("{")
+    last = cleaned.rfind("}")
+    if first != -1 and last != -1 and first < last:
+      cleaned = cleaned[first:last + 1].strip()
   return cleaned
 
 

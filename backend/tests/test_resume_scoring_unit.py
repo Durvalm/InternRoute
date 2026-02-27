@@ -4,6 +4,7 @@ from app.services.resume_scoring import (
   score_prepared_resume,
   validate_pdf_upload,
 )
+from app.services.resume_providers import ResumeProviderError
 
 
 class _FakeProvider:
@@ -16,6 +17,26 @@ class _FakeProvider:
       "bullet_quality_impact": 29,
       "technical_demonstration": 24,
       "writing_communication": 13,
+      "formatting_ats": 16,
+    }
+
+
+class _FlakyProvider:
+  provider_name = "openai"
+  model_name = "fake-model"
+
+  def __init__(self):
+    self.calls = 0
+
+  def score_resume(self, *, resume_text: str, page_count: int, pdf_bytes: bytes, file_name: str):
+    self.calls += 1
+    if self.calls == 1:
+      raise ResumeProviderError("LLM provider timeout.")
+    return {
+      "overall_score": 82,
+      "bullet_quality_impact": 28,
+      "technical_demonstration": 24,
+      "writing_communication": 12,
       "formatting_ats": 16,
     }
 
@@ -65,3 +86,20 @@ def test_score_prepared_resume_returns_weighted_response():
   assert result.overall_score == 84
   assert len(result.strengths) == 0
   assert len(result.improvements) == 0
+
+
+def test_score_prepared_resume_retries_on_timeout_provider_error():
+  prepared = PreparedResumeContent(
+    text_for_prompt="Student resume text",
+    page_count=1,
+    extracted_char_count=20,
+  )
+  provider = _FlakyProvider()
+  result = score_prepared_resume(
+    prepared_content=prepared,
+    provider=provider,
+    pdf_bytes=b"%PDF-1.4 fake",
+    file_name="resume.pdf",
+  )
+  assert result.overall_score == 82
+  assert provider.calls == 2
