@@ -100,21 +100,6 @@ def _next_action(module_states: list[ModuleState]) -> str | None:
   return "No tasks available yet"
 
 
-def _latest_successful_resume_score(user_id: int) -> int:
-  latest_score = (
-    db.session.query(ResumeSubmission.overall_score)
-    .filter(
-      ResumeSubmission.user_id == user_id,
-      ResumeSubmission.status == "succeeded",
-      ResumeSubmission.overall_score.isnot(None),
-    )
-    .order_by(ResumeSubmission.created_at.desc(), ResumeSubmission.id.desc())
-    .limit(1)
-    .scalar()
-  )
-  return max(0, min(100, int(latest_score or 0)))
-
-
 def _best_successful_resume_score(user_id: int) -> int:
   best_score = (
     db.session.query(db.func.max(ResumeSubmission.overall_score))
@@ -162,8 +147,8 @@ def _build_module_states(user: User, progress: UserProgress) -> list[ModuleState
     has_bonus_by_module_id[module.id] = has_bonus
 
     if module.key == "resume":
-      # Resume module readiness should reflect the latest scored resume.
-      score = _latest_successful_resume_score(user.id)
+      # Resume readiness should reflect the user's best score achieved so far.
+      score = _best_successful_resume_score(user.id)
     elif has_tasks:
       total_weight = sum(max(0, task.weight) for task in module_tasks)
       completed_weight = sum(max(0, task.weight) for task in module_tasks if task.id in completed_ids)

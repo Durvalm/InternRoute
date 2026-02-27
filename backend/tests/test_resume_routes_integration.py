@@ -74,6 +74,7 @@ def test_score_resume_success_persists_submission_and_updates_progress(client, a
   assert response.status_code == 200
   payload = response.get_json()
   assert payload["overall_score"] >= 80
+  assert payload["rubric_scores"]["bullet_quality_impact"] == 30
   assert payload["progression"]["resume_task_completed"] is True
   assert payload["progression"]["category_resume"] == payload["overall_score"]
 
@@ -140,7 +141,7 @@ def test_score_resume_rejects_invalid_file_type(client, auth_headers):
   assert payload["error_code"] == "invalid_file_type"
 
 
-def test_resume_dashboard_uses_latest_score_while_pass_keeps_best(client, auth_headers, monkeypatch):
+def test_resume_readiness_keeps_best_score_and_does_not_drop(client, auth_headers, monkeypatch):
   provider = _SequentialProvider()
   monkeypatch.setattr(resume_route, "build_resume_scoring_provider", lambda: provider)
   monkeypatch.setattr(
@@ -173,15 +174,15 @@ def test_resume_dashboard_uses_latest_score_while_pass_keeps_best(client, auth_h
   assert second.status_code == 200
   second_payload = second.get_json()
   assert second_payload["overall_score"] == 72
-  assert second_payload["progression"]["category_resume"] == 72
+  assert second_payload["progression"]["category_resume"] == 84
   assert second_payload["progression"]["resume_task_completed"] is True
 
   dashboard = client.get("/dashboard/summary", headers=auth_headers)
   assert dashboard.status_code == 200
   dashboard_payload = dashboard.get_json()
-  assert dashboard_payload["category_readiness"]["resume"] == 72
+  assert dashboard_payload["category_readiness"]["resume"] == 84
   resume_module = next(
     module for module in dashboard_payload["module_progress"]
     if module["module_key"] == "resume"
   )
-  assert resume_module["score"] == 72
+  assert resume_module["score"] == 84

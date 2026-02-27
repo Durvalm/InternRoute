@@ -64,6 +64,10 @@ class ResumeScoringResult:
   content_score: int
   ats_score: int
   impact_score: int
+  bullet_quality_impact_score: int
+  technical_demonstration_score: int
+  writing_communication_score: int
+  formatting_ats_score: int
   strengths: list[str]
   improvements: list[str]
 
@@ -74,6 +78,15 @@ class ResumeScoringResult:
       "content": self.content_score,
       "ats": self.ats_score,
       "impact": self.impact_score,
+    }
+
+  @property
+  def rubric_scores(self) -> dict[str, int]:
+    return {
+      "bullet_quality_impact": self.bullet_quality_impact_score,
+      "technical_demonstration": self.technical_demonstration_score,
+      "writing_communication": self.writing_communication_score,
+      "formatting_ats": self.formatting_ats_score,
     }
 
 
@@ -141,14 +154,10 @@ def prepare_resume_content(pdf_bytes: bytes) -> PreparedResumeContent:
 def _coerce_int_score(raw: Any, *, field_name: str, max_value: int = 100) -> int:
   if isinstance(raw, bool):
     raise ResumeResponseValidationError(f"{field_name} must be an integer between 0 and {max_value}.")
-  if isinstance(raw, int):
-    if 0 <= raw <= max_value:
-      return raw
-    raise ResumeResponseValidationError(f"{field_name} must be between 0 and {max_value}.")
-  if isinstance(raw, float) and raw.is_integer():
-    as_int = int(raw)
-    if 0 <= as_int <= max_value:
-      return as_int
+  if isinstance(raw, (int, float)):
+    as_float = float(raw)
+    if 0 <= as_float <= max_value:
+      return int(round(as_float))
     raise ResumeResponseValidationError(f"{field_name} must be between 0 and {max_value}.")
   raise ResumeResponseValidationError(f"{field_name} must be an integer between 0 and {max_value}.")
 
@@ -182,7 +191,18 @@ def _normalize_score(raw_score: int, max_points: int) -> int:
   return clamp_score(round((raw_score / max_points) * 100))
 
 
-def parse_provider_payload(payload: dict[str, Any]) -> tuple[dict[str, int], list[str], list[str], int | None]:
+def _extract_v2_points(value: Any, *, field_name: str, max_points: int, input_is_percent: bool) -> int:
+  raw = _coerce_int_score(value, field_name=field_name, max_value=100)
+  if input_is_percent:
+    return int(round((raw / 100) * max_points))
+  if raw > max_points:
+    raise ResumeResponseValidationError(f"{field_name} must be between 0 and {max_points}.")
+  return raw
+
+
+def parse_provider_payload(
+  payload: dict[str, Any]
+) -> tuple[dict[str, int], list[str], list[str], int | None, dict[str, int] | None]:
   if not isinstance(payload, dict):
     raise ResumeResponseValidationError("Provider payload must be an object.")
 
@@ -201,29 +221,57 @@ def parse_provider_payload(payload: dict[str, Any]) -> tuple[dict[str, int], lis
   )
   if has_v2_shape:
     overall_score = _coerce_int_score(payload.get("overall_score"), field_name="overall_score")
-    bullet_quality_impact = _extract_score(
-      payload,
-      names=["bullet_quality_impact"],
+    raw_bullet_quality_impact = _coerce_int_score(
+      payload.get("bullet_quality_impact"),
       field_name="bullet_quality_impact",
-      max_value=35,
+      max_value=100,
     )
-    technical_demonstration = _extract_score(
-      payload,
-      names=["technical_demonstration"],
+    raw_technical_demonstration = _coerce_int_score(
+      payload.get("technical_demonstration"),
       field_name="technical_demonstration",
-      max_value=30,
+      max_value=100,
     )
-    writing_communication = _extract_score(
-      payload,
-      names=["writing_communication"],
+    raw_writing_communication = _coerce_int_score(
+      payload.get("writing_communication"),
       field_name="writing_communication",
-      max_value=15,
+      max_value=100,
     )
-    formatting_ats = _extract_score(
-      payload,
-      names=["formatting_ats"],
+    raw_formatting_ats = _coerce_int_score(
+      payload.get("formatting_ats"),
       field_name="formatting_ats",
-      max_value=20,
+      max_value=100,
+    )
+
+    input_is_percent = (
+      raw_bullet_quality_impact > 35
+      or raw_technical_demonstration > 30
+      or raw_writing_communication > 15
+      or raw_formatting_ats > 20
+    )
+
+    bullet_quality_impact = _extract_v2_points(
+      raw_bullet_quality_impact,
+      field_name="bullet_quality_impact",
+      max_points=35,
+      input_is_percent=input_is_percent,
+    )
+    technical_demonstration = _extract_v2_points(
+      raw_technical_demonstration,
+      field_name="technical_demonstration",
+      max_points=30,
+      input_is_percent=input_is_percent,
+    )
+    writing_communication = _extract_v2_points(
+      raw_writing_communication,
+      field_name="writing_communication",
+      max_points=15,
+      input_is_percent=input_is_percent,
+    )
+    formatting_ats = _extract_v2_points(
+      raw_formatting_ats,
+      field_name="formatting_ats",
+      max_points=20,
+      input_is_percent=input_is_percent,
     )
 
     formatting_score = _normalize_score(formatting_ats, 20)
@@ -235,7 +283,12 @@ def parse_provider_payload(payload: dict[str, Any]) -> tuple[dict[str, int], lis
       "ats": formatting_score,
       "impact": impact_score,
     }
-    return scores, strengths, improvements, overall_score
+    return scores, strengths, improvements, overall_score, {
+      "bullet_quality_impact": bullet_quality_impact,
+      "technical_demonstration": technical_demonstration,
+      "writing_communication": writing_communication,
+      "formatting_ats": formatting_ats,
+    }
 
   dimension_payload: dict[str, Any]
   nested = payload.get("dimension_scores")
@@ -270,7 +323,7 @@ def parse_provider_payload(payload: dict[str, Any]) -> tuple[dict[str, int], lis
   if "overall_score" in dimension_payload:
     overall_score = _coerce_int_score(dimension_payload.get("overall_score"), field_name="overall_score")
 
-  return scores, strengths, improvements, overall_score
+  return scores, strengths, improvements, overall_score, None
 
 
 def _dedupe_preserve_order(items: list[str]) -> list[str]:
@@ -328,6 +381,7 @@ def score_prepared_resume(
   strengths: list[str] = []
   improvements: list[str] = []
   overall_from_provider: int | None = None
+  rubric_scores: dict[str, int] | None = None
   last_error: ResumeScoringError | None = None
 
   for attempt in range(MAX_PROVIDER_ATTEMPTS):
@@ -338,7 +392,7 @@ def score_prepared_resume(
         pdf_bytes=pdf_bytes,
         file_name=file_name,
       )
-      llm_scores, strengths, improvements, overall_from_provider = parse_provider_payload(provider_payload)
+      llm_scores, strengths, improvements, overall_from_provider, rubric_scores = parse_provider_payload(provider_payload)
       last_error = None
       break
     except ResumeProviderError as err:
@@ -361,6 +415,13 @@ def score_prepared_resume(
   merged_improvements = _dedupe_preserve_order(improvements)[:3]
   merged_strengths = _dedupe_preserve_order(strengths)[:2]
 
+  normalized_rubric = rubric_scores or {
+    "bullet_quality_impact": int(round((llm_scores["impact"] / 100) * 35)),
+    "technical_demonstration": int(round((llm_scores["content"] / 100) * 30)),
+    "writing_communication": int(round((llm_scores["content"] / 100) * 15)),
+    "formatting_ats": int(round(((llm_scores["formatting"] + llm_scores["ats"]) / 2 / 100) * 20)),
+  }
+
   overall_score = overall_from_provider if overall_from_provider is not None else _weighted_overall(llm_scores)
   return ResumeScoringResult(
     overall_score=overall_score,
@@ -368,6 +429,10 @@ def score_prepared_resume(
     content_score=llm_scores["content"],
     ats_score=llm_scores["ats"],
     impact_score=llm_scores["impact"],
+    bullet_quality_impact_score=normalized_rubric["bullet_quality_impact"],
+    technical_demonstration_score=normalized_rubric["technical_demonstration"],
+    writing_communication_score=normalized_rubric["writing_communication"],
+    formatting_ats_score=normalized_rubric["formatting_ats"],
     strengths=merged_strengths,
     improvements=merged_improvements,
   )

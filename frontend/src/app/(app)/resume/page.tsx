@@ -32,15 +32,21 @@ import { apiRequest } from "@/lib/api";
 
 type ResumeScore = {
   overall: number;
-  formatting: number;
-  content: number;
-  ats: number;
-  impact: number;
+  bullet_quality_impact: number;
+  technical_demonstration: number;
+  writing_communication: number;
+  formatting_ats: number;
 };
 
 type ResumeScoreResponse = {
   submission_id: number;
   overall_score: number;
+  rubric_scores?: {
+    bullet_quality_impact: number;
+    technical_demonstration: number;
+    writing_communication: number;
+    formatting_ats: number;
+  };
   dimension_scores: {
     formatting: number;
     content: number;
@@ -210,12 +216,19 @@ export default function ResumePage() {
         body: formData
       });
 
+      const rubric = {
+        bullet_quality_impact: response.rubric_scores?.bullet_quality_impact ?? Math.round((response.dimension_scores.impact / 100) * 35),
+        technical_demonstration: response.rubric_scores?.technical_demonstration ?? Math.round((response.dimension_scores.content / 100) * 30),
+        writing_communication: response.rubric_scores?.writing_communication ?? Math.round((response.dimension_scores.content / 100) * 15),
+        formatting_ats: response.rubric_scores?.formatting_ats ?? Math.round((response.dimension_scores.formatting / 100) * 20)
+      };
+
       setScore({
         overall: response.overall_score,
-        formatting: response.dimension_scores.formatting,
-        content: response.dimension_scores.content,
-        ats: response.dimension_scores.ats,
-        impact: response.dimension_scores.impact
+        bullet_quality_impact: Math.round((rubric.bullet_quality_impact / 35) * 100),
+        technical_demonstration: Math.round((rubric.technical_demonstration / 30) * 100),
+        writing_communication: Math.round((rubric.writing_communication / 15) * 100),
+        formatting_ats: Math.round((rubric.formatting_ats / 20) * 100)
       });
       setFeedback(buildFeedback(response));
       setSubmissionId(response.submission_id);
@@ -1348,7 +1361,7 @@ export default function ResumePage() {
                     <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
                     <div className="text-center">
                       <p className="text-base font-semibold text-slate-900 mb-1">Analyzing your resume...</p>
-                      <p className="text-sm text-slate-500">Checking formatting, content, ATS compatibility, and impact</p>
+                      <p className="text-sm text-slate-500">Scoring bullet impact, technical depth, communication, and formatting/ATS</p>
                     </div>
                   </div>
                 ) : null}
@@ -1384,16 +1397,16 @@ export default function ResumePage() {
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { label: "Formatting", value: score?.formatting ?? 0, icon: FileText },
-                    { label: "Content", value: score?.content ?? 0, icon: Star },
-                    { label: "ATS Score", value: score?.ats ?? 0, icon: Target },
-                    { label: "Impact", value: score?.impact ?? 0, icon: Zap }
+                    { label: "Bullet Quality & Impact", value: score?.bullet_quality_impact ?? 0, icon: Zap },
+                    { label: "Technical Demonstration", value: score?.technical_demonstration ?? 0, icon: Code2 },
+                    { label: "Writing & Communication", value: score?.writing_communication ?? 0, icon: Star },
+                    { label: "Formatting & ATS", value: score?.formatting_ats ?? 0, icon: FileText }
                   ].map((item) => {
                     const Icon = item.icon;
                     return (
                       <div key={item.label} className="bg-slate-50 rounded-lg p-4 text-center border border-slate-200">
                         <Icon className="w-5 h-5 text-slate-400 mx-auto mb-2" />
-                        <div className={`text-lg md:text-xl font-bold mb-1 ${getScoreColor(item.value)}`}>{item.value}</div>
+                        <div className={`text-lg md:text-xl font-bold mb-1 ${getScoreColor(item.value)}`}>{item.value}%</div>
                         <div className="text-xs text-slate-600 font-medium">{item.label}</div>
                       </div>
                     );

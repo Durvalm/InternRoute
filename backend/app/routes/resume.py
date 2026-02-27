@@ -194,8 +194,8 @@ def score_resume():
       .filter(ResumeSubmission.user_id == user_id, ResumeSubmission.status == "succeeded")
       .scalar()
     )
-    resume_task_completed = int(best_successful_score or 0) >= PASS_THRESHOLD_SCORE
-    resume_category = scored.overall_score
+    resume_category = int(best_successful_score or 0)
+    resume_task_completed = resume_category >= PASS_THRESHOLD_SCORE
     elapsed_ms = int((time.perf_counter() - start) * 1000)
     logger.info(
       "resume_score_succeeded user_id=%s submission_id=%s provider=%s model=%s overall=%s page_count=%s size=%s elapsed_ms=%s",
@@ -213,6 +213,7 @@ def score_resume():
       {
         "submission_id": submission.id,
         "overall_score": scored.overall_score,
+        "rubric_scores": scored.rubric_scores,
         "dimension_scores": scored.dimension_scores,
         "strengths": scored.strengths,
         "improvements": scored.improvements,

@@ -67,6 +67,26 @@ def test_parse_provider_payload_requires_expected_fields():
     assert "missing" in str(err).lower()
 
 
+def test_parse_provider_payload_accepts_v2_percent_scale_scores():
+  payload = {
+    "overall_score": 84,
+    "bullet_quality_impact": 90,
+    "technical_demonstration": 88,
+    "writing_communication": 82,
+    "formatting_ats": 68,
+  }
+  scores, strengths, improvements, overall, rubric_scores = parse_provider_payload(payload)
+  assert overall == 84
+  assert scores["formatting"] == 70
+  assert scores["ats"] == 70
+  assert 0 <= scores["content"] <= 100
+  assert 0 <= scores["impact"] <= 100
+  assert rubric_scores is not None
+  assert rubric_scores["formatting_ats"] == 14
+  assert strengths == []
+  assert improvements == []
+
+
 def test_score_prepared_resume_returns_weighted_response():
   prepared = PreparedResumeContent(
     text_for_prompt=(
