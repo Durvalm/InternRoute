@@ -302,19 +302,19 @@ export default function TimelinePage() {
     summaryLoading
       ? "Loading personalized timeline..."
       : summersLeft === null
-      ? "Set your graduation date to calculate this."
-      : `${summersLeft} ${summersLeft === 1 ? "summer" : "summers"} left`;
+        ? "Set your graduation date to calculate this."
+        : `${summersLeft} ${summersLeft === 1 ? "summer" : "summers"} left`;
 
   const summersLeftDetail =
     summaryLoading
       ? "We are calculating your timeline context."
       : summersLeft === null
-      ? "Once your graduation date is set, we can map your realistic internship windows."
-      : summersLeft <= 0
-        ? "Summer windows are likely closed, but off-season internships and entry-level routes still matter."
-        : summersLeft === 1
-          ? "High urgency: this is likely your final summer internship window."
-          : "You still have runway. Use each summer to ladder up in quality and brand signal.";
+        ? "Once your graduation date is set, we can map your realistic internship windows."
+        : summersLeft <= 0
+          ? "Summer windows are likely closed, but off-season internships and entry-level routes still matter."
+          : summersLeft === 1
+            ? "High urgency: this is likely your final summer internship window."
+            : "You still have runway. Use each summer to ladder up in quality and brand signal.";
   const timelineModule = summary?.module_progress.find((module) => module.module_key === "timeline");
   const timelineTask = timelineTasks[0] ?? null;
   const allChecksComplete = completionChecks.every(Boolean);
@@ -617,7 +617,7 @@ export default function TimelinePage() {
               </li>
               <li className="flex gap-2">
                 <XCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
-                <span><strong>Do not delay applying</strong> just to grind LC. Most local companies care more about your projects.</span>
+                <span><strong>Do not delay applying</strong> just to grind LC. Most other companies care more about your projects and experiences.</span>
               </li>
             </ul>
           </section>
