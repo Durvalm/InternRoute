@@ -1,6 +1,10 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  ArrowRight,
   BrainCircuit,
   Briefcase,
   CheckCircle2,
@@ -19,6 +23,7 @@ import {
   Wrench
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { apiRequest } from "@/lib/api";
 
 type StageCard = {
   title: string;
@@ -46,6 +51,31 @@ type ResourceLink = {
 type CodingStep = {
   title: string;
   description: string;
+};
+
+type InterviewPrepTask = {
+  id: number;
+  title: string;
+  description: string | null;
+  weight: number;
+  is_bonus: boolean;
+  is_completed: boolean;
+};
+
+type InterviewPrepTasksResponse = {
+  module_key: string;
+  tasks: InterviewPrepTask[];
+};
+
+type TaskCompletionModuleProgress = {
+  module_key: string;
+  score: number;
+};
+
+type TaskCompletionResponse = {
+  task_id: number;
+  completed: boolean;
+  module_progress: TaskCompletionModuleProgress[];
 };
 
 const interviewStages: StageCard[] = [
@@ -191,7 +221,145 @@ const codingSteps: CodingStep[] = [
   }
 ];
 
+const interviewPrepCompletionItems = [
+  "I understand the typical interview flow (OA, recruiter screen, behavioral, technical) and that formats vary by company.",
+  "I understand how company research (mission, values, product, role fit) improves behavioral preparation.",
+  "I understand how STAR and story-bank preparation prevent freezing and improve answer quality.",
+  "I understand the difference between LeetCode-style and non-LeetCode interviews, and how prep changes for each.",
+  "I understand why asking thoughtful end-of-interview questions and sending a thank-you follow-up matters."
+];
+
 export default function InterviewPrepPage() {
+  const [interviewPrepTasks, setInterviewPrepTasks] = useState<InterviewPrepTask[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
+  const [tasksError, setTasksError] = useState<string | null>(null);
+  const [completionChecks, setCompletionChecks] = useState<boolean[]>(() => interviewPrepCompletionItems.map(() => false));
+  const [checklistHydrated, setChecklistHydrated] = useState(false);
+  const [serverChecklistSynced, setServerChecklistSynced] = useState(false);
+  const [syncingTaskId, setSyncingTaskId] = useState<number | null>(null);
+  const [moduleScore, setModuleScore] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setChecklistHydrated(true);
+      return;
+    }
+
+    const saved = window.localStorage.getItem("interview_prep_completion_checks_v1");
+    if (!saved) {
+      setChecklistHydrated(true);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length === interviewPrepCompletionItems.length) {
+        setCompletionChecks(parsed.map(Boolean));
+      }
+    } catch {
+      // Ignore corrupted local storage.
+    }
+
+    setChecklistHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!checklistHydrated) return;
+    window.localStorage.setItem("interview_prep_completion_checks_v1", JSON.stringify(completionChecks));
+  }, [checklistHydrated, completionChecks]);
+
+  useEffect(() => {
+    let active = true;
+    setTasksLoading(true);
+    setTasksError(null);
+
+    apiRequest<InterviewPrepTasksResponse>("/dashboard/tasks?module_key=interview_prep")
+      .then((data) => {
+        if (!active) return;
+        const tasks = data.tasks ?? [];
+        setInterviewPrepTasks(tasks);
+        const firstTask = tasks[0];
+        setModuleScore(firstTask?.is_completed ? 100 : 0);
+      })
+      .catch(() => {
+        if (!active) return;
+        setInterviewPrepTasks([]);
+        setTasksError("Unable to load the interview prep checklist.");
+      })
+      .finally(() => {
+        if (active) setTasksLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const interviewPrepTask = interviewPrepTasks[0] ?? null;
+  const allChecksComplete = completionChecks.every(Boolean);
+
+  const updateInterviewPrepTaskCompletion = useCallback(
+    async (nextCompleted: boolean) => {
+      if (!interviewPrepTask) {
+        setTasksError("Interview prep completion task is not configured.");
+        return;
+      }
+      if (syncingTaskId === interviewPrepTask.id) return;
+
+      const previousCompleted = interviewPrepTask.is_completed;
+      setTasksError(null);
+      setSyncingTaskId(interviewPrepTask.id);
+      setInterviewPrepTasks((prev) =>
+        prev.map((item) => (item.id === interviewPrepTask.id ? { ...item, is_completed: nextCompleted } : item))
+      );
+
+      try {
+        const data = await apiRequest<TaskCompletionResponse>(`/dashboard/tasks/${interviewPrepTask.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ completed: nextCompleted })
+        });
+        const nextModuleState = data.module_progress.find((item) => item.module_key === "interview_prep");
+        setModuleScore(nextModuleState?.score ?? (nextCompleted ? 100 : 0));
+      } catch {
+        setInterviewPrepTasks((prev) =>
+          prev.map((item) => (item.id === interviewPrepTask.id ? { ...item, is_completed: previousCompleted } : item))
+        );
+        setTasksError("Unable to save your checklist progress. Please try again.");
+      } finally {
+        setSyncingTaskId(null);
+      }
+    },
+    [interviewPrepTask, syncingTaskId]
+  );
+
+  useEffect(() => {
+    if (tasksLoading || !checklistHydrated || !interviewPrepTask || serverChecklistSynced) return;
+
+    if (interviewPrepTask.is_completed && !allChecksComplete) {
+      setCompletionChecks(interviewPrepCompletionItems.map(() => true));
+    }
+    if (!interviewPrepTask.is_completed && allChecksComplete) {
+      setCompletionChecks(interviewPrepCompletionItems.map(() => false));
+    }
+
+    setServerChecklistSynced(true);
+  }, [allChecksComplete, checklistHydrated, interviewPrepTask, serverChecklistSynced, tasksLoading]);
+
+  const toggleCompletionCheck = (index: number) => {
+    if (syncingTaskId !== null) return;
+
+    const nextChecks = completionChecks.map((value, itemIndex) => (itemIndex === index ? !value : value));
+    setCompletionChecks(nextChecks);
+
+    if (!interviewPrepTask) return;
+
+    const nextAllChecksComplete = nextChecks.every(Boolean);
+    if (nextAllChecksComplete !== interviewPrepTask.is_completed) {
+      void updateInterviewPrepTaskCompletion(nextAllChecksComplete);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12 md:[&_.text-sm]:text-[15px]">
       <section className="overflow-hidden rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 via-white to-cyan-50 p-4">
@@ -778,6 +946,57 @@ export default function InterviewPrepPage() {
               You do not need perfect answers. You need clear thinking, communication, and good collaboration signals.
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-emerald-200 bg-white p-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Complete This Module</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              Use this checklist to confirm the core concepts are clear. You can complete this even if you are not
+              actively interviewing yet.
+            </p>
+          </div>
+          <Link
+            href="/leetcode"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100"
+          >
+            Continue to Leetcode
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+          <div className="space-y-2.5">
+            {interviewPrepCompletionItems.map((item, index) => (
+              <label key={item} className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={completionChecks[index]}
+                  onChange={() => toggleCompletionCheck(index)}
+                  disabled={syncingTaskId !== null}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-60"
+                />
+                <span className="text-sm leading-relaxed text-slate-700">{item}</span>
+              </label>
+            ))}
+          </div>
+
+          {tasksLoading ? <p className="mt-3 text-sm text-slate-500">Loading checklist...</p> : null}
+          {tasksError ? <p className="mt-3 text-xs text-rose-600">{tasksError}</p> : null}
+
+          <p className="mt-3 text-xs text-slate-500">
+            {tasksLoading
+              ? "Checking your task progress..."
+              : moduleScore !== null
+                ? `Interview Prep module progress: ${moduleScore}%.`
+                : interviewPrepTask
+                  ? interviewPrepTask.is_completed
+                    ? "Interview prep checklist complete."
+                    : "Complete all checklist items to mark this module done."
+                  : "Checklist task will sync here once it is available."}
+          </p>
         </div>
       </section>
     </div>
