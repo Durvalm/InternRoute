@@ -1,5 +1,5 @@
 import type { ElementType } from "react";
-import { TrendingUp, FileText, Code2, Briefcase } from "lucide-react";
+import { TrendingUp, FileText, Code2, Briefcase, Target } from "lucide-react";
 
 type CategoryProgressProps = {
   icon: ElementType;
@@ -17,6 +17,7 @@ type ReadinessWidgetProps = {
     coding: number;
     projects: number;
     resume: number;
+    leetcode?: number;
   };
 };
 
@@ -24,6 +25,7 @@ export default function ReadinessWidget({ progress, categories }: ReadinessWidge
   const coding = categories?.coding ?? 0;
   const projects = categories?.projects ?? 0;
   const resume = categories?.resume ?? 0;
+  const leetcode = categories?.leetcode ?? 0;
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
@@ -49,7 +51,7 @@ export default function ReadinessWidget({ progress, categories }: ReadinessWidge
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         <CategoryProgress
           icon={Code2}
           label="Coding Skills"
@@ -76,6 +78,15 @@ export default function ReadinessWidget({ progress, categories }: ReadinessWidge
           bgColor="bg-blue-600"
           bgLight="bg-blue-50"
           details="Almost Ready"
+        />
+        <CategoryProgress
+          icon={Target}
+          label="LeetCode"
+          percentage={leetcode}
+          color="text-violet-600"
+          bgColor="bg-violet-600"
+          bgLight="bg-violet-50"
+          details={leetcode >= 100 ? "Target Met" : leetcode >= 70 ? "Strong Grind" : "In Progress"}
         />
       </div>
     </div>

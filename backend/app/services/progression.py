@@ -1,11 +1,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from math import floor
 from typing import Any
 
 from ..extensions import db
-from ..models import Module, ProjectSubmission, ResumeSubmission, Task, User, UserProgress, UserTaskCompletion
+from ..models import (
+  LeetcodeProgress,
+  Module,
+  ProjectSubmission,
+  ResumeSubmission,
+  Task,
+  User,
+  UserProgress,
+  UserTaskCompletion,
+)
+
+LEETCODE_TOTAL_TARGET = 50
+LEETCODE_MEDIUM_TARGET = 30
 
 
 @dataclass
@@ -109,6 +122,15 @@ def _best_successful_resume_score(user_id: int) -> int:
   return max(0, min(100, int(best_score or 0)))
 
 
+def _leetcode_module_score(user_id: int) -> int:
+  progress = LeetcodeProgress.query.filter_by(user_id=user_id).first()
+  if progress is None:
+    return 0
+  total_progress = min(max(progress.total_solved, 0) / LEETCODE_TOTAL_TARGET, 1.0)
+  medium_progress = min(max(progress.medium_solved, 0) / LEETCODE_MEDIUM_TARGET, 1.0)
+  return max(0, min(100, round(((total_progress + medium_progress) / 2.0) * 100)))
+
+
 def _build_module_states(user: User, progress: UserProgress) -> list[ModuleState]:
   modules = Module.query.order_by(Module.sort_order.asc()).all()
   if not modules:
@@ -149,6 +171,8 @@ def _build_module_states(user: User, progress: UserProgress) -> list[ModuleState
     if module.key == "resume":
       # Resume readiness should reflect the user's best score achieved so far.
       score = _best_successful_resume_score(user.id)
+    elif module.key == "leetcode":
+      score = _leetcode_module_score(user.id)
     elif has_tasks:
       total_weight = sum(max(0, task.weight) for task in module_tasks)
       completed_weight = sum(max(0, task.weight) for task in module_tasks if task.id in completed_ids)
@@ -316,6 +340,45 @@ def sync_resume_submission_progress(user_id: int, *, commit: bool = True) -> dic
 
   best_successful_score = _best_successful_resume_score(user_id)
   is_completed = best_successful_score >= 80
+
+  completion = UserTaskCompletion.query.filter_by(user_id=user_id, task_id=task.id).first()
+  if is_completed and completion is None:
+    db.session.add(UserTaskCompletion(user_id=user_id, task_id=task.id))
+  if not is_completed and completion is not None:
+    db.session.delete(completion)
+
+  return recompute_and_persist_user_progress(user_id, commit=commit)
+
+
+def sync_leetcode_progress(user_id: int, *, commit: bool = True) -> dict[str, Any]:
+  module = Module.query.filter_by(key="leetcode").first()
+  if module is None:
+    return recompute_and_persist_user_progress(user_id, commit=commit)
+
+  task = (
+    Task.query
+    .filter(
+      Task.module_id == module.id,
+      Task.is_active.is_(True),
+      Task.challenge_id.in_(["leetcode_verify_50_total_30_medium", "leetcode_50_total_30_medium"]),
+    )
+    .first()
+  )
+  if task is None:
+    return recompute_and_persist_user_progress(user_id, commit=commit)
+
+  progress = LeetcodeProgress.query.filter_by(user_id=user_id).first()
+  meets_threshold = bool(
+    progress is not None
+    and progress.total_solved >= LEETCODE_TOTAL_TARGET
+    and progress.medium_solved >= LEETCODE_MEDIUM_TARGET
+  )
+  is_completed = meets_threshold
+
+  if progress is not None and meets_threshold and progress.completion_verified_at is None:
+    progress.completion_verified_at = datetime.utcnow()
+  if progress is not None and not meets_threshold:
+    progress.completion_verified_at = None
 
   completion = UserTaskCompletion.query.filter_by(user_id=user_id, task_id=task.id).first()
   if is_completed and completion is None:

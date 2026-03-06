@@ -62,6 +62,8 @@ type DashboardSummary = {
 export default function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const leetcodeReadiness =
+    summary?.module_progress.find((module) => module.module_key === "leetcode")?.score ?? 0;
 
   useEffect(() => {
     let active = true;
@@ -95,7 +97,10 @@ export default function Dashboard() {
         <div className="lg:col-span-2 flex flex-col gap-6">
           <ReadinessWidget
             progress={summary?.progress ?? 0}
-            categories={summary?.category_readiness}
+            categories={{
+              ...(summary?.category_readiness ?? { coding: 0, projects: 0, resume: 0 }),
+              leetcode: leetcodeReadiness,
+            }}
           />
           <ActionItemsWidget
             moduleProgress={summary?.module_progress ?? []}

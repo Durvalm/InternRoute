@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertCircle,
   ArrowRight,
@@ -19,44 +19,40 @@ import {
   Filter,
   Layers,
   Play,
+  RefreshCw,
   Star,
   Wrench,
   Zap
 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 
-type LeetcodeTask = {
-  id: number;
-  title: string;
-  description: string | null;
-  weight: number;
-  is_bonus: boolean;
-  is_completed: boolean;
+type LeetcodeProgressStatus = {
+  linked: boolean;
+  leetcode_username: string | null;
+  total_solved: number;
+  easy_solved: number;
+  medium_solved: number;
+  hard_solved: number;
+  total_target: number;
+  medium_target: number;
+  completion_target_met: boolean;
+  progress_percent_total: number;
+  progress_percent_medium: number;
+  progress_percent_overall: number;
+  last_synced_at: string | null;
+  sync_hint: string;
 };
 
-type LeetcodeTasksResponse = {
-  module_key: string;
-  tasks: LeetcodeTask[];
-};
-
-type TaskCompletionModuleProgress = {
+type ModuleProgressSnapshot = {
   module_key: string;
   score: number;
+  unlock_threshold: number;
 };
 
-type TaskCompletionResponse = {
-  task_id: number;
-  completed: boolean;
-  module_progress: TaskCompletionModuleProgress[];
+type LeetcodeProgressResponse = {
+  progress: LeetcodeProgressStatus;
+  module_progress: ModuleProgressSnapshot | null;
 };
-
-const leetcodeCompletionItems = [
-  "I understand Leetcode helps pass interviews after I already have strong projects and resume fundamentals.",
-  "I can explain the two-step path: practical DSA foundation first, then deliberate Leetcode practice volume.",
-  "I know how to run category-based grinding in NeetCode 150 without jumping randomly across topics.",
-  "I can explain solution patterns and time/space complexity for the problems I practice.",
-  "I have a focused 3-month base plan and a short interview refresh strategy."
-];
 
 const stepTwoList = [
   {
@@ -108,77 +104,59 @@ const keyTakeaways = [
   "Prioritize basics first (80-20), then add advanced topics later."
 ];
 
-function NumberPill({ value, tone }: { value: number; tone: "blue" | "green" }) {
+function NumberPill({ value }: { value: number }) {
   return (
-    <div
-      className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${tone === "blue" ? "bg-blue-600" : "bg-green-600"}`}
-    >
+    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-green-600 text-sm font-bold text-white">
       {value}
     </div>
   );
 }
 
+function formatDate(value: string | null): string {
+  if (!value) return "Not available";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "Not available";
+  return parsed.toLocaleString();
+}
+
 export default function LeetcodePage() {
   const [isComplexityExpanded, setIsComplexityExpanded] = useState(false);
-  const [leetcodeTasks, setLeetcodeTasks] = useState<LeetcodeTask[]>([]);
-  const [tasksLoading, setTasksLoading] = useState(true);
-  const [tasksError, setTasksError] = useState<string | null>(null);
-  const [completionChecks, setCompletionChecks] = useState<boolean[]>(() => leetcodeCompletionItems.map(() => false));
-  const [checklistHydrated, setChecklistHydrated] = useState(false);
-  const [serverChecklistSynced, setServerChecklistSynced] = useState(false);
-  const [syncingTaskId, setSyncingTaskId] = useState<number | null>(null);
+  const [progress, setProgress] = useState<LeetcodeProgressStatus | null>(null);
   const [moduleScore, setModuleScore] = useState<number | null>(null);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [loadingStatus, setLoadingStatus] = useState(true);
+  const [linking, setLinking] = useState(false);
+  const [syncingProgress, setSyncingProgress] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      setChecklistHydrated(true);
-      return;
+  const applyProgressResponse = (payload: LeetcodeProgressResponse) => {
+    setProgress(payload.progress);
+    setModuleScore(payload.module_progress?.score ?? null);
+    if (payload.progress.leetcode_username) {
+      setUsernameInput((previous) => previous || payload.progress.leetcode_username || "");
     }
-
-    const saved = window.localStorage.getItem("leetcode_completion_checks_v2");
-    if (!saved) {
-      setChecklistHydrated(true);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length === leetcodeCompletionItems.length) {
-        setCompletionChecks(parsed.map(Boolean));
-      }
-    } catch {
-      // Ignore corrupted local storage.
-    }
-
-    setChecklistHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!checklistHydrated) return;
-    window.localStorage.setItem("leetcode_completion_checks_v2", JSON.stringify(completionChecks));
-  }, [checklistHydrated, completionChecks]);
+  };
 
   useEffect(() => {
     let active = true;
-    setTasksLoading(true);
-    setTasksError(null);
 
-    apiRequest<LeetcodeTasksResponse>("/dashboard/tasks?module_key=leetcode")
-      .then((data) => {
+    apiRequest<LeetcodeProgressResponse>("/leetcode/progress")
+      .then((payload) => {
         if (!active) return;
-        const tasks = data.tasks ?? [];
-        setLeetcodeTasks(tasks);
-        const firstTask = tasks[0];
-        setModuleScore(firstTask ? (firstTask.is_completed ? 100 : 0) : null);
+        setProgress(payload.progress);
+        setModuleScore(payload.module_progress?.score ?? null);
+        if (payload.progress.leetcode_username) {
+          setUsernameInput((previous) => previous || payload.progress.leetcode_username || "");
+        }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!active) return;
-        setLeetcodeTasks([]);
-        setTasksError("Unable to load the Leetcode checklist.");
+        const message = err instanceof Error ? err.message : "Unable to load LeetCode progress.";
+        setErrorMessage(message);
       })
       .finally(() => {
-        if (active) setTasksLoading(false);
+        if (active) setLoadingStatus(false);
       });
 
     return () => {
@@ -186,69 +164,54 @@ export default function LeetcodePage() {
     };
   }, []);
 
-  const leetcodeTask = leetcodeTasks[0] ?? null;
-  const allChecksComplete = completionChecks.every(Boolean);
-
-  const updateLeetcodeTaskCompletion = useCallback(
-    async (nextCompleted: boolean) => {
-      if (!leetcodeTask) {
-        setTasksError("Leetcode completion task is not configured.");
-        return;
-      }
-      if (syncingTaskId === leetcodeTask.id) return;
-
-      const previousCompleted = leetcodeTask.is_completed;
-      setTasksError(null);
-      setSyncingTaskId(leetcodeTask.id);
-      setLeetcodeTasks((prev) =>
-        prev.map((item) => (item.id === leetcodeTask.id ? { ...item, is_completed: nextCompleted } : item))
-      );
-
-      try {
-        const data = await apiRequest<TaskCompletionResponse>(`/dashboard/tasks/${leetcodeTask.id}`, {
-          method: "PATCH",
-          body: JSON.stringify({ completed: nextCompleted })
-        });
-        const nextModuleState = data.module_progress.find((item) => item.module_key === "leetcode");
-        setModuleScore(nextModuleState?.score ?? (nextCompleted ? 100 : 0));
-      } catch {
-        setLeetcodeTasks((prev) =>
-          prev.map((item) => (item.id === leetcodeTask.id ? { ...item, is_completed: previousCompleted } : item))
-        );
-        setTasksError("Unable to save your checklist progress. Please try again.");
-      } finally {
-        setSyncingTaskId(null);
-      }
-    },
-    [leetcodeTask, syncingTaskId]
-  );
-
-  useEffect(() => {
-    if (tasksLoading || !checklistHydrated || !leetcodeTask || serverChecklistSynced) return;
-
-    if (leetcodeTask.is_completed && !allChecksComplete) {
-      setCompletionChecks(leetcodeCompletionItems.map(() => true));
-    }
-    if (!leetcodeTask.is_completed && allChecksComplete) {
-      setCompletionChecks(leetcodeCompletionItems.map(() => false));
+  const handleLinkUsername = async () => {
+    const candidate = usernameInput.trim();
+    if (!candidate) {
+      setErrorMessage("Enter your LeetCode username.");
+      return;
     }
 
-    setServerChecklistSynced(true);
-  }, [allChecksComplete, checklistHydrated, leetcodeTask, serverChecklistSynced, tasksLoading]);
-
-  const toggleCompletionCheck = (index: number) => {
-    if (syncingTaskId !== null) return;
-
-    const nextChecks = completionChecks.map((value, itemIndex) => (itemIndex === index ? !value : value));
-    setCompletionChecks(nextChecks);
-
-    if (!leetcodeTask) return;
-
-    const nextAllChecksComplete = nextChecks.every(Boolean);
-    if (nextAllChecksComplete !== leetcodeTask.is_completed) {
-      void updateLeetcodeTaskCompletion(nextAllChecksComplete);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setLinking(true);
+    try {
+      const payload = await apiRequest<LeetcodeProgressResponse>("/leetcode/progress/link", {
+        method: "POST",
+        body: JSON.stringify({ leetcode_username: candidate })
+      });
+      applyProgressResponse(payload);
+      setUsernameInput(payload.progress.leetcode_username || candidate);
+      setSuccessMessage("LeetCode username linked.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to link LeetCode username.";
+      setErrorMessage(message);
+    } finally {
+      setLinking(false);
     }
   };
+
+  const handleSyncProgress = async () => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setSyncingProgress(true);
+    try {
+      const payload = await apiRequest<LeetcodeProgressResponse>("/leetcode/progress/sync", {
+        method: "POST"
+      });
+      applyProgressResponse(payload);
+      setSuccessMessage("Progress synced from LeetCode.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to sync LeetCode progress.";
+      setErrorMessage(message);
+    } finally {
+      setSyncingProgress(false);
+    }
+  };
+
+  const totalProgress = progress ? progress.progress_percent_total : 0;
+  const mediumProgress = progress ? progress.progress_percent_medium : 0;
+  const overallProgress = progress ? progress.progress_percent_overall : 0;
+  const moduleProgressValue = moduleScore ?? overallProgress;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-12">
@@ -530,7 +493,8 @@ export default function LeetcodePage() {
           <div className="flex-1">
             <h2 className="text-xl font-bold text-slate-900">STEP 2: The Leetcode Grind Strategy</h2>
             <p className="mt-2 text-slate-700">
-              This is how to improve systematically. Most of this happens on NeetCode.
+              This is how to improve systematically. Most of this happens on NeetCode. Solve your real practice on
+              LeetCode/NeetCode so this module can track your progress.
             </p>
             <a
               href="https://neetcode.io/practice"
@@ -548,7 +512,7 @@ export default function LeetcodePage() {
         <div className="space-y-3">
           {stepTwoList.map((item, index) => (
             <div key={item.title} className="flex items-start gap-3">
-              <NumberPill value={index + 1} tone="green" />
+              <NumberPill value={index + 1} />
               <div className="pt-0.5">
                 <p className="text-sm text-slate-800">
                   <strong>{item.title}</strong> {item.body}
@@ -586,7 +550,7 @@ export default function LeetcodePage() {
           <article className="rounded-xl border-2 border-cyan-200 bg-white p-5">
             <div className="flex items-center gap-2">
               <Clock3 className="h-6 w-6 text-cyan-600" />
-            <h3 className="font-bold text-slate-900">The Initial 3-Month Grind</h3>
+              <h3 className="font-bold text-slate-900">The Initial 3-Month Grind</h3>
             </div>
             <p className="mt-3 text-sm text-slate-700">
               I spent around 3 focused months building pattern intuition and completed roughly 70-80 easy/medium
@@ -611,7 +575,9 @@ export default function LeetcodePage() {
               I had about 1 week to prepare. Because the foundation already existed, prep was mostly review. In about
               3-4 days before the interview, I reviewed 60+ previously solved problems to reactivate patterns and speed.
             </p>
-            <p className="mt-3 text-sm text-slate-700">I did not need to relearn from scratch, and that preparation was enough.</p>
+            <p className="mt-3 text-sm text-slate-700">
+              I did not need to relearn from scratch, and that preparation was enough.
+            </p>
           </article>
 
           <article className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 p-5 text-white">
@@ -700,52 +666,148 @@ export default function LeetcodePage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-emerald-200 bg-white p-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Complete This Module</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Check these off once the strategy is clear so your Leetcode module progress can sync.
-            </p>
-          </div>
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">LeetCode Progress Tracker</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            This module is completion-based. Link your LeetCode username, sync progress, then reach{" "}
+            <strong>50 solved total</strong> with at least <strong>30 medium</strong>.
+          </p>
           <Link
-            href="/applications"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100"
+            href="/opportunities"
+            className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-100"
           >
-            Back to Applications
+            Go to Opportunities
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
-          <div className="space-y-2.5">
-            {leetcodeCompletionItems.map((item, index) => (
-              <label key={item} className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={completionChecks[index]}
-                  onChange={() => toggleCompletionCheck(index)}
-                  disabled={syncingTaskId !== null}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-60"
-                />
-                <span className="text-sm leading-relaxed text-slate-700">{item}</span>
-              </label>
-            ))}
-          </div>
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          {loadingStatus ? <p className="text-sm text-slate-600">Loading LeetCode progress...</p> : null}
 
-          {tasksLoading ? <p className="mt-3 text-sm text-slate-500">Loading checklist...</p> : null}
-          {tasksError ? <p className="mt-3 text-xs text-rose-600">{tasksError}</p> : null}
+          {!loadingStatus && progress ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-slate-200 bg-white p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-900">
+                    {progress.linked
+                      ? `Linked username: @${progress.leetcode_username}`
+                      : "Step 1: Link your LeetCode username"}
+                  </p>
+                  <p className="text-xs text-slate-600">Last sync: {formatDate(progress.last_synced_at)}</p>
+                </div>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="text"
+                    value={usernameInput}
+                    onChange={(event) => setUsernameInput(event.target.value)}
+                    disabled={linking}
+                    placeholder="Enter LeetCode username"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleLinkUsername}
+                    disabled={linking}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  >
+                    {linking ? "Updating..." : progress.linked ? "Update Username" : "Link Username"}
+                  </button>
+                </div>
+                {progress.linked ? (
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-slate-500">{progress.sync_hint}</p>
+                    <button
+                      type="button"
+                      onClick={handleSyncProgress}
+                      disabled={syncingProgress}
+                      title={progress.sync_hint}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${syncingProgress ? "animate-spin" : ""}`} />
+                      {syncingProgress ? "Syncing..." : "Sync Progress"}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
+              {progress.linked ? (
+                <div className="rounded-lg border border-slate-200 bg-white p-4">
+                  <div>
+                    <div className="mb-1 flex items-center justify-between text-sm font-medium text-slate-700">
+                      <span>Total Solved</span>
+                      <span>
+                        {progress.total_solved} / {progress.total_target}
+                      </span>
+                    </div>
+                    <div className="h-3 rounded-full bg-slate-200">
+                      <div className="h-3 rounded-full bg-emerald-500 transition-all" style={{ width: `${totalProgress}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="mb-1 flex items-center justify-between text-sm font-medium text-slate-700">
+                      <span>Medium Solved</span>
+                      <span>
+                        {progress.medium_solved} / {progress.medium_target}
+                      </span>
+                    </div>
+                    <div className="h-3 rounded-full bg-slate-200">
+                      <div className="h-3 rounded-full bg-violet-500 transition-all" style={{ width: `${mediumProgress}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 border-t border-slate-200 pt-4">
+                    <div className="mb-1 flex items-center justify-between text-sm font-medium text-slate-700">
+                      <span>Module Progress</span>
+                      <span>{moduleProgressValue}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-200">
+                      <div className="h-2 rounded-full bg-indigo-500 transition-all" style={{ width: `${moduleProgressValue}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    <article className="rounded-xl border border-emerald-200 bg-white p-4 text-center">
+                      <p className="text-sm text-slate-600">Easy</p>
+                      <p className="mt-1 text-4xl font-bold text-emerald-600">{progress.easy_solved}</p>
+                    </article>
+                    <article className="rounded-xl border border-amber-200 bg-white p-4 text-center">
+                      <p className="text-sm text-slate-600">Medium</p>
+                      <p className="mt-1 text-4xl font-bold text-amber-500">{progress.medium_solved}</p>
+                    </article>
+                    <article className="rounded-xl border border-rose-200 bg-white p-4 text-center">
+                      <p className="text-sm text-slate-600">Hard</p>
+                      <p className="mt-1 text-4xl font-bold text-rose-600">{progress.hard_solved}</p>
+                    </article>
+                  </div>
+
+                  {progress.completion_target_met ? (
+                    <div className="mt-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 p-5 text-white">
+                      <p className="text-2xl font-bold">Module complete</p>
+                      <p className="mt-1 text-sm text-white/90">You reached 50 total solved and 30 medium solved.</p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                      Keep solving and sync again. Hover on the sync button for timing guidance.
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  Add your username first, then sync to load your LeetCode progress.
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {successMessage ? <p className="mt-3 text-sm text-emerald-700">{successMessage}</p> : null}
+          {errorMessage ? <p className="mt-3 text-sm text-rose-600">{errorMessage}</p> : null}
 
           <p className="mt-3 text-xs text-slate-500">
-            {tasksLoading
-              ? "Checking your task progress..."
-              : moduleScore !== null
-                ? `Leetcode module progress: ${moduleScore}%.`
-                : leetcodeTask
-                  ? leetcodeTask.is_completed
-                    ? "Leetcode checklist complete."
-                    : "Complete all checklist items to mark this module done."
-                  : "Checklist task will sync here once it is available."}
+            {progress
+              ? `Leetcode module progress: ${moduleProgressValue}%.`
+              : "Leetcode module progress will appear once status loads."}
           </p>
         </div>
       </section>

@@ -105,6 +105,30 @@ class UserTaskCompletion(db.Model):
   task = db.relationship("Task", backref=db.backref("completions", lazy=True))
 
 
+class LeetcodeProgress(db.Model):
+  __tablename__ = "leetcode_verifications"
+
+  id = db.Column(db.Integer, primary_key=True)
+  user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
+  leetcode_username = db.Column(db.String(100), nullable=False)
+  ownership_code = db.Column(db.String(64), nullable=False, default="", server_default=db.text("''"))
+  ownership_verified_at = db.Column(db.DateTime, nullable=True)
+  total_solved = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+  easy_solved = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+  medium_solved = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+  hard_solved = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+  completion_verified_at = db.Column(db.DateTime, nullable=True)
+  last_synced_at = db.Column(db.DateTime, nullable=True)
+  created_at = db.Column(db.DateTime, default=datetime.utcnow)
+  updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+  __table_args__ = (
+    db.UniqueConstraint("leetcode_username", name="uq_leetcode_verifications_username"),
+  )
+
+  user = db.relationship("User", backref=db.backref("leetcode_progress", uselist=False))
+
+
 class ProjectSubmission(db.Model):
   __tablename__ = "project_submissions"
 
