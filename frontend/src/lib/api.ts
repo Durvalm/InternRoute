@@ -2,6 +2,18 @@ import { getToken } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+export class ApiError extends Error {
+  status: number;
+  retryAfterSeconds: number | null;
+
+  constructor(message: string, status: number, retryAfterSeconds: number | null = null) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
 export async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken();
   const isFormDataBody = typeof FormData !== "undefined" && options?.body instanceof FormData;
@@ -56,7 +68,7 @@ export async function apiRequest<T>(path: string, options?: RequestInit): Promis
       message = `${message} Please wait ${retryAfterSeconds}s before trying again.`;
     }
 
-    throw new Error(message);
+    throw new ApiError(message, res.status, retryAfterSeconds);
   }
 
   return res.json() as Promise<T>;

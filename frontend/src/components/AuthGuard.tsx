@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { apiRequest } from "@/lib/api";
+import { ApiError, apiRequest } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import { clearUser, setUser } from "@/lib/user";
 
@@ -47,10 +47,15 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }
         setChecked(true);
       })
-      .catch(() => {
-        clearToken();
-        clearUser();
-        router.replace("/login");
+      .catch((error) => {
+        // Keep sessions on transient API/server errors; only clear auth on 401.
+        if (error instanceof ApiError && error.status === 401) {
+          clearToken();
+          clearUser();
+          router.replace("/login");
+          setChecked(true);
+          return;
+        }
         setChecked(true);
       });
   }, [pathname, router]);
