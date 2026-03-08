@@ -93,7 +93,7 @@ export default function CountdownWidget({
 
   const data: RecruitingSummary = recruiting ?? {
     season: seasonStatus === "window" ? "peak" : "off",
-    readiness_status: (readiness ?? 0) >= 70 ? "ready" : "not_ready",
+    readiness_status: (readiness ?? 0) >= 62 ? "ready" : "not_ready",
     summers_left: null,
     next_peak_date: recruitingDate ?? "",
     recruiting_window_end: recruitingWindowEnd ?? null,
@@ -118,7 +118,7 @@ export default function CountdownWidget({
   const countdownTarget = formatFullDate(scenario.countdown_target);
   const nextPeakLabel = formatFullDate(data.next_peak_date);
   const countdownUnitLabel = scenario.countdown_days === 1 ? "day" : "days";
-  const readinessLabel = data.readiness_status === "ready" ? "Ready (>= 70%)" : "Not Ready (< 70%)";
+  const readinessLabel = data.readiness_status === "ready" ? "Ready (>= 62%)" : "Not Ready (< 62%)";
   const summersLabel = data.summers_left === null
     ? "Set graduation date"
     : `${data.summers_left} ${data.summers_left === 1 ? "summer" : "summers"} left`;

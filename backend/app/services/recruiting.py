@@ -8,7 +8,7 @@ from typing import Any
 SEASON_PEAK = "peak"
 SEASON_LOWER = "lower"
 SEASON_OFF = "off"
-READY_THRESHOLD = 70
+READY_THRESHOLD = 62
 
 
 @dataclass
@@ -153,7 +153,7 @@ def _build_scenario(
       id="B",
       name="Not Ready + Peak",
       header="Peak Season: Catch Up",
-      subtext="The window is open, but your profile needs work. Hit 70% readiness while still applying strategically.",
+      subtext="The window is open, but your profile needs work. Hit 62% readiness while still applying strategically.",
       color_theme="amber",
       countdown_label="Season Ends",
       countdown_target=target,

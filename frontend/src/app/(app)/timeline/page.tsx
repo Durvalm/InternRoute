@@ -92,7 +92,7 @@ type TaskCompletionResponse = {
 };
 
 const completionItems = [
-  "I should target around 70% readiness before applying, while still avoiding perfection paralysis.",
+  "I should target around 62% readiness before applying, while still avoiding perfection paralysis.",
   "I should ideally be ready before August for applications, but if not, the sooner I start the better.",
   "Most internships run in the summer; applications happen the year before, mainly August-December and often stretching into March.",
   "I understand that summers-left matters for planning, but I should also chase off-season internships, hackathons, and other opportunities."
@@ -475,7 +475,7 @@ export default function TimelinePage() {
 
         <InfoCard icon={Clock3} title="Time to Readiness" colorClass="bg-blue-100 text-blue-600">
           <p className="mb-3">
-            We recommend reaching <strong>70% Readiness</strong> before applying.
+            We recommend reaching <strong>62% Readiness</strong> before applying.
           </p>
           <div className="bg-slate-50 rounded-lg p-2 text-xs text-left space-y-1">
             <div className="flex justify-between">
