@@ -108,7 +108,7 @@ export default function ActionItemsWidget({ moduleProgress, nextAction }: Action
   }, [currentModule]);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
       <div className="p-5 border-b border-slate-100">
         <h3 className="font-bold text-slate-900">Next Steps</h3>
         <p className="mt-1 text-sm text-slate-500">{nextAction ?? "No tasks available yet"}</p>
@@ -136,7 +136,7 @@ export default function ActionItemsWidget({ moduleProgress, nextAction }: Action
         </div>
       </div>
 
-      <div className="p-2 flex-1">
+      <div className="p-2 max-h-[30rem] overflow-y-auto">
         {currentModule ? (
           <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
             {currentModule.module_name}

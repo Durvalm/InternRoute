@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import Image from "next/image";
 import {
   AlertCircle,
@@ -108,6 +108,16 @@ const tabs: Array<{ id: TabType; label: string; icon: LucideIcon }> = [
   { id: "scorer", label: "Score It", icon: Trophy }
 ];
 
+function isTabType(value: string | null): value is TabType {
+  return (
+    value === "ats"
+    || value === "philosophy"
+    || value === "content"
+    || value === "examples"
+    || value === "scorer"
+  );
+}
+
 function getScoreColor(score: number) {
   if (score >= 80) return "text-emerald-600";
   if (score >= 60) return "text-amber-600";
@@ -163,6 +173,7 @@ function getDateLabel(isoDate: string | null): string {
 }
 
 export default function ResumePage() {
+  const hasAppliedInitialTabFromUrl = useRef(false);
   const [activeTab, setActiveTab] = useState<TabType>("ats");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -176,6 +187,18 @@ export default function ResumePage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+
+  useEffect(() => {
+    if (hasAppliedInitialTabFromUrl.current || typeof window === "undefined") {
+      return;
+    }
+
+    const tabParam = new URLSearchParams(window.location.search).get("tab");
+    if (isTabType(tabParam)) {
+      setActiveTab(tabParam);
+    }
+    hasAppliedInitialTabFromUrl.current = true;
+  }, []);
 
   const loadSubmissionHistory = useCallback(async () => {
     setHistoryLoading(true);
