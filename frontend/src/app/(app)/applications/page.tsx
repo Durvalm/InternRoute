@@ -1032,6 +1032,26 @@ export default function ApplicationsPage() {
         </div>
       </section>
 
+      <section className="rounded-3xl border-2 border-violet-300 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Do Not Skip Opportunities Programs</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
+              It is really important to apply to opportunities programs as well, not just internship
+              job postings. Fellowships, externships, diversity programs, and communities can
+              accelerate your recruiting outcomes and add real resume value.
+            </p>
+          </div>
+          <a
+            href="/opportunities"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
+          >
+            Open Opportunities Page
+            <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
+      </section>
+
       <section className="rounded-3xl border border-emerald-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>

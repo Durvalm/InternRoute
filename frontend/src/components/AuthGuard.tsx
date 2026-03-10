@@ -82,11 +82,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [pathname, router]);
 
   if (!checked) {
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-600 flex items-center justify-center px-4">
-        <p className="text-sm">Loading your workspace...</p>
-      </div>
-    );
+    return null;
   }
 
   return <>{children}</>;
