@@ -29,3 +29,7 @@ pnpm-debug.log*
 PRODUCT_PRIVATE.md
 todo.txt
 MVP_SPEC.md
+
+# Next temp artifacts
+frontend/.next_stale_*/
+frontend/tsconfig.tsbuildinfo

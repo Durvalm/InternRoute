@@ -39,6 +39,15 @@ const resources: Resource[] = [
     external: true
   },
   {
+    name: "Underclassmen Internships",
+    description: "Actively maintained list focused on freshmen and sophomores.",
+    href: "https://github.com/zapplyjobs/underclassmen-internships",
+    icon: Search,
+    color: "text-emerald-700",
+    bg: "bg-emerald-50",
+    external: true
+  },
+  {
     name: "Simplify",
     description: "Apply faster and track internship applications.",
     href: "https://simplify.jobs/",
