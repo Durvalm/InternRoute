@@ -3,7 +3,11 @@ import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AuthGuard from "@/components/AuthGuard";
 
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space" });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space",
+  preload: false,
+});
 
 export const metadata: Metadata = {
   title: "InternshipRoute",

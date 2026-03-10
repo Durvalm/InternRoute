@@ -24,18 +24,31 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    let active = true;
+    const authCheckTimeout = window.setTimeout(() => {
+      // Failsafe so the UI never stays blank if the auth request hangs.
+      if (active) setChecked(true);
+    }, 8000);
+    const controller = new AbortController();
+
     const token = getToken();
     if (!token) {
       clearUser();
       if (!PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
         router.replace("/login");
       }
-      setChecked(true);
-      return;
+      if (active) setChecked(true);
+      return () => {
+        active = false;
+        window.clearTimeout(authCheckTimeout);
+        controller.abort();
+      };
     }
 
-    apiRequest<MeResponse>("/auth/me")
+    apiRequest<MeResponse>("/auth/me", { signal: controller.signal })
       .then((data) => {
+        if (!active) return;
+        window.clearTimeout(authCheckTimeout);
         setUser(data.user);
         if (!data.user.onboarding_completed && !pathname.startsWith("/onboarding")) {
           router.replace("/onboarding");
@@ -48,6 +61,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         setChecked(true);
       })
       .catch((error) => {
+        if (!active) return;
+        window.clearTimeout(authCheckTimeout);
         // Keep sessions on transient API/server errors; only clear auth on 401.
         if (error instanceof ApiError && error.status === 401) {
           clearToken();
@@ -58,10 +73,20 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }
         setChecked(true);
       });
+
+    return () => {
+      active = false;
+      window.clearTimeout(authCheckTimeout);
+      controller.abort();
+    };
   }, [pathname, router]);
 
   if (!checked) {
-    return null;
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-600 flex items-center justify-center px-4">
+        <p className="text-sm">Loading your workspace...</p>
+      </div>
+    );
   }
 
   return <>{children}</>;

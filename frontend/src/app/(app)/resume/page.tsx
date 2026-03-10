@@ -344,7 +344,7 @@ export default function ResumePage() {
                 <strong> It first goes through an ATS (Applicant Tracking System)</strong> - basically software that scans and filters resumes automatically.
               </p>
               <p className="text-slate-700">
-                Think of it like this: <strong>Robot reads your resume first -> If it passes, then a human recruiter sees it.</strong>
+                Think of it like this: <strong>Robot reads your resume first -&gt; if it passes, then a human recruiter sees it.</strong>
               </p>
             </div>
 
@@ -618,15 +618,15 @@ export default function ResumePage() {
                   <div className="space-y-3">
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                       <p className="text-sm font-bold text-emerald-900 mb-1">Example 1:</p>
-                      <p className="text-slate-700">Built a chat app -> Built real-time chat application <strong>serving 50+ daily users</strong></p>
+                      <p className="text-slate-700">Built a chat app -&gt; Built real-time chat application <strong>serving 50+ daily users</strong></p>
                     </div>
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                       <p className="text-sm font-bold text-emerald-900 mb-1">Example 2:</p>
-                      <p className="text-slate-700">Made it faster -> Optimized database queries, <strong>reducing load time by 40%</strong></p>
+                      <p className="text-slate-700">Made it faster -&gt; Optimized database queries, <strong>reducing load time by 40%</strong></p>
                     </div>
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                       <p className="text-sm font-bold text-emerald-900 mb-1">Example 3:</p>
-                      <p className="text-slate-700">Built REST API -> Designed and implemented <strong>15+ RESTful API endpoints</strong> with authentication</p>
+                      <p className="text-slate-700">Built REST API -&gt; Designed and implemented <strong>15+ RESTful API endpoints</strong> with authentication</p>
                     </div>
                   </div>
                 </div>
@@ -650,15 +650,15 @@ export default function ResumePage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex items-start gap-2">
                       <ChevronRight className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-slate-700">Used React -> Built responsive UI with <strong>React hooks and Context API for state management</strong></span>
+                      <span className="text-slate-700">Used React -&gt; Built responsive UI with <strong>React hooks and Context API for state management</strong></span>
                     </div>
                     <div className="flex items-start gap-2">
                       <ChevronRight className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-slate-700">Made a database -> Designed and implemented <strong>PostgreSQL database with normalized schema</strong></span>
+                      <span className="text-slate-700">Made a database -&gt; Designed and implemented <strong>PostgreSQL database with normalized schema</strong></span>
                     </div>
                     <div className="flex items-start gap-2">
                       <ChevronRight className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-slate-700">Deployed the app -> Deployed to <strong>AWS EC2 with Nginx reverse proxy and SSL encryption</strong></span>
+                      <span className="text-slate-700">Deployed the app -&gt; Deployed to <strong>AWS EC2 with Nginx reverse proxy and SSL encryption</strong></span>
                     </div>
                   </div>
                 </div>
@@ -1150,28 +1150,28 @@ export default function ResumePage() {
                       </div>
                       <ul className="space-y-3 text-sm text-slate-700">
                         <li className="flex items-start gap-2">
-                          <span className="text-emerald-600 font-bold">-></span>
+                          <span className="text-emerald-600 font-bold">-&gt;</span>
                           <div>
                             <p className="font-semibold">First Impression Impact</p>
                             <p>Looked impressive at first glance.</p>
                           </div>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-emerald-600 font-bold">-></span>
+                          <span className="text-emerald-600 font-bold">-&gt;</span>
                           <div>
                             <p className="font-semibold">Smart Coursework Section</p>
                             <p>Listed Udemy/YouTube courses because I had no CS classes yet.</p>
                           </div>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-emerald-600 font-bold">-></span>
+                          <span className="text-emerald-600 font-bold">-&gt;</span>
                           <div>
                             <p className="font-semibold">Labeled Projects as Experiences</p>
                             <p>Didn&apos;t call them projects - sounds more professional.</p>
                           </div>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-emerald-600 font-bold">-></span>
+                          <span className="text-emerald-600 font-bold">-&gt;</span>
                           <div>
                             <p className="font-semibold">Put Experiences on Top</p>
                             <p>Education lower because experience carried more signal.</p>

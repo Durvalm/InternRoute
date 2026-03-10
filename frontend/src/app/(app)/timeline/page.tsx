@@ -36,11 +36,11 @@ type RoadmapStep = {
   title: string;
   description: string;
   stageState: "current" | "next" | "later";
-  icon: ComponentType<{ size?: number; className?: string }>;
+  icon: ComponentType<{ size?: string | number; className?: string }>;
 };
 
 type InfoCardProps = {
-  icon: ComponentType<{ size?: number; className?: string }>;
+  icon: ComponentType<{ size?: string | number; className?: string }>;
   title: string;
   children: ReactNode;
   colorClass?: string;

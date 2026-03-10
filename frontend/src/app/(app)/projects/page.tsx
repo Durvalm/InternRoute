@@ -128,6 +128,7 @@ type ViewerResponse = {
 };
 
 type AdminProjectSubmission = ProjectSubmission & {
+  user_id: number | null;
   user: {
     id: number;
     email: string | null;
