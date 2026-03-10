@@ -12,7 +12,7 @@ from sqlalchemy.sql import func
 from ..extensions import db
 from ..models import LeetcodeProgress
 from ..services.leetcode_api import LeetcodeApiError, fetch_solved_counts
-from ..services.progression import sync_leetcode_progress
+from ..services.progression import module_completion_allowed_or_error, sync_leetcode_progress
 
 
 bp = Blueprint("leetcode", __name__, url_prefix="/leetcode")
@@ -111,6 +111,10 @@ def get_status():
 @jwt_required()
 def link_username():
   user_id = int(get_jwt_identity())
+  allowed, error_payload = module_completion_allowed_or_error(user_id, "leetcode")
+  if not allowed and error_payload is not None:
+    return jsonify(error_payload), 409
+
   payload = request.get_json() or {}
   username = _normalize_username(payload.get("leetcode_username"))
   if username is None:
@@ -170,6 +174,10 @@ def link_username():
 @jwt_required()
 def sync_progress():
   user_id = int(get_jwt_identity())
+  allowed, error_payload = module_completion_allowed_or_error(user_id, "leetcode")
+  if not allowed and error_payload is not None:
+    return jsonify(error_payload), 409
+
   record = LeetcodeProgress.query.filter_by(user_id=user_id).first()
   if record is None:
     return jsonify({"error": "Link your LeetCode username first."}), 400

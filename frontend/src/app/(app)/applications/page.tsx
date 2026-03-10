@@ -532,11 +532,12 @@ export default function ApplicationsPage() {
         });
         const nextModuleState = data.module_progress.find((item) => item.module_key === "applications");
         setModuleScore(nextModuleState?.score ?? (nextCompleted ? 100 : 0));
-      } catch {
+      } catch (err) {
         setApplicationsTasks((prev) =>
           prev.map((item) => (item.id === applicationsTask.id ? { ...item, is_completed: previousCompleted } : item))
         );
-        setTasksError("Unable to save your checklist progress. Please try again.");
+        const message = err instanceof Error ? err.message : "Unable to save your checklist progress. Please try again.";
+        setTasksError(message);
       } finally {
         setSyncingTaskId(null);
       }

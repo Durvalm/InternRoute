@@ -8,7 +8,7 @@ from sqlalchemy.orm import joinedload
 
 from ..extensions import db
 from ..models import ProjectSubmission, User
-from ..services.progression import sync_projects_submission_progress
+from ..services.progression import module_completion_allowed_or_error, sync_projects_submission_progress
 
 bp = Blueprint("projects", __name__, url_prefix="/projects")
 
@@ -187,6 +187,11 @@ def review_submission(submission_id: int):
     return jsonify({"error": "To mark pass, both has_api and has_database must be true."}), 400
 
   submission = ProjectSubmission.query.get_or_404(submission_id)
+  if decision == "pass":
+    allowed, error_payload = module_completion_allowed_or_error(submission.user_id, "projects")
+    if not allowed and error_payload is not None:
+      return jsonify(error_payload), 409
+
   submission.status = decision
   submission.review_notes = note
   computed = sync_projects_submission_progress(submission.user_id, commit=True)

@@ -62,6 +62,12 @@ def _score_from_weights(total_weight: int, completed_weight: int) -> int:
   return max(0, min(100, raw))
 
 
+def _is_module_state_complete(state: ModuleState) -> bool:
+  if not state.has_tasks:
+    return True
+  return state.score >= state.unlock_threshold
+
+
 def _compute_category_score(module_states: list[ModuleState], modules: list[Module], category: str) -> int:
   weighted_sum = 0
   total_weight = 0
@@ -169,21 +175,73 @@ def _build_module_states(user: User) -> list[ModuleState]:
     scores_by_module_id[module.id] = score
 
   states: list[ModuleState] = []
+  previous_modules_complete = True
   for module in modules:
-    states.append(
-      ModuleState(
-        module_id=module.id,
-        module_key=module.key,
-        module_name=module.name,
-        score=scores_by_module_id.get(module.id, 0),
-        is_unlocked=True,
-        unlock_threshold=module.unlock_threshold,
-        has_tasks=has_tasks_by_module_id.get(module.id, False),
-        has_bonus_tasks=has_bonus_by_module_id.get(module.id, False),
-      )
+    state = ModuleState(
+      module_id=module.id,
+      module_key=module.key,
+      module_name=module.name,
+      score=scores_by_module_id.get(module.id, 0),
+      is_unlocked=previous_modules_complete,
+      unlock_threshold=module.unlock_threshold,
+      has_tasks=has_tasks_by_module_id.get(module.id, False),
+      has_bonus_tasks=has_bonus_by_module_id.get(module.id, False),
     )
+    states.append(state)
+    if not _is_module_state_complete(state):
+      previous_modules_complete = False
 
   return states
+
+
+def _unmet_prerequisite_states_for_module_key(
+  module_states: list[ModuleState],
+  module_key: str,
+) -> list[ModuleState]:
+  target_index = next((index for index, state in enumerate(module_states) if state.module_key == module_key), None)
+  if target_index is None:
+    return []
+
+  return [
+    state
+    for state in module_states[:target_index]
+    if state.has_tasks and state.score < state.unlock_threshold
+  ]
+
+
+def get_unmet_module_prerequisites(user_id: int, module_key: str) -> list[dict[str, str]]:
+  user = User.query.get_or_404(user_id)
+  module_states = _build_module_states(user)
+  unmet_states = _unmet_prerequisite_states_for_module_key(module_states, module_key)
+  return [
+    {
+      "module_key": state.module_key,
+      "module_name": state.module_name,
+    }
+    for state in unmet_states
+  ]
+
+
+def format_unmet_prerequisites_error(module_name: str, unmet_modules: list[dict[str, str]]) -> str:
+  if not unmet_modules:
+    return f"Previous module requirements must be completed before {module_name}."
+  names = ", ".join(item["module_name"] for item in unmet_modules)
+  return f"Complete previous modules before completing {module_name}: {names}."
+
+
+def module_completion_allowed_or_error(user_id: int, module_key: str) -> tuple[bool, dict[str, Any] | None]:
+  module = Module.query.filter_by(key=module_key).first()
+  if module is None:
+    return True, None
+
+  unmet_modules = get_unmet_module_prerequisites(user_id, module_key)
+  if not unmet_modules:
+    return True, None
+
+  return False, {
+    "error": format_unmet_prerequisites_error(module.name, unmet_modules),
+    "unmet_prerequisites": unmet_modules,
+  }
 
 
 def recompute_and_persist_user_progress(user_id: int, *, commit: bool = True) -> dict[str, Any]:
@@ -284,11 +342,12 @@ def sync_projects_submission_progress(user_id: int, *, commit: bool = True) -> d
     .first()
     is not None
   )
+  can_complete, _ = module_completion_allowed_or_error(user_id, "projects")
 
   desired_completion_by_task_key = {
-    "projects_core_1": passed_count >= 1,
-    "projects_core_2": passed_count >= 2,
-    "projects_bonus_real_user": has_bonus_real_user,
+    "projects_core_1": can_complete and passed_count >= 1,
+    "projects_core_2": can_complete and passed_count >= 2,
+    "projects_bonus_real_user": can_complete and has_bonus_real_user,
   }
 
   for task_key, is_completed in desired_completion_by_task_key.items():
@@ -319,7 +378,8 @@ def sync_resume_submission_progress(user_id: int, *, commit: bool = True) -> dic
     return recompute_and_persist_user_progress(user_id, commit=commit)
 
   best_successful_score = _best_successful_resume_score(user_id)
-  is_completed = best_successful_score >= 80
+  can_complete, _ = module_completion_allowed_or_error(user_id, "resume")
+  is_completed = can_complete and best_successful_score >= 80
 
   completion = UserTaskCompletion.query.filter_by(user_id=user_id, task_id=task.id).first()
   if is_completed and completion is None:
@@ -353,7 +413,8 @@ def sync_leetcode_progress(user_id: int, *, commit: bool = True) -> dict[str, An
     and progress.total_solved >= LEETCODE_TOTAL_TARGET
     and progress.medium_solved >= LEETCODE_MEDIUM_TARGET
   )
-  is_completed = meets_threshold
+  can_complete, _ = module_completion_allowed_or_error(user_id, "leetcode")
+  is_completed = can_complete and meets_threshold
 
   if progress is not None and meets_threshold and progress.completion_verified_at is None:
     progress.completion_verified_at = datetime.utcnow()

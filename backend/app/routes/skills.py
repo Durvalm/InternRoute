@@ -18,7 +18,7 @@ from ..services.judge0 import (
   get_languages,
   run_submission,
 )
-from ..services.progression import set_task_completion_internal
+from ..services.progression import module_completion_allowed_or_error, set_task_completion_internal
 from ..services.skills_harness import RESULT_MARKER, build_harness_source, format_case_preview
 from ..services.skills_challenges import (
   challenge_supports_family,
@@ -601,14 +601,19 @@ def submit_challenge(challenge_id: str):
 
     passed_all_hidden = evaluation["passed_count"] == evaluation["total"]
     task_completed = False
+    completion_blocked_reason: str | None = None
 
     if passed_all_hidden:
       coding_module = Module.query.filter_by(key="coding").first()
       if coding_module:
         task = _resolve_challenge_task(challenge_id=challenge_id, coding_module_id=coding_module.id)
         if task:
-          set_task_completion_internal(user_id, task.id, True)
-          task_completed = True
+          allowed, error_payload = module_completion_allowed_or_error(user_id, coding_module.key)
+          if allowed:
+            set_task_completion_internal(user_id, task.id, True)
+            task_completed = True
+          else:
+            completion_blocked_reason = str((error_payload or {}).get("error") or "Complete previous modules first.")
 
     return jsonify(
       {
@@ -617,6 +622,7 @@ def submit_challenge(challenge_id: str):
         "hidden_pass_count": evaluation["passed_count"],
         "hidden_total": evaluation["total"],
         "task_completed": task_completed,
+        "completion_blocked_reason": completion_blocked_reason,
         "compile_output": evaluation["compile_output"],
         "stderr": evaluation["stderr"],
         "time_ms": evaluation["time_ms"],

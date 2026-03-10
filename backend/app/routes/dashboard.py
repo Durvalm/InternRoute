@@ -5,6 +5,7 @@ from ..models import Task, User
 from ..utils import days_until
 from ..services.progression import (
   get_tasks_for_user_module,
+  module_completion_allowed_or_error,
   recompute_and_persist_user_progress,
   set_task_completion_internal,
 )
@@ -80,6 +81,11 @@ def update_task_completion(task_id: int):
   task = Task.query.filter_by(id=task_id, is_active=True).first()
   if task is None:
     return jsonify({"error": "Task not found"}), 404
+
+  if completed and task.module is not None:
+    allowed, error_payload = module_completion_allowed_or_error(user_id, task.module.key)
+    if not allowed and error_payload is not None:
+      return jsonify(error_payload), 409
 
   computed = set_task_completion_internal(user_id, task_id, completed)
   return jsonify(

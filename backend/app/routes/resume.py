@@ -11,7 +11,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from ..extensions import db
 from ..models import ResumeSubmission
-from ..services.progression import sync_resume_submission_progress
+from ..services.progression import module_completion_allowed_or_error, sync_resume_submission_progress
 from ..services.resume_providers import ResumeProviderError, build_resume_scoring_provider
 from ..services.resume_scoring import (
   PASS_THRESHOLD_SCORE,
@@ -126,6 +126,10 @@ def score_resume():
     return jsonify({"error": "Resume scoring is currently disabled."}), 503
 
   user_id = int(get_jwt_identity())
+  allowed, error_payload = module_completion_allowed_or_error(user_id, "resume")
+  if not allowed and error_payload is not None:
+    return jsonify(error_payload), 409
+
   retry_after = _check_rate_limit(user_id, limit=RESUME_SCORE_LIMIT_PER_MINUTE)
   if retry_after is not None:
     response = jsonify({

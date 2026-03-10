@@ -321,11 +321,12 @@ export default function InterviewPrepPage() {
         });
         const nextModuleState = data.module_progress.find((item) => item.module_key === "interview_prep");
         setModuleScore(nextModuleState?.score ?? (nextCompleted ? 100 : 0));
-      } catch {
+      } catch (err) {
         setInterviewPrepTasks((prev) =>
           prev.map((item) => (item.id === interviewPrepTask.id ? { ...item, is_completed: previousCompleted } : item))
         );
-        setTasksError("Unable to save your checklist progress. Please try again.");
+        const message = err instanceof Error ? err.message : "Unable to save your checklist progress. Please try again.";
+        setTasksError(message);
       } finally {
         setSyncingTaskId(null);
       }

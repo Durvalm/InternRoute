@@ -93,6 +93,7 @@ type SubmitResponse = {
   hidden_pass_count: number;
   hidden_total: number;
   task_completed: boolean;
+  completion_blocked_reason?: string | null;
   compile_output: string;
   stderr: string;
   time_ms: number | null;
@@ -1239,6 +1240,9 @@ export default function SkillsPage() {
                       {submitResult.hidden_pass_count}/{submitResult.hidden_total} hidden tests passed.
                       {submitResult.task_completed ? " Task marked complete." : ""}
                     </p>
+                    {submitResult.completion_blocked_reason ? (
+                      <p className="text-xs mt-1 text-amber-800">{submitResult.completion_blocked_reason}</p>
+                    ) : null}
                     {submitResult.compile_output ? (
                       <p className="text-xs mt-1 text-amber-700">Compile output: {submitResult.compile_output}</p>
                     ) : null}

@@ -344,9 +344,10 @@ export default function TimelinePage() {
             module_progress: data.module_progress
           }
       );
-    } catch {
+    } catch (err) {
       setTimelineTasks((prev) => prev.map((item) => (item.id === timelineTask.id ? { ...item, is_completed: previousCompleted } : item)));
-      setTasksError("Unable to save your checklist progress. Please try again.");
+      const message = err instanceof Error ? err.message : "Unable to save your checklist progress. Please try again.";
+      setTasksError(message);
     } finally {
       setSyncingTaskId(null);
     }

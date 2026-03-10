@@ -14,9 +14,10 @@ Purpose: track pre-deploy fixes discussed in audit, in the same numbering used i
 - Applied (2026-03-10): removed coding skill from onboarding/profile flow and removed override scoring logic; readiness now stays objective (task/submission-based).
 
 2. Module lock vs open access model alignment
-- Status: `decision_made`
+- Status: `completed`
 - Summary: product direction is to keep modules visible/open.
 - Action: align naming/logic to "recommended path" (not hard unlock semantics).
+- Applied (2026-03-10): modules remain viewable, but completion credit is now blocked until prior modules are completed; backend enforcement added for checklist/task completion and module-completion actions.
 
 3. Project progression duplicate inflation risk
 - Status: `accepted_for_now`
@@ -56,4 +57,4 @@ Purpose: track pre-deploy fixes discussed in audit, in the same numbering used i
 
 ## Next Up
 
-- #2 (current)
+- #5 (current)
