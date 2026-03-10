@@ -265,6 +265,7 @@ def build_recruiting_view(*, today: date, readiness_score: int, graduation_date:
 
   return {
     "season": season,
+    "ready_threshold": READY_THRESHOLD,
     "readiness_status": "ready" if readiness_score >= READY_THRESHOLD else "not_ready",
     "summers_left": summers_left,
     "next_peak_date": next_peak.isoformat(),

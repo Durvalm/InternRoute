@@ -38,6 +38,7 @@ type RecruitingScenario = {
 
 type RecruitingSummary = {
   season: "peak" | "lower" | "off";
+  ready_threshold: number;
   readiness_status: "ready" | "not_ready";
   summers_left: number | null;
   next_peak_date: string;
@@ -93,6 +94,7 @@ export default function CountdownWidget({
 
   const data: RecruitingSummary = recruiting ?? {
     season: seasonStatus === "window" ? "peak" : "off",
+    ready_threshold: 62,
     readiness_status: (readiness ?? 0) >= 62 ? "ready" : "not_ready",
     summers_left: null,
     next_peak_date: recruitingDate ?? "",
@@ -100,6 +102,8 @@ export default function CountdownWidget({
     season_explainer: "Peak: Aug-Dec, Lower: Jan-Mar, Off: Apr-Jul.",
     scenario: fallbackScenario
   };
+
+  const readyThreshold = Number.isFinite(data.ready_threshold) ? data.ready_threshold : 62;
 
   const scenario = data.scenario;
   const seasonMeta = {
@@ -118,7 +122,9 @@ export default function CountdownWidget({
   const countdownTarget = formatFullDate(scenario.countdown_target);
   const nextPeakLabel = formatFullDate(data.next_peak_date);
   const countdownUnitLabel = scenario.countdown_days === 1 ? "day" : "days";
-  const readinessLabel = data.readiness_status === "ready" ? "Ready (>= 62%)" : "Not Ready (< 62%)";
+  const readinessLabel = data.readiness_status === "ready"
+    ? `Ready (>= ${readyThreshold}%)`
+    : `Not Ready (< ${readyThreshold}%)`;
   const summersLabel = data.summers_left === null
     ? "Set graduation date"
     : `${data.summers_left} ${data.summers_left === 1 ? "summer" : "summers"} left`;

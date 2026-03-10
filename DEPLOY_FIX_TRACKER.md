@@ -42,8 +42,9 @@ Purpose: track pre-deploy fixes discussed in audit, in the same numbering used i
 - Applied (2026-03-10): removed `RESUME_SCORER_ENABLED` gating from resume scoring flow; scorer is always active. Added production config guard requiring `OPENAI_API_KEY` when `APP_ENV=production`.
 
 8. Threshold/docs alignment
-- Status: `pending`
+- Status: `completed`
 - Summary: docs and product messaging should reflect the implemented readiness threshold.
+- Applied (2026-03-10): aligned docs with implementation (`ready` threshold = 62%, module completion target = 80%), and removed frontend hardcoded readiness badge text by wiring threshold from backend recruiting payload.
 
 9. Graduation date fallback UX
 - Status: `pending`
@@ -60,4 +61,4 @@ Purpose: track pre-deploy fixes discussed in audit, in the same numbering used i
 
 ## Next Up
 
-- #8 (current)
+- #9 (current)

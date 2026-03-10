@@ -32,6 +32,7 @@ type RecruitingScenario = {
 
 type RecruitingSummary = {
   season: "peak" | "lower" | "off";
+  ready_threshold: number;
   readiness_status: "ready" | "not_ready";
   summers_left: number | null;
   next_peak_date: string;
