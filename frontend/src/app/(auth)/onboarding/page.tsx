@@ -10,7 +10,6 @@ type ProfileResponse = {
     id: number;
     email: string;
     name: string | null;
-    coding_skill_level: string | null;
     graduation_date: string | null;
     is_superuser: boolean;
     onboarding_completed: boolean;
@@ -20,7 +19,6 @@ type ProfileResponse = {
 export default function OnboardingPage() {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [codingSkillLevel, setCodingSkillLevel] = useState("Beginner");
   const [graduationDate, setGraduationDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,7 +43,6 @@ export default function OnboardingPage() {
         method: "POST",
         body: JSON.stringify({
           name: name.trim(),
-          coding_skill_level: codingSkillLevel,
           graduation_date: graduationDate || null
         })
       });
@@ -63,7 +60,7 @@ export default function OnboardingPage() {
     <div className="rounded-2xl bg-white/90 p-8 shadow-soft border border-white/60">
       <h1 className="text-2xl font-semibold">Let’s personalize your plan</h1>
       <p className="mt-2 text-sm text-slate-500">
-        Tell us your current level and goals so we can build your dashboard.
+        Tell us your basic info so we can build your dashboard.
       </p>
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -76,20 +73,6 @@ export default function OnboardingPage() {
             onChange={(event) => setName(event.target.value)}
             required
           />
-        </div>
-        <div>
-          <label className="text-xs font-medium text-slate-600">
-            How would you rate your coding skills with at least one programming language?
-          </label>
-          <select
-            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-            value={codingSkillLevel}
-            onChange={(event) => setCodingSkillLevel(event.target.value)}
-          >
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
-          </select>
         </div>
         <div>
           <label className="text-xs font-medium text-slate-600">Graduation date</label>

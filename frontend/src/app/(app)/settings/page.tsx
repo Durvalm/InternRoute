@@ -20,7 +20,6 @@ type MeResponse = {
     id: number;
     email: string;
     name: string | null;
-    coding_skill_level: string | null;
     graduation_date: string | null;
     is_superuser: boolean;
     onboarding_completed: boolean;
@@ -42,7 +41,6 @@ function toStoredUser(payload: MeResponse["user"]): StoredUser {
     id: payload.id,
     email: payload.email,
     name: payload.name,
-    coding_skill_level: payload.coding_skill_level,
     graduation_date: payload.graduation_date,
     is_superuser: payload.is_superuser,
     onboarding_completed: payload.onboarding_completed

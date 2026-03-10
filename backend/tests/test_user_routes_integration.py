@@ -7,21 +7,18 @@ def test_update_profile_success(client, auth_headers, app):
     headers=auth_headers,
     json={
       "name": "Taylor Student",
-      "coding_skill_level": "Intermediate",
       "graduation_date": "2028-05",
     },
   )
   assert response.status_code == 200
   payload = response.get_json()
   assert payload["user"]["name"] == "Taylor Student"
-  assert payload["user"]["coding_skill_level"] == "Intermediate"
   assert payload["user"]["graduation_date"] == "2028-05-01"
 
   with app.app_context():
     user = User.query.get(app.config["TEST_USER_ID"])
     assert user is not None
     assert user.name == "Taylor Student"
-    assert user.coding_skill_level == "Intermediate"
     assert user.graduation_date.isoformat() == "2028-05-01"
 
 

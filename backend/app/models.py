@@ -31,7 +31,6 @@ class User(db.Model):
       "id": self.id,
       "email": self.email,
       "name": self.name,
-      "coding_skill_level": self.coding_skill_level,
       "graduation_date": self.graduation_date.isoformat() if self.graduation_date else None,
       "is_superuser": self.is_superuser,
       "onboarding_completed": self.onboarding_completed

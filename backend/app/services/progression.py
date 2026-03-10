@@ -55,20 +55,6 @@ def get_or_create_user_progress(user_id: int) -> UserProgress:
   return progress
 
 
-def set_coding_override_for_advanced(user_id: int, score: int = 80) -> None:
-  progress = get_or_create_user_progress(user_id)
-  progress.coding_override_score = max(0, min(100, score))
-  progress.coding_override_source = "advanced_onboarding"
-  db.session.flush()
-
-
-def clear_coding_override(user_id: int) -> None:
-  progress = get_or_create_user_progress(user_id)
-  progress.coding_override_score = None
-  progress.coding_override_source = None
-  db.session.flush()
-
-
 def _score_from_weights(total_weight: int, completed_weight: int) -> int:
   if total_weight <= 0:
     return 0
@@ -131,7 +117,7 @@ def _leetcode_module_score(user_id: int) -> int:
   return max(0, min(100, round(((total_progress + medium_progress) / 2.0) * 100)))
 
 
-def _build_module_states(user: User, progress: UserProgress) -> list[ModuleState]:
+def _build_module_states(user: User) -> list[ModuleState]:
   modules = Module.query.order_by(Module.sort_order.asc()).all()
   if not modules:
     return []
@@ -177,12 +163,6 @@ def _build_module_states(user: User, progress: UserProgress) -> list[ModuleState
       total_weight = sum(max(0, task.weight) for task in module_tasks)
       completed_weight = sum(max(0, task.weight) for task in module_tasks if task.id in completed_ids)
       score = _score_from_weights(total_weight, completed_weight)
-    elif (
-      module.key == "coding"
-      and progress.coding_override_score is not None
-      and progress.coding_override_source == "advanced_onboarding"
-    ):
-      score = max(0, min(100, progress.coding_override_score))
     else:
       score = 0
 
@@ -210,7 +190,7 @@ def recompute_and_persist_user_progress(user_id: int, *, commit: bool = True) ->
   user = User.query.get_or_404(user_id)
   progress = get_or_create_user_progress(user.id)
   modules = Module.query.order_by(Module.sort_order.asc()).all()
-  module_states = _build_module_states(user, progress)
+  module_states = _build_module_states(user)
 
   overall = _compute_overall_score(module_states, modules) if modules else 0
   category_coding = _compute_category_score(module_states, modules, "coding") if modules else 0
