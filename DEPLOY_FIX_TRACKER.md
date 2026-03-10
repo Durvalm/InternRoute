@@ -28,8 +28,9 @@ Purpose: track pre-deploy fixes discussed in audit, in the same numbering used i
 - Summary: product owner preference is to keep current tone/lingo.
 
 5. Production config wiring
-- Status: `pending`
+- Status: `completed`
 - Summary: configure production CORS, frontend API URL, secrets, DB, and service endpoints.
+- Applied (2026-03-10): backend now supports `APP_ENV` + `FLASK_DEBUG` toggles, env-driven CORS origins, env-driven host/port runtime, and production guardrails for DB/CORS. Frontend now requires `NEXT_PUBLIC_API_URL` in production (local fallback only in development). Added env templates for backend/frontend.
 
 6. Lint/CI setup
 - Status: `deferred`
@@ -52,9 +53,10 @@ Purpose: track pre-deploy fixes discussed in audit, in the same numbering used i
 - Summary: acceptable for MVP.
 
 11. Production runtime mode
-- Status: `pending`
+- Status: `completed`
 - Summary: ensure non-debug production run path.
+- Applied (2026-03-10): removed hardcoded `debug=True` and wired runtime mode to environment configuration.
 
 ## Next Up
 
-- #5 (current)
+- #7 (current)

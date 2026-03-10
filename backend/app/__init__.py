@@ -18,7 +18,7 @@ def create_app():
     app,
     resources={
       r"/*": {
-        "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+        "origins": app.config.get("CORS_ALLOWED_ORIGINS", []),
         "allow_headers": ["Content-Type", "Authorization"],
         "methods": ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"]
       }

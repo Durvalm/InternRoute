@@ -1,6 +1,19 @@
 import { getToken } from "@/lib/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").trim();
+const API_URL =
+  rawApiUrl.length > 0
+    ? rawApiUrl.replace(/\/+$/, "")
+    : process.env.NODE_ENV === "production"
+      ? ""
+      : "http://localhost:5000";
+
+function requireApiUrl(): string {
+  if (API_URL) {
+    return API_URL;
+  }
+  throw new Error("NEXT_PUBLIC_API_URL is required in production.");
+}
 
 export class ApiError extends Error {
   status: number;
@@ -27,7 +40,7 @@ export async function apiRequest<T>(path: string, options?: RequestInit): Promis
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${requireApiUrl()}${path}`, {
     ...options,
     headers,
   });
