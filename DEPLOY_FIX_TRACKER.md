@@ -37,8 +37,9 @@ Purpose: track pre-deploy fixes discussed in audit, in the same numbering used i
 - Summary: intentionally not prioritized right now.
 
 7. Resume scoring availability
-- Status: `pending`
+- Status: `completed`
 - Summary: remove disable flag path and require scorer configuration (always-on behavior).
+- Applied (2026-03-10): removed `RESUME_SCORER_ENABLED` gating from resume scoring flow; scorer is always active. Added production config guard requiring `OPENAI_API_KEY` when `APP_ENV=production`.
 
 8. Threshold/docs alignment
 - Status: `pending`
@@ -59,4 +60,4 @@ Purpose: track pre-deploy fixes discussed in audit, in the same numbering used i
 
 ## Next Up
 
-- #7 (current)
+- #8 (current)

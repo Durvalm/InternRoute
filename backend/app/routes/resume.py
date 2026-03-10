@@ -6,7 +6,7 @@ import time
 from threading import Lock
 from typing import Any
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from ..extensions import db
@@ -29,16 +29,6 @@ logger = logging.getLogger(__name__)
 RESUME_SCORE_LIMIT_PER_MINUTE = 6
 _RATE_LIMIT_EVENTS: dict[str, list[float]] = {}
 _RATE_LIMIT_LOCK = Lock()
-
-
-def _is_resume_scorer_enabled() -> bool:
-  value = current_app.config.get("RESUME_SCORER_ENABLED")
-  if isinstance(value, bool):
-    return value
-  if value is None:
-    return False
-  text = str(value).strip().lower()
-  return text in {"1", "true", "yes", "on"}
 
 
 def _check_rate_limit(user_id: int, *, limit: int, window_seconds: float = 60.0) -> int | None:
@@ -122,9 +112,6 @@ def list_submissions():
 @bp.post("/score")
 @jwt_required()
 def score_resume():
-  if not _is_resume_scorer_enabled():
-    return jsonify({"error": "Resume scoring is currently disabled."}), 503
-
   user_id = int(get_jwt_identity())
   allowed, error_payload = module_completion_allowed_or_error(user_id, "resume")
   if not allowed and error_payload is not None:

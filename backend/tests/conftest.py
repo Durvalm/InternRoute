@@ -6,7 +6,6 @@ from flask_jwt_extended import create_access_token
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-key")
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
-os.environ.setdefault("RESUME_SCORER_ENABLED", "true")
 os.environ.setdefault("SUPERUSER_EMAILS", "")
 
 from app import create_app  # noqa: E402
@@ -20,7 +19,6 @@ def app():
   app.config.update(
     TESTING=True,
     SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
-    RESUME_SCORER_ENABLED=True,
   )
 
   with app.app_context():

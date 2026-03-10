@@ -82,8 +82,11 @@ class Config:
   if IS_PRODUCTION and not CORS_ALLOWED_ORIGINS:
     raise RuntimeError("CORS_ALLOWED_ORIGINS is required when APP_ENV=production.")
 
+  OPENAI_API_KEY = (os.getenv("OPENAI_API_KEY") or "").strip()
+  if IS_PRODUCTION and not OPENAI_API_KEY:
+    raise RuntimeError("OPENAI_API_KEY is required when APP_ENV=production.")
+
   FLASK_RUN_HOST = _env_str("FLASK_RUN_HOST", "127.0.0.1")
   FLASK_RUN_PORT = _env_int("FLASK_RUN_PORT", 5000)
 
   SUPERUSER_EMAILS = os.getenv("SUPERUSER_EMAILS", "")
-  RESUME_SCORER_ENABLED = _env_bool("RESUME_SCORER_ENABLED", default=False)
