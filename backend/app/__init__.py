@@ -54,6 +54,24 @@ def create_app():
   app.register_blueprint(resume_bp)
   app.register_blueprint(leetcode_bp)
 
+  @app.after_request
+  def apply_security_headers(response):
+    if not app.config.get("SECURITY_HEADERS_ENABLED", True):
+      return response
+    response.headers.setdefault("Content-Security-Policy", app.config.get("SECURITY_CSP", ""))
+    response.headers.setdefault(
+      "Referrer-Policy",
+      app.config.get("SECURITY_REFERRER_POLICY", "strict-origin-when-cross-origin"),
+    )
+    response.headers.setdefault("X-Frame-Options", app.config.get("SECURITY_X_FRAME_OPTIONS", "DENY"))
+    response.headers.setdefault(
+      "X-Content-Type-Options",
+      app.config.get("SECURITY_X_CONTENT_TYPE_OPTIONS", "nosniff"),
+    )
+    if app.config.get("IS_PRODUCTION"):
+      response.headers.setdefault("Strict-Transport-Security", app.config.get("SECURITY_HSTS", ""))
+    return response
+
   @app.get("/")
   def health():
     return {"status": "ok"}

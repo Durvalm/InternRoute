@@ -96,4 +96,11 @@ class Config:
   FLASK_RUN_HOST = _env_str("FLASK_RUN_HOST", "127.0.0.1")
   FLASK_RUN_PORT = _env_int("FLASK_RUN_PORT", 5000)
 
+  SECURITY_HEADERS_ENABLED = True
+  SECURITY_CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+  SECURITY_HSTS = "max-age=31536000; includeSubDomains; preload"
+  SECURITY_REFERRER_POLICY = "strict-origin-when-cross-origin"
+  SECURITY_X_FRAME_OPTIONS = "DENY"
+  SECURITY_X_CONTENT_TYPE_OPTIONS = "nosniff"
+
   SUPERUSER_EMAILS = os.getenv("SUPERUSER_EMAILS", "")
