@@ -9,6 +9,7 @@ from typing import Any
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
+from ..analytics import track_event
 from ..extensions import db
 from ..monitoring import capture_monitored_exception
 from ..models import ResumeSubmission
@@ -142,6 +143,11 @@ def score_resume():
     status="failed",
   )
   db.session.add(submission)
+  track_event(
+    "resume_score_requested",
+    user_id=user_id,
+    properties={"file_size_bytes": file_size_bytes},
+  )
 
   start = time.perf_counter()
   try:
@@ -178,7 +184,7 @@ def score_resume():
     submission.error_code = None
     submission.error_message = None
 
-    sync_resume_submission_progress(user_id, commit=False)
+    sync_resume_submission_progress(user_id, commit=False, emit_module_completion_events=True)
     db.session.commit()
 
     best_successful_score = (
@@ -199,6 +205,17 @@ def score_resume():
       submission.page_count,
       submission.file_size_bytes,
       elapsed_ms,
+    )
+    track_event(
+      "resume_score_succeeded",
+      user_id=user_id,
+      properties={
+        "submission_id": submission.id,
+        "overall_score": scored.overall_score,
+        "provider": submission.provider,
+        "model": submission.model,
+        "elapsed_ms": elapsed_ms,
+      },
     )
 
     return jsonify(
@@ -242,6 +259,15 @@ def score_resume():
         tags={"area": "resume", "error_code": str(err.code)},
         context={"user_id": user_id, "submission_id": submission.id, "status_code": status_code},
       )
+    track_event(
+      "resume_score_failed",
+      user_id=user_id,
+      properties={
+        "submission_id": submission.id,
+        "error_code": str(err.code),
+        "status_code": status_code,
+      },
+    )
     return jsonify(_submission_error_payload(public_message, error_code=err.code)), err.status_code
   except ResumeProviderError as err:
     submission.status = "failed"
@@ -254,6 +280,15 @@ def score_resume():
       tags={"area": "resume", "error_code": "provider_config_error"},
       context={"user_id": user_id, "submission_id": submission.id, "status_code": 503},
     )
+    track_event(
+      "resume_score_failed",
+      user_id=user_id,
+      properties={
+        "submission_id": submission.id,
+        "error_code": "provider_config_error",
+        "status_code": 503,
+      },
+    )
     return jsonify(_submission_error_payload("Resume scorer is not configured.", error_code="provider_config_error")), 503
   except Exception as err:
     submission.status = "failed"
@@ -265,5 +300,14 @@ def score_resume():
       err,
       tags={"area": "resume", "error_code": "resume_scoring_internal_error"},
       context={"user_id": user_id, "submission_id": submission.id, "status_code": 500},
+    )
+    track_event(
+      "resume_score_failed",
+      user_id=user_id,
+      properties={
+        "submission_id": submission.id,
+        "error_code": "resume_scoring_internal_error",
+        "status_code": 500,
+      },
     )
     return jsonify(_submission_error_payload("Internal scoring error.", error_code="resume_scoring_internal_error")), 500

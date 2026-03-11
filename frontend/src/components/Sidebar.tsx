@@ -17,6 +17,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
+import { trackLogoutClicked } from "@/lib/analytics";
 import { clearUser, getUser, USER_UPDATED_EVENT, type StoredUser } from "@/lib/user";
 
 type SidebarProps = {
@@ -52,6 +53,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
   const handleLogout = async () => {
     onClose?.();
+    trackLogoutClicked(pathname || "/");
     try {
       await apiRequest<{ ok: boolean }>("/auth/logout", { method: "POST", skipAuthRedirect: true });
     } catch (error) {

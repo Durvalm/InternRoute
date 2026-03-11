@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import hashlib
 from datetime import datetime
 from typing import Any
 
@@ -9,6 +10,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import func
 
+from ..analytics import track_event
 from ..extensions import db
 from ..monitoring import capture_monitored_exception
 from ..models import LeetcodeProgress
@@ -107,6 +109,10 @@ def _api_error_response(err: LeetcodeApiError):
   return jsonify({"error": str(err)}), 502
 
 
+def _hash_username(username: str) -> str:
+  return hashlib.sha256(username.strip().lower().encode("utf-8")).hexdigest()
+
+
 @bp.get("/progress")
 @jwt_required()
 def get_status():
@@ -143,6 +149,15 @@ def link_username():
   try:
     solved = fetch_solved_counts(username)
   except LeetcodeApiError as err:
+    track_event(
+      "leetcode_sync_failed",
+      user_id=user_id,
+      properties={
+        "error_code": "leetcode_api_error",
+        "status_code": int(err.status_code or 502),
+        "route": "link",
+      },
+    )
     if err.status_code == 404:
       return jsonify({"error": "LeetCode username not found."}), 404
     _capture_leetcode_api_error(err, user_id=user_id, route="link")
@@ -171,11 +186,19 @@ def link_username():
   record.completion_verified_at = now if _meets_completion_target(record) else None
 
   try:
-    computed = sync_leetcode_progress(user_id, commit=False)
+    computed = sync_leetcode_progress(user_id, commit=False, emit_module_completion_events=True)
     db.session.commit()
   except IntegrityError:
     db.session.rollback()
     return jsonify({"error": "This LeetCode username is already linked to another account."}), 409
+
+  track_event(
+    "leetcode_linked",
+    user_id=user_id,
+    properties={
+      "leetcode_username": _hash_username(username),
+    },
+  )
 
   return jsonify({
     "progress": _serialize_status(record),
@@ -198,6 +221,15 @@ def sync_progress():
   try:
     solved = fetch_solved_counts(record.leetcode_username)
   except LeetcodeApiError as err:
+    track_event(
+      "leetcode_sync_failed",
+      user_id=user_id,
+      properties={
+        "error_code": "leetcode_api_error",
+        "status_code": int(err.status_code or 502),
+        "route": "sync",
+      },
+    )
     if err.status_code == 404:
       return jsonify({"error": "LeetCode username not found."}), 404
     _capture_leetcode_api_error(err, user_id=user_id, route="sync")
@@ -211,8 +243,17 @@ def sync_progress():
   record.last_synced_at = now
   record.completion_verified_at = now if _meets_completion_target(record) else None
 
-  computed = sync_leetcode_progress(user_id, commit=False)
+  computed = sync_leetcode_progress(user_id, commit=False, emit_module_completion_events=True)
   db.session.commit()
+  track_event(
+    "leetcode_sync_succeeded",
+    user_id=user_id,
+    properties={
+      "total_solved": record.total_solved,
+      "medium_solved": record.medium_solved,
+      "hard_solved": record.hard_solved,
+    },
+  )
   return jsonify({
     "progress": _serialize_status(record),
     "module_progress": _module_progress_snapshot(computed),

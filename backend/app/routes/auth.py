@@ -10,6 +10,7 @@ from flask_jwt_extended import (
   unset_jwt_cookies,
 )
 from sqlalchemy.exc import IntegrityError
+from ..analytics import track_event
 from ..extensions import db
 from ..models import User, UserProgress
 
@@ -116,6 +117,11 @@ def register():
     db.session.rollback()
     return jsonify({"error": "Email already registered"}), 409
 
+  track_event(
+    "signup_completed",
+    user_id=user.id,
+    properties={"auth_method": "email_password"},
+  )
   return _auth_success_response(user)
 
 @bp.post("/login")
@@ -142,6 +148,11 @@ def login():
   if _sync_superuser_flag(user):
     db.session.commit()
 
+  track_event(
+    "login_succeeded",
+    user_id=user.id,
+    properties={"auth_method": "email_password"},
+  )
   return _auth_success_response(user)
 
 

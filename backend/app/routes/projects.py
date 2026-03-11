@@ -6,6 +6,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy.orm import joinedload
 
+from ..analytics import track_event
 from ..extensions import db
 from ..models import ProjectSubmission, User
 from ..services.progression import module_completion_allowed_or_error, sync_projects_submission_progress
@@ -140,6 +141,14 @@ def create_submission():
   )
   db.session.add(submission)
   db.session.commit()
+  track_event(
+    "project_submitted",
+    user_id=user.id,
+    properties={
+      "project_id": submission.id,
+      "module_key": "projects",
+    },
+  )
 
   return jsonify({"submission": _serialize_submission(submission)}), 201
 
@@ -194,7 +203,11 @@ def review_submission(submission_id: int):
 
   submission.status = decision
   submission.review_notes = note
-  computed = sync_projects_submission_progress(submission.user_id, commit=True)
+  computed = sync_projects_submission_progress(
+    submission.user_id,
+    commit=True,
+    emit_module_completion_events=True,
+  )
 
   return jsonify(
     {

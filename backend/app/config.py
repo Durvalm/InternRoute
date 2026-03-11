@@ -104,6 +104,14 @@ class Config:
   if IS_PRODUCTION and not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY is required when APP_ENV=production.")
 
+  POSTHOG_API_KEY = (os.getenv("POSTHOG_API_KEY") or "").strip()
+  POSTHOG_HOST = _env_str("POSTHOG_HOST", "https://us.i.posthog.com").rstrip("/")
+  ANALYTICS_APP_VERSION = (
+    (os.getenv("ANALYTICS_APP_VERSION") or "").strip()
+    or (os.getenv("SENTRY_RELEASE") or "").strip()
+    or "dev"
+  )
+
   SENTRY_DSN = (os.getenv("SENTRY_DSN") or "").strip()
   SENTRY_ENVIRONMENT = _env_str("SENTRY_ENVIRONMENT", APP_ENV)
   SENTRY_RELEASE = (os.getenv("SENTRY_RELEASE") or "").strip() or None

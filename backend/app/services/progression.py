@@ -5,6 +5,7 @@ from datetime import datetime
 from math import floor
 from typing import Any
 
+from ..analytics import analytics_insert_id, track_event
 from ..extensions import db
 from ..models import (
   LeetcodeProgress,
@@ -66,6 +67,24 @@ def _is_module_state_complete(state: ModuleState) -> bool:
   if not state.has_tasks:
     return True
   return state.score >= state.unlock_threshold
+
+
+def _emit_module_completion_events(user_id: int, module_states: list[ModuleState]) -> None:
+  for state in module_states:
+    if not state.has_tasks:
+      continue
+    if state.score < state.unlock_threshold:
+      continue
+    track_event(
+      "module_completed",
+      user_id=user_id,
+      properties={
+        "module_key": state.module_key,
+        "score": state.score,
+        "unlock_threshold": state.unlock_threshold,
+      },
+      insert_id=analytics_insert_id("module_completed", user_id, state.module_key),
+    )
 
 
 def _compute_category_score(module_states: list[ModuleState], modules: list[Module], category: str) -> int:
@@ -244,7 +263,12 @@ def module_completion_allowed_or_error(user_id: int, module_key: str) -> tuple[b
   }
 
 
-def recompute_and_persist_user_progress(user_id: int, *, commit: bool = True) -> dict[str, Any]:
+def recompute_and_persist_user_progress(
+  user_id: int,
+  *,
+  commit: bool = True,
+  emit_module_completion_events: bool = False,
+) -> dict[str, Any]:
   user = User.query.get_or_404(user_id)
   progress = get_or_create_user_progress(user.id)
   modules = Module.query.order_by(Module.sort_order.asc()).all()
@@ -264,6 +288,9 @@ def recompute_and_persist_user_progress(user_id: int, *, commit: bool = True) ->
     db.session.commit()
   else:
     db.session.flush()
+
+  if emit_module_completion_events:
+    _emit_module_completion_events(user.id, module_states)
 
   return {
     "progress": overall,
@@ -316,13 +343,26 @@ def set_task_completion_internal(user_id: int, task_id: int, completed: bool) ->
   if not completed and completion is not None:
     db.session.delete(completion)
 
-  return recompute_and_persist_user_progress(user_id, commit=True)
+  return recompute_and_persist_user_progress(
+    user_id,
+    commit=True,
+    emit_module_completion_events=True,
+  )
 
 
-def sync_projects_submission_progress(user_id: int, *, commit: bool = True) -> dict[str, Any]:
+def sync_projects_submission_progress(
+  user_id: int,
+  *,
+  commit: bool = True,
+  emit_module_completion_events: bool = False,
+) -> dict[str, Any]:
   module = Module.query.filter_by(key="projects").first()
   if module is None:
-    return recompute_and_persist_user_progress(user_id, commit=commit)
+    return recompute_and_persist_user_progress(
+      user_id,
+      commit=commit,
+      emit_module_completion_events=emit_module_completion_events,
+    )
 
   keyed_tasks = {
     task.challenge_id: task
@@ -361,13 +401,26 @@ def sync_projects_submission_progress(user_id: int, *, commit: bool = True) -> d
     if not is_completed and completion is not None:
       db.session.delete(completion)
 
-  return recompute_and_persist_user_progress(user_id, commit=commit)
+  return recompute_and_persist_user_progress(
+    user_id,
+    commit=commit,
+    emit_module_completion_events=emit_module_completion_events,
+  )
 
 
-def sync_resume_submission_progress(user_id: int, *, commit: bool = True) -> dict[str, Any]:
+def sync_resume_submission_progress(
+  user_id: int,
+  *,
+  commit: bool = True,
+  emit_module_completion_events: bool = False,
+) -> dict[str, Any]:
   module = Module.query.filter_by(key="resume").first()
   if module is None:
-    return recompute_and_persist_user_progress(user_id, commit=commit)
+    return recompute_and_persist_user_progress(
+      user_id,
+      commit=commit,
+      emit_module_completion_events=emit_module_completion_events,
+    )
 
   task = (
     Task.query
@@ -375,7 +428,11 @@ def sync_resume_submission_progress(user_id: int, *, commit: bool = True) -> dic
     .first()
   )
   if task is None:
-    return recompute_and_persist_user_progress(user_id, commit=commit)
+    return recompute_and_persist_user_progress(
+      user_id,
+      commit=commit,
+      emit_module_completion_events=emit_module_completion_events,
+    )
 
   best_successful_score = _best_successful_resume_score(user_id)
   can_complete, _ = module_completion_allowed_or_error(user_id, "resume")
@@ -387,13 +444,26 @@ def sync_resume_submission_progress(user_id: int, *, commit: bool = True) -> dic
   if not is_completed and completion is not None:
     db.session.delete(completion)
 
-  return recompute_and_persist_user_progress(user_id, commit=commit)
+  return recompute_and_persist_user_progress(
+    user_id,
+    commit=commit,
+    emit_module_completion_events=emit_module_completion_events,
+  )
 
 
-def sync_leetcode_progress(user_id: int, *, commit: bool = True) -> dict[str, Any]:
+def sync_leetcode_progress(
+  user_id: int,
+  *,
+  commit: bool = True,
+  emit_module_completion_events: bool = False,
+) -> dict[str, Any]:
   module = Module.query.filter_by(key="leetcode").first()
   if module is None:
-    return recompute_and_persist_user_progress(user_id, commit=commit)
+    return recompute_and_persist_user_progress(
+      user_id,
+      commit=commit,
+      emit_module_completion_events=emit_module_completion_events,
+    )
 
   task = (
     Task.query
@@ -405,7 +475,11 @@ def sync_leetcode_progress(user_id: int, *, commit: bool = True) -> dict[str, An
     .first()
   )
   if task is None:
-    return recompute_and_persist_user_progress(user_id, commit=commit)
+    return recompute_and_persist_user_progress(
+      user_id,
+      commit=commit,
+      emit_module_completion_events=emit_module_completion_events,
+    )
 
   progress = LeetcodeProgress.query.filter_by(user_id=user_id).first()
   meets_threshold = bool(
@@ -427,4 +501,8 @@ def sync_leetcode_progress(user_id: int, *, commit: bool = True) -> dict[str, An
   if not is_completed and completion is not None:
     db.session.delete(completion)
 
-  return recompute_and_persist_user_progress(user_id, commit=commit)
+  return recompute_and_persist_user_progress(
+    user_id,
+    commit=commit,
+    emit_module_completion_events=emit_module_completion_events,
+  )

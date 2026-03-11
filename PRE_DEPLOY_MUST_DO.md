@@ -5,7 +5,7 @@ Last updated: 2026-03-10
 ## 2) Reliability + Observability
 
 - [x] Add error monitoring (frontend + backend).
-- [ ] Add analytics for core funnel events (signup, onboarding complete, module completion, resume scoring, etc.).
+- [x] Add analytics for core MVP events (signup/login/session/active day, module progression, resume scoring, leetcode sync). See `ANALYTICS_MVP_SCHEMA.md`.
 - [ ] Add dependency vulnerability checks in CI (`npm audit`, `pip-audit`, or equivalent).
 
 ## 3) Product/SEO (Do last)

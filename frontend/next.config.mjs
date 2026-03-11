@@ -1,6 +1,8 @@
 const isProduction = process.env.NODE_ENV === "production";
 const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").trim();
 const rawSentryDsn = (process.env.NEXT_PUBLIC_SENTRY_DSN || "").trim();
+const rawPosthogKey = (process.env.NEXT_PUBLIC_POSTHOG_KEY || "").trim();
+const rawPosthogHost = (process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com").trim();
 const connectSources = ["'self'"];
 const scriptSources = ["'self'", "'unsafe-inline'"];
 if (rawApiUrl) {
@@ -16,6 +18,13 @@ if (rawSentryDsn) {
     scriptSources.push("https://browser.sentry-cdn.com");
   } catch (_err) {
     // Ignore malformed DSN.
+  }
+}
+if (rawPosthogKey && rawPosthogHost) {
+  try {
+    connectSources.push(new URL(rawPosthogHost).origin);
+  } catch (_err) {
+    // Ignore malformed analytics host.
   }
 }
 if (!isProduction) {
