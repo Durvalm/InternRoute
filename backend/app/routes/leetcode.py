@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import func
 
 from ..extensions import db
+from ..monitoring import capture_monitored_exception
 from ..models import LeetcodeProgress
 from ..services.leetcode_api import LeetcodeApiError, fetch_solved_counts
 from ..services.progression import module_completion_allowed_or_error, sync_leetcode_progress
@@ -88,6 +89,17 @@ def _module_progress_snapshot(computed: dict[str, Any]) -> dict[str, Any] | None
   }
 
 
+def _capture_leetcode_api_error(err: LeetcodeApiError, *, user_id: int, route: str) -> None:
+  status = err.status_code
+  if status is not None and 400 <= status <= 499:
+    return
+  capture_monitored_exception(
+    err,
+    tags={"area": "leetcode", "service": "leetcode_api", "route": route},
+    context={"user_id": user_id, "status_code": status if status is not None else 502},
+  )
+
+
 def _api_error_response(err: LeetcodeApiError):
   status = err.status_code
   if status is not None and 400 <= status <= 499:
@@ -133,6 +145,7 @@ def link_username():
   except LeetcodeApiError as err:
     if err.status_code == 404:
       return jsonify({"error": "LeetCode username not found."}), 404
+    _capture_leetcode_api_error(err, user_id=user_id, route="link")
     return _api_error_response(err)
 
   now = datetime.utcnow()
@@ -187,6 +200,7 @@ def sync_progress():
   except LeetcodeApiError as err:
     if err.status_code == 404:
       return jsonify({"error": "LeetCode username not found."}), 404
+    _capture_leetcode_api_error(err, user_id=user_id, route="sync")
     return _api_error_response(err)
 
   now = datetime.utcnow()

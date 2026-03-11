@@ -10,6 +10,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from ..extensions import db
+from ..monitoring import capture_monitored_exception
 from ..models import ResumeSubmission
 from ..services.progression import module_completion_allowed_or_error, sync_resume_submission_progress
 from ..services.resume_providers import ResumeProviderError, build_resume_scoring_provider
@@ -234,6 +235,13 @@ def score_resume():
       err.code,
       str(err),
     )
+    status_code = int(getattr(err, "status_code", 500) or 500)
+    if status_code >= 500:
+      capture_monitored_exception(
+        err,
+        tags={"area": "resume", "error_code": str(err.code)},
+        context={"user_id": user_id, "submission_id": submission.id, "status_code": status_code},
+      )
     return jsonify(_submission_error_payload(public_message, error_code=err.code)), err.status_code
   except ResumeProviderError as err:
     submission.status = "failed"
@@ -241,11 +249,21 @@ def score_resume():
     submission.error_message = str(err)[:500]
     db.session.commit()
     logger.exception("resume_score_provider_config_error user_id=%s submission_id=%s", user_id, submission.id)
+    capture_monitored_exception(
+      err,
+      tags={"area": "resume", "error_code": "provider_config_error"},
+      context={"user_id": user_id, "submission_id": submission.id, "status_code": 503},
+    )
     return jsonify(_submission_error_payload("Resume scorer is not configured.", error_code="provider_config_error")), 503
-  except Exception:
+  except Exception as err:
     submission.status = "failed"
     submission.error_code = "resume_scoring_internal_error"
     submission.error_message = "Internal scoring error."
     db.session.commit()
     logger.exception("resume_score_internal_error user_id=%s submission_id=%s", user_id, submission.id)
+    capture_monitored_exception(
+      err,
+      tags={"area": "resume", "error_code": "resume_scoring_internal_error"},
+      context={"user_id": user_id, "submission_id": submission.id, "status_code": 500},
+    )
     return jsonify(_submission_error_payload("Internal scoring error.", error_code="resume_scoring_internal_error")), 500

@@ -1,3 +1,5 @@
+import { captureFrontendError } from "@/lib/monitoring";
+
 const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").trim();
 const API_URL =
   rawApiUrl.length > 0
@@ -27,10 +29,17 @@ export class ApiError extends Error {
 
 type ApiRequestOptions = RequestInit & {
   skipAuthRedirect?: boolean;
+  skipErrorMonitoring?: boolean;
+  expectedStatuses?: number[];
 };
 
 export async function apiRequest<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  const { skipAuthRedirect = false, ...requestInit } = options || {};
+  const {
+    skipAuthRedirect = false,
+    skipErrorMonitoring = false,
+    expectedStatuses = [],
+    ...requestInit
+  } = options || {};
   const method = (requestInit.method || "GET").toUpperCase();
   const isFormDataBody = typeof FormData !== "undefined" && requestInit.body instanceof FormData;
   const headers = new Headers(requestInit.headers || undefined);
@@ -50,11 +59,19 @@ export async function apiRequest<T>(path: string, options?: ApiRequestOptions): 
     }
   }
 
-  const res = await fetch(`${requireApiUrl()}${path}`, {
-    ...requestInit,
-    headers,
-    credentials: requestInit.credentials || "include",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${requireApiUrl()}${path}`, {
+      ...requestInit,
+      headers,
+      credentials: requestInit.credentials || "include",
+    });
+  } catch (error) {
+    if (!skipErrorMonitoring) {
+      captureFrontendError(error, { path, method, feature: "api_request" });
+    }
+    throw error;
+  }
 
   if (!res.ok) {
     if (res.status === 401 && !skipAuthRedirect && typeof window !== "undefined") {
@@ -88,6 +105,18 @@ export async function apiRequest<T>(path: string, options?: ApiRequestOptions): 
 
     if (res.status === 429 && retryAfterSeconds !== null) {
       message = `${message} Please wait ${retryAfterSeconds}s before trying again.`;
+    }
+
+    const isExpectedStatus = expectedStatuses.includes(res.status);
+    if (!skipErrorMonitoring && !isExpectedStatus) {
+      captureFrontendError(new ApiError(message, res.status, retryAfterSeconds), {
+        path,
+        method,
+        status: res.status,
+        retryAfterSeconds,
+        feature: "api_request",
+        expected: path === "/auth/me" && res.status === 401,
+      });
     }
 
     throw new ApiError(message, res.status, retryAfterSeconds);

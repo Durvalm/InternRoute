@@ -1,6 +1,8 @@
 const isProduction = process.env.NODE_ENV === "production";
 const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").trim();
+const rawSentryDsn = (process.env.NEXT_PUBLIC_SENTRY_DSN || "").trim();
 const connectSources = ["'self'"];
+const scriptSources = ["'self'", "'unsafe-inline'"];
 if (rawApiUrl) {
   try {
     connectSources.push(new URL(rawApiUrl).origin);
@@ -8,13 +10,22 @@ if (rawApiUrl) {
     // Ignore malformed URL; runtime fetch calls will still fail loudly.
   }
 }
+if (rawSentryDsn) {
+  try {
+    connectSources.push(new URL(rawSentryDsn).origin);
+    scriptSources.push("https://browser.sentry-cdn.com");
+  } catch (_err) {
+    // Ignore malformed DSN.
+  }
+}
 if (!isProduction) {
   connectSources.push("http://localhost:*", "http://127.0.0.1:*", "ws://localhost:*", "ws://127.0.0.1:*");
+  scriptSources.push("'unsafe-eval'");
 }
 
 const cspParts = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"}`,
+  `script-src ${Array.from(new Set(scriptSources)).join(" ")}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",

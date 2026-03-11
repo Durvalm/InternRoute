@@ -41,7 +41,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       failClosed();
     }, 8000);
 
-    apiRequest<MeResponse>("/auth/me", { signal: controller.signal, skipAuthRedirect: true })
+    apiRequest<MeResponse>("/auth/me", {
+      signal: controller.signal,
+      skipAuthRedirect: true,
+      skipErrorMonitoring: true,
+      expectedStatuses: [401],
+    })
       .then((data) => {
         if (!active) return;
         window.clearTimeout(authCheckTimeout);

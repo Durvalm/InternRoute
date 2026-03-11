@@ -35,6 +35,17 @@ def _env_int(name: str, default: int) -> int:
     return default
 
 
+def _env_float(name: str, default: float) -> float:
+  value = os.getenv(name)
+  if value is None:
+    return default
+  try:
+    parsed = float(value.strip())
+    return parsed if parsed >= 0 else default
+  except ValueError:
+    return default
+
+
 def _env_csv(name: str, default: list[str] | None = None) -> list[str]:
   value = os.getenv(name)
   if value is None:
@@ -92,6 +103,14 @@ class Config:
   OPENAI_API_KEY = (os.getenv("OPENAI_API_KEY") or "").strip()
   if IS_PRODUCTION and not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY is required when APP_ENV=production.")
+
+  SENTRY_DSN = (os.getenv("SENTRY_DSN") or "").strip()
+  SENTRY_ENVIRONMENT = _env_str("SENTRY_ENVIRONMENT", APP_ENV)
+  SENTRY_RELEASE = (os.getenv("SENTRY_RELEASE") or "").strip() or None
+  SENTRY_TRACES_SAMPLE_RATE = _env_float(
+    "SENTRY_TRACES_SAMPLE_RATE",
+    default=0.1 if IS_PRODUCTION else 0.0,
+  )
 
   FLASK_RUN_HOST = _env_str("FLASK_RUN_HOST", "127.0.0.1")
   FLASK_RUN_PORT = _env_int("FLASK_RUN_PORT", 5000)

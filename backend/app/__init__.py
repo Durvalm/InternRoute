@@ -8,6 +8,7 @@ from .routes.skills import bp as skills_bp
 from .routes.projects import bp as projects_bp
 from .routes.resume import bp as resume_bp
 from .routes.leetcode import bp as leetcode_bp
+from .monitoring import init_error_monitoring
 
 
 def create_app():
@@ -28,6 +29,7 @@ def create_app():
   db.init_app(app)
   jwt.init_app(app)
   migrate.init_app(app, db)
+  init_error_monitoring(app)
 
   @jwt.token_in_blocklist_loader
   def is_token_revoked(jwt_header, jwt_payload):
