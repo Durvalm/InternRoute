@@ -29,6 +29,23 @@ def create_app():
   jwt.init_app(app)
   migrate.init_app(app, db)
 
+  @jwt.token_in_blocklist_loader
+  def is_token_revoked(jwt_header, jwt_payload):
+    subject = jwt_payload.get("sub")
+    token_version = jwt_payload.get("token_version")
+    try:
+      user_id = int(subject)
+      token_version_value = int(token_version)
+    except (TypeError, ValueError):
+      return True
+
+    from .models import User
+
+    user = db.session.get(User, user_id)
+    if user is None:
+      return True
+    return token_version_value != int(user.token_version or 0)
+
   app.register_blueprint(auth_bp)
   app.register_blueprint(user_bp)
   app.register_blueprint(dashboard_bp)

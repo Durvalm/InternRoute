@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   CheckCircle2,
@@ -12,8 +13,8 @@ import {
   ShieldCheck,
   User
 } from "lucide-react";
-import { apiRequest } from "@/lib/api";
-import { getUser, setUser, type StoredUser } from "@/lib/user";
+import { ApiError, apiRequest } from "@/lib/api";
+import { clearUser, getUser, setUser, type StoredUser } from "@/lib/user";
 
 type MeResponse = {
   user: {
@@ -48,6 +49,7 @@ function toStoredUser(payload: MeResponse["user"]): StoredUser {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [email, setEmail] = useState<string>("");
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
   const [profile, setProfile] = useState<ProfileState>({
@@ -182,14 +184,17 @@ export default function SettingsPage() {
         body: JSON.stringify({
           current_password: currentPassword,
           new_password: newPassword
-        })
+        }),
+        skipAuthRedirect: true,
       });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setPasswordSuccess("Password updated.");
+      clearUser();
+      router.replace("/login?reason=password_changed");
+      return;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to update password.";
+      const message = err instanceof ApiError ? err.message : "Failed to update password.";
       setPasswordError(message);
     } finally {
       setSavingPassword(false);

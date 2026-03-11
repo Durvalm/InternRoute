@@ -33,6 +33,13 @@ def test_change_password_success(client, auth_headers, app):
   )
   assert response.status_code == 200
 
+  stale_token_response = client.patch(
+    "/user/profile",
+    headers=auth_headers,
+    json={"name": "Old Session", "graduation_date": "2028-05"},
+  )
+  assert stale_token_response.status_code == 401
+
   login_response = client.post(
     "/auth/login",
     json={

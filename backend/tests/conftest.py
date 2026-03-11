@@ -54,7 +54,10 @@ def app():
     db.session.add(UserProgress(user_id=user.id))
     db.session.commit()
 
-    token = create_access_token(identity=str(user.id))
+    token = create_access_token(
+      identity=str(user.id),
+      additional_claims={"token_version": int(user.token_version or 0)},
+    )
     app.config["TEST_USER_ID"] = user.id
     app.config["TEST_RESUME_TASK_ID"] = resume_task.id
     app.config["TEST_TOKEN"] = token

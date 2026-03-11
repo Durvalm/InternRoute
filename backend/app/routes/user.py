@@ -123,5 +123,6 @@ def change_password():
   except ValueError:
     return jsonify({"error": "Password too long (max 72 bytes)."}), 400
 
+  user.token_version = int(user.token_version or 0) + 1
   db.session.commit()
   return jsonify({"message": "Password updated successfully"})

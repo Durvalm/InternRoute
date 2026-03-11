@@ -14,6 +14,7 @@ class User(db.Model):
   coding_skill_level = db.Column(db.String(50), nullable=True)
   graduation_date = db.Column(db.Date, nullable=True)
   is_superuser = db.Column(db.Boolean, nullable=False, default=False, server_default=db.text("false"))
+  token_version = db.Column(db.Integer, nullable=False, default=0, server_default=db.text("0"))
   onboarding_completed = db.Column(db.Boolean, nullable=False, default=False, server_default=db.text("false"))
   created_at = db.Column(db.DateTime, default=datetime.utcnow)
   updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

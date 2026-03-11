@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 import { setUser as storeUser } from "@/lib/user";
 
@@ -18,10 +18,12 @@ type AuthResponse = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const passwordChanged = searchParams.get("reason") === "password_changed";
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -47,6 +49,11 @@ export default function LoginPage() {
     <div className="rounded-2xl bg-white/90 p-8 shadow-soft border border-white/60">
       <h1 className="text-2xl font-semibold">Welcome back</h1>
       <p className="mt-2 text-sm text-slate-500">Sign in to continue.</p>
+      {passwordChanged ? (
+        <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+          Password updated. Please sign in again.
+        </p>
+      ) : null}
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>

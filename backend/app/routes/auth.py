@@ -71,8 +71,12 @@ def _rate_limited_response(message: str, retry_after_seconds: int):
   return response
 
 
+def _token_claims(user: User) -> dict[str, int]:
+  return {"token_version": int(user.token_version or 0)}
+
+
 def _auth_success_response(user: User):
-  token = create_access_token(identity=str(user.id))
+  token = create_access_token(identity=str(user.id), additional_claims=_token_claims(user))
   response = jsonify({"user": user.to_dict()})
   set_access_cookies(response, token)
   return response
