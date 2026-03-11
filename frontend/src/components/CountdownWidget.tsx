@@ -4,9 +4,9 @@ import { useMemo } from "react";
 import { Calendar, Briefcase, Zap, AlertTriangle } from "lucide-react";
 
 const formatMonthYear = (value: string | null | undefined) => {
-  if (!value) return "May 2027";
+  if (!value) return "Not set";
   const [year, month] = value.split("-").map(Number);
-  if (!year || !month) return "May 2027";
+  if (!year || !month) return "Not set";
   const date = new Date(Date.UTC(year, month - 1, 1));
   return date.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
 };
@@ -121,6 +121,8 @@ export default function CountdownWidget({
 
   const countdownTarget = formatFullDate(scenario.countdown_target);
   const nextPeakLabel = formatFullDate(data.next_peak_date);
+  const graduationLabel = formatMonthYear(graduationDate);
+  const graduationNotSet = graduationLabel === "Not set";
   const countdownUnitLabel = scenario.countdown_days === 1 ? "day" : "days";
   const readinessLabel = data.readiness_status === "ready"
     ? `Ready (>= ${readyThreshold}%)`
@@ -183,7 +185,10 @@ export default function CountdownWidget({
 
         <div className="mt-3 rounded-lg bg-white/10 border border-white/15 p-3">
           <p className="text-[11px] uppercase tracking-wider text-white/65 font-semibold">Graduation Date</p>
-          <p className="mt-1 text-sm font-semibold">{formatMonthYear(graduationDate)}</p>
+          <p className="mt-1 text-sm font-semibold">{graduationLabel}</p>
+          {graduationNotSet ? (
+            <p className="mt-1 text-xs text-white/75">Set it in Settings to unlock accurate timeline guidance.</p>
+          ) : null}
         </div>
 
         <div className="mt-auto pt-4">

@@ -1,3 +1,6 @@
+import time
+from threading import Lock
+
 from flask import Blueprint, current_app, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy.exc import IntegrityError
@@ -5,6 +8,11 @@ from ..extensions import db
 from ..models import User, UserProgress
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
+AUTH_RATE_LIMIT_WINDOW_SECONDS = 60
+AUTH_LOGIN_LIMIT_PER_WINDOW = 10
+AUTH_REGISTER_LIMIT_PER_WINDOW = 5
+_RATE_LIMIT_EVENTS: dict[str, list[float]] = {}
+_RATE_LIMIT_LOCK = Lock()
 
 
 def _configured_superuser_emails() -> set[str]:
@@ -25,8 +33,47 @@ def _sync_superuser_flag(user: User) -> bool:
   user.is_superuser = should_be_superuser
   return True
 
+
+def _request_ip() -> str:
+  forwarded_for = (request.headers.get("X-Forwarded-For") or "").strip()
+  if forwarded_for:
+    return forwarded_for.split(",")[0].strip() or "unknown"
+  return request.remote_addr or "unknown"
+
+
+def _check_auth_rate_limit(action: str, *, limit: int, window_seconds: int) -> int | None:
+  now = time.time()
+  key = f"{_request_ip()}:{action}"
+
+  with _RATE_LIMIT_LOCK:
+    history = _RATE_LIMIT_EVENTS.get(key, [])
+    history = [stamp for stamp in history if now - stamp < window_seconds]
+    if len(history) >= limit:
+      retry_after = int(window_seconds - (now - history[0])) + 1
+      _RATE_LIMIT_EVENTS[key] = history
+      return max(1, retry_after)
+    history.append(now)
+    _RATE_LIMIT_EVENTS[key] = history
+
+  return None
+
+
+def _rate_limited_response(message: str, retry_after_seconds: int):
+  response = jsonify({"error": message, "retry_after_seconds": retry_after_seconds})
+  response.status_code = 429
+  response.headers["Retry-After"] = str(retry_after_seconds)
+  return response
+
 @bp.post("/register")
 def register():
+  retry_after = _check_auth_rate_limit(
+    "register",
+    limit=AUTH_REGISTER_LIMIT_PER_WINDOW,
+    window_seconds=AUTH_RATE_LIMIT_WINDOW_SECONDS,
+  )
+  if retry_after is not None:
+    return _rate_limited_response("Too many register attempts. Try again soon.", retry_after)
+
   data = request.get_json() or {}
   email = (data.get("email") or "").strip().lower()
   password = data.get("password")
@@ -57,6 +104,14 @@ def register():
 
 @bp.post("/login")
 def login():
+  retry_after = _check_auth_rate_limit(
+    "login",
+    limit=AUTH_LOGIN_LIMIT_PER_WINDOW,
+    window_seconds=AUTH_RATE_LIMIT_WINDOW_SECONDS,
+  )
+  if retry_after is not None:
+    return _rate_limited_response("Too many login attempts. Try again soon.", retry_after)
+
   data = request.get_json() or {}
   email = (data.get("email") or "").strip().lower()
   password = data.get("password")
