@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
-import { setToken } from "@/lib/auth";
 import { setUser as storeUser } from "@/lib/user";
 
 type AuthResponse = {
-  access_token: string;
   user: {
     id: number;
     email: string;
@@ -48,9 +46,9 @@ export default function RegisterPage() {
     try {
       const data = await apiRequest<AuthResponse>("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
+        skipAuthRedirect: true,
       });
-      setToken(data.access_token);
       storeUser(data.user);
       router.push(data.user.onboarding_completed ? "/dashboard" : "/onboarding");
     } catch (err) {

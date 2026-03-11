@@ -16,10 +16,11 @@ def create_app():
 
   cors.init_app(
     app,
+    supports_credentials=True,
     resources={
       r"/*": {
         "origins": app.config.get("CORS_ALLOWED_ORIGINS", []),
-        "allow_headers": ["Content-Type", "Authorization"],
+        "allow_headers": ["Content-Type", "Authorization", "X-CSRF-TOKEN"],
         "methods": ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"]
       }
     }

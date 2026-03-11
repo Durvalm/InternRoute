@@ -42,7 +42,9 @@ def test_change_password_success(client, auth_headers, app):
   )
   assert login_response.status_code == 200
   login_payload = login_response.get_json()
-  assert isinstance(login_payload.get("access_token"), str)
+  assert isinstance(login_payload.get("user"), dict)
+  set_cookie_headers = login_response.headers.getlist("Set-Cookie")
+  assert any("internroute_access_token=" in header for header in set_cookie_headers)
 
   with app.app_context():
     user = User.query.get(app.config["TEST_USER_ID"])

@@ -16,7 +16,7 @@ import {
   GraduationCap,
   Sparkles
 } from "lucide-react";
-import { clearToken } from "@/lib/auth";
+import { apiRequest } from "@/lib/api";
 import { clearUser, getUser, USER_UPDATED_EVENT, type StoredUser } from "@/lib/user";
 
 type SidebarProps = {
@@ -50,9 +50,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const router = useRouter();
   const [user, setCurrentUser] = useState<StoredUser | null>(null);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     onClose?.();
-    clearToken();
+    try {
+      await apiRequest<{ ok: boolean }>("/auth/logout", { method: "POST", skipAuthRedirect: true });
+    } catch (error) {
+      // Clear local user state even if logout request fails.
+    }
     clearUser();
     router.push("/login");
   };

@@ -2,7 +2,13 @@ import time
 from threading import Lock
 
 from flask import Blueprint, current_app, request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+  create_access_token,
+  get_jwt_identity,
+  jwt_required,
+  set_access_cookies,
+  unset_jwt_cookies,
+)
 from sqlalchemy.exc import IntegrityError
 from ..extensions import db
 from ..models import User, UserProgress
@@ -64,6 +70,13 @@ def _rate_limited_response(message: str, retry_after_seconds: int):
   response.headers["Retry-After"] = str(retry_after_seconds)
   return response
 
+
+def _auth_success_response(user: User):
+  token = create_access_token(identity=str(user.id))
+  response = jsonify({"user": user.to_dict()})
+  set_access_cookies(response, token)
+  return response
+
 @bp.post("/register")
 def register():
   retry_after = _check_auth_rate_limit(
@@ -99,8 +112,7 @@ def register():
     db.session.rollback()
     return jsonify({"error": "Email already registered"}), 409
 
-  token = create_access_token(identity=str(user.id))
-  return jsonify({"access_token": token, "user": user.to_dict()})
+  return _auth_success_response(user)
 
 @bp.post("/login")
 def login():
@@ -126,8 +138,15 @@ def login():
   if _sync_superuser_flag(user):
     db.session.commit()
 
-  token = create_access_token(identity=str(user.id))
-  return jsonify({"access_token": token, "user": user.to_dict()})
+  return _auth_success_response(user)
+
+
+@bp.post("/logout")
+@jwt_required(optional=True)
+def logout():
+  response = jsonify({"ok": True})
+  unset_jwt_cookies(response)
+  return response
 
 @bp.get("/me")
 @jwt_required()

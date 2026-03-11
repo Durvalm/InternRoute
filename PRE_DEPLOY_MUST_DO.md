@@ -4,7 +4,7 @@ Last updated: 2026-03-10
 
 ## 1) Security + Auth (Do first)
 - [x] Add rate limiting for `POST /auth/login` and `POST /auth/register`.
-- [ ] Move auth from `localStorage` token storage to `HttpOnly + Secure + SameSite` cookie auth.
+- [x] Move auth from `localStorage` token storage to `HttpOnly + Secure + SameSite` cookie auth.
 - [ ] Invalidate active sessions/tokens after password change.
 - [ ] Make protected-route auth checks fail closed (do not render app shell on auth-check failure).
 - [ ] Add security headers: CSP baseline, HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`.

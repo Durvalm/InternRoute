@@ -1,5 +1,3 @@
-import { getToken } from "@/lib/auth";
-
 const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").trim();
 const API_URL =
   rawApiUrl.length > 0
@@ -27,29 +25,40 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
-  const token = getToken();
-  const isFormDataBody = typeof FormData !== "undefined" && options?.body instanceof FormData;
-  const headers = new Headers(options?.headers || undefined);
+type ApiRequestOptions = RequestInit & {
+  skipAuthRedirect?: boolean;
+};
+
+export async function apiRequest<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  const { skipAuthRedirect = false, ...requestInit } = options || {};
+  const method = (requestInit.method || "GET").toUpperCase();
+  const isFormDataBody = typeof FormData !== "undefined" && requestInit.body instanceof FormData;
+  const headers = new Headers(requestInit.headers || undefined);
 
   if (!isFormDataBody && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
+  const requiresCsrf = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
+  if (requiresCsrf && !headers.has("X-CSRF-TOKEN") && typeof document !== "undefined") {
+    const csrfToken = document.cookie
+      .split("; ")
+      .find((cookie) => cookie.startsWith("internroute_csrf_token="))
+      ?.split("=")[1];
+    if (csrfToken) {
+      headers.set("X-CSRF-TOKEN", decodeURIComponent(csrfToken));
+    }
   }
 
   const res = await fetch(`${requireApiUrl()}${path}`, {
-    ...options,
+    ...requestInit,
     headers,
+    credentials: requestInit.credentials || "include",
   });
 
   if (!res.ok) {
-    if (res.status === 401 && typeof window !== "undefined") {
-      const { clearToken } = await import("@/lib/auth");
+    if (res.status === 401 && !skipAuthRedirect && typeof window !== "undefined") {
       const { clearUser } = await import("@/lib/user");
-      clearToken();
       clearUser();
       window.location.href = "/login";
     }

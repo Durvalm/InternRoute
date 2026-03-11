@@ -74,6 +74,13 @@ class Config:
   JWT_ACCESS_TOKEN_EXPIRES = timedelta(
     minutes=_env_int("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", 60 * 24 * 14)
   )
+  JWT_TOKEN_LOCATION = ["headers", "cookies"]
+  JWT_COOKIE_SECURE = IS_PRODUCTION
+  JWT_COOKIE_SAMESITE = "Lax"
+  JWT_COOKIE_CSRF_PROTECT = True
+  JWT_ACCESS_COOKIE_NAME = "internroute_access_token"
+  JWT_ACCESS_CSRF_COOKIE_NAME = "internroute_csrf_token"
+  JWT_ACCESS_CSRF_HEADER_NAME = "X-CSRF-TOKEN"
 
   CORS_ALLOWED_ORIGINS = _env_csv(
     "CORS_ALLOWED_ORIGINS",
