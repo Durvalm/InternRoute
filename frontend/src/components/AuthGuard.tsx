@@ -24,11 +24,22 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let active = true;
     const isPublicPath = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
-    const authCheckTimeout = window.setTimeout(() => {
-      // Failsafe so the UI never stays blank if the auth request hangs.
-      if (active) setChecked(true);
-    }, 8000);
+    setChecked(false);
+    const failClosed = () => {
+      clearUser();
+      if (isPublicPath) {
+        setChecked(true);
+        return;
+      }
+      router.replace("/login");
+      setChecked(false);
+    };
     const controller = new AbortController();
+    const authCheckTimeout = window.setTimeout(() => {
+      if (!active) return;
+      controller.abort();
+      failClosed();
+    }, 8000);
 
     apiRequest<MeResponse>("/auth/me", { signal: controller.signal, skipAuthRedirect: true })
       .then((data) => {
@@ -52,16 +63,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       .catch((error) => {
         if (!active) return;
         window.clearTimeout(authCheckTimeout);
-        // Keep sessions on transient API/server errors; only clear auth on 401.
         if (error instanceof ApiError && error.status === 401) {
-          clearUser();
-          if (!isPublicPath) {
-            router.replace("/login");
-          }
-          setChecked(true);
+          failClosed();
           return;
         }
-        setChecked(true);
+        failClosed();
       });
 
     return () => {
