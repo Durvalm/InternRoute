@@ -3,8 +3,10 @@ const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").trim();
 const rawSentryDsn = (process.env.NEXT_PUBLIC_SENTRY_DSN || "").trim();
 const rawPosthogKey = (process.env.NEXT_PUBLIC_POSTHOG_KEY || "").trim();
 const rawPosthogHost = (process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com").trim();
+const MONACO_CDN_ORIGIN = "https://cdn.jsdelivr.net";
 const connectSources = ["'self'"];
-const scriptSources = ["'self'", "'unsafe-inline'"];
+const scriptSources = ["'self'", "'unsafe-inline'", MONACO_CDN_ORIGIN];
+const styleSources = ["'self'", "'unsafe-inline'", MONACO_CDN_ORIGIN];
 if (rawApiUrl) {
   try {
     connectSources.push(new URL(rawApiUrl).origin);
@@ -35,9 +37,11 @@ if (!isProduction) {
 const cspParts = [
   "default-src 'self'",
   `script-src ${Array.from(new Set(scriptSources)).join(" ")}`,
-  "style-src 'self' 'unsafe-inline'",
+  `style-src ${Array.from(new Set(styleSources)).join(" ")}`,
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
+  "worker-src 'self' blob:",
+  "child-src 'self' blob:",
   `connect-src ${Array.from(new Set(connectSources)).join(" ")}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",

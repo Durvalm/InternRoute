@@ -19,20 +19,21 @@ type MeResponse = {
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [checked, setChecked] = useState(false);
+  const [isBootstrapped, setIsBootstrapped] = useState(false);
 
   useEffect(() => {
     let active = true;
     const isPublicPath = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
-    setChecked(false);
+    const completeBootstrap = () => {
+      setIsBootstrapped(true);
+    };
     const failClosed = () => {
       clearUser();
+      completeBootstrap();
       if (isPublicPath) {
-        setChecked(true);
         return;
       }
       router.replace("/login");
-      setChecked(false);
     };
     const controller = new AbortController();
     const authCheckTimeout = window.setTimeout(() => {
@@ -50,6 +51,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       .then((data) => {
         if (!active) return;
         window.clearTimeout(authCheckTimeout);
+        completeBootstrap();
         setUser(data.user);
         if (isPublicPath) {
           router.replace(data.user.onboarding_completed ? "/dashboard" : "/onboarding");
@@ -63,7 +65,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           router.replace("/dashboard");
           return;
         }
-        setChecked(true);
       })
       .catch((error) => {
         if (!active) return;
@@ -82,8 +83,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     };
   }, [pathname, router]);
 
-  if (!checked) {
-    return null;
+  if (!isBootstrapped) {
+    return <div className="min-h-screen bg-slate-50" />;
   }
 
   return <>{children}</>;
