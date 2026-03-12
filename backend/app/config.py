@@ -61,6 +61,14 @@ def _env_str(name: str, default: str) -> str:
   return normalized if normalized else default
 
 
+def _env_optional_str(name: str) -> str | None:
+  value = os.getenv(name)
+  if value is None:
+    return None
+  normalized = value.strip()
+  return normalized if normalized else None
+
+
 def _normalize_database_url(url: str) -> str:
   normalized = (url or "").strip()
   if normalized.startswith("postgres://"):
@@ -97,6 +105,7 @@ class Config:
   JWT_TOKEN_LOCATION = ["headers", "cookies"]
   JWT_COOKIE_SECURE = IS_PRODUCTION
   JWT_COOKIE_SAMESITE = "Lax"
+  JWT_COOKIE_DOMAIN = _env_optional_str("JWT_COOKIE_DOMAIN")
   JWT_COOKIE_CSRF_PROTECT = True
   JWT_ACCESS_COOKIE_NAME = "internroute_access_token"
   JWT_ACCESS_CSRF_COOKIE_NAME = "internroute_csrf_token"

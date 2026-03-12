@@ -21,6 +21,7 @@ This repo includes `render.yaml` at project root. It provisions:
 
 In Render service env vars, set these before first production deploy:
 - `CORS_ALLOWED_ORIGINS=https://app.<yourdomain>.com`
+- `JWT_COOKIE_DOMAIN=<yourdomain.com>`
 - `OPENAI_API_KEY=<your-openai-key>`
 
 Recommended now:
@@ -91,6 +92,7 @@ Recommended now:
 If login loops or every protected request is `401`:
 - Confirm frontend is using `https://api.<yourdomain>.com`
 - Confirm `CORS_ALLOWED_ORIGINS` exactly matches `https://app.<yourdomain>.com`
+- Confirm `JWT_COOKIE_DOMAIN` is set to your root domain (example: `internroute.com`)
 - Confirm both app and API are served over HTTPS
 - Clear browser cookies and retry
 
