@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import AuthGuard from "@/components/AuthGuard";
 import MonitoringBootstrap from "@/components/MonitoringBootstrap";
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space",
-  preload: false,
-});
 
 export const metadata: Metadata = {
   title: "InternshipRoute",
@@ -24,7 +17,7 @@ export default function RootLayout({
   const sentryEnabled = (process.env.NEXT_PUBLIC_SENTRY_DSN || "").trim().length > 0;
 
   return (
-    <html lang="en" className={spaceGrotesk.variable}>
+    <html lang="en">
       <body className="font-sans">
         {sentryEnabled ? (
           <Script

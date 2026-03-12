@@ -61,6 +61,13 @@ def _env_str(name: str, default: str) -> str:
   return normalized if normalized else default
 
 
+def _normalize_database_url(url: str) -> str:
+  normalized = (url or "").strip()
+  if normalized.startswith("postgres://"):
+    return normalized.replace("postgres://", "postgresql+psycopg2://", 1)
+  return normalized
+
+
 APP_ENV = (os.getenv("APP_ENV") or "development").strip().lower()
 IS_PRODUCTION = APP_ENV in {"production", "prod"}
 
@@ -74,7 +81,9 @@ class Config:
   DEBUG = _env_bool("FLASK_DEBUG", default=not IS_PRODUCTION)
 
   SECRET_KEY = _require_env("SECRET_KEY")
-  SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", _DEFAULT_DATABASE_URL)
+  SQLALCHEMY_DATABASE_URI = _normalize_database_url(
+    os.getenv("DATABASE_URL", _DEFAULT_DATABASE_URL)
+  )
   if IS_PRODUCTION and SQLALCHEMY_DATABASE_URI == _DEFAULT_DATABASE_URL:
     raise RuntimeError(
       "DATABASE_URL must be set to a production database when APP_ENV=production."
