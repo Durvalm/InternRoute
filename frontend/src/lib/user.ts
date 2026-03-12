@@ -9,8 +9,8 @@ export type StoredUser = {
   onboarding_completed: boolean;
 };
 
-const USER_KEY = "internshiproute_user";
-export const USER_UPDATED_EVENT = "internshiproute:user-updated";
+const USER_KEY = "internroute_user";
+export const USER_UPDATED_EVENT = "internroute:user-updated";
 
 export function setUser(user: StoredUser) {
   if (typeof window === "undefined") return;

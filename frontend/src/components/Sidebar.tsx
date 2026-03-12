@@ -86,7 +86,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <GraduationCap size={24} />
           </div>
           <div>
-            <h1 className="font-bold text-slate-900 leading-tight">InternshipRoute</h1>
+            <h1 className="font-bold text-slate-900 leading-tight">InternRoute</h1>
           </div>
         </div>
       </div>

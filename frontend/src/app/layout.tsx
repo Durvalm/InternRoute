@@ -5,7 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import MonitoringBootstrap from "@/components/MonitoringBootstrap";
 
 export const metadata: Metadata = {
-  title: "InternshipRoute",
+  title: "InternRoute",
   description: "Your internship prep cockpit"
 };
 

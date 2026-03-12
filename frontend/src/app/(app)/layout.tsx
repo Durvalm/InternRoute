@@ -28,7 +28,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200">
-          <span className="font-bold text-lg text-indigo-600">InternshipRoute</span>
+          <span className="font-bold text-lg text-indigo-600">InternRoute</span>
           <button
             onClick={() => setIsSidebarOpen(true)}
             className="p-2 text-slate-600 hover:bg-slate-100 rounded-md"
