@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { trackActiveDay, trackModuleViewed, trackSessionStarted } from "@/lib/analytics";
 
 const PATH_TO_MODULE_KEY: Array<{ prefix: string; moduleKey: string }> = [
+  { prefix: "/intro", moduleKey: "timeline" },
   { prefix: "/timeline", moduleKey: "timeline" },
   { prefix: "/skills", moduleKey: "coding" },
   { prefix: "/projects", moduleKey: "projects" },

@@ -1059,7 +1059,7 @@ export default function ApplicationsPage() {
             <h2 className="text-xl font-bold text-slate-900">Complete This Module</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Click through this checklist once the main ideas are clear. When every item is checked, this
-              module is marked complete in your task system, just like the Timeline module.
+              module is marked complete in your task system, just like the Intro module.
             </p>
           </div>
           <a
