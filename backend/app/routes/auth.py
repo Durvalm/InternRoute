@@ -84,6 +84,25 @@ def _auth_success_response(user: User):
   set_access_cookies(response, token)
   return response
 
+
+def _clear_cookie_variants(response, cookie_name: str) -> None:
+  if not cookie_name:
+    return
+
+  cookie_options = {
+    "path": "/",
+    "secure": bool(current_app.config.get("JWT_COOKIE_SECURE", False)),
+    "samesite": current_app.config.get("JWT_COOKIE_SAMESITE", "Lax"),
+  }
+
+  # Clear host-only cookies (legacy/local setups without explicit domain).
+  response.delete_cookie(cookie_name, **cookie_options)
+
+  # Also clear shared-domain cookies (production subdomain setup).
+  cookie_domain = (current_app.config.get("JWT_COOKIE_DOMAIN") or "").strip()
+  if cookie_domain:
+    response.delete_cookie(cookie_name, domain=cookie_domain, **cookie_options)
+
 @bp.post("/register")
 def register():
   retry_after = _check_auth_rate_limit(
@@ -163,6 +182,10 @@ def login():
 def logout():
   response = jsonify({"ok": True})
   unset_jwt_cookies(response)
+  _clear_cookie_variants(response, current_app.config.get("JWT_ACCESS_COOKIE_NAME"))
+  _clear_cookie_variants(response, current_app.config.get("JWT_ACCESS_CSRF_COOKIE_NAME"))
+  _clear_cookie_variants(response, current_app.config.get("JWT_REFRESH_COOKIE_NAME"))
+  _clear_cookie_variants(response, current_app.config.get("JWT_REFRESH_CSRF_COOKIE_NAME"))
   return response
 
 @bp.get("/me")
