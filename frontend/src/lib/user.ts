@@ -10,6 +10,7 @@ export type StoredUser = {
 };
 
 const USER_KEY = "internroute_user";
+const CSRF_TOKEN_KEY = "internroute_csrf_token_value";
 export const USER_UPDATED_EVENT = "internroute:user-updated";
 
 export function setUser(user: StoredUser) {
@@ -32,5 +33,6 @@ export function getUser(): StoredUser | null {
 export function clearUser() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(USER_KEY);
+  window.localStorage.removeItem(CSRF_TOKEN_KEY);
   window.dispatchEvent(new Event(USER_UPDATED_EVENT));
 }

@@ -4,6 +4,8 @@ from threading import Lock
 from flask import Blueprint, current_app, request, jsonify
 from flask_jwt_extended import (
   create_access_token,
+  get_csrf_token,
+  get_jwt,
   get_jwt_identity,
   jwt_required,
   set_access_cookies,
@@ -78,7 +80,7 @@ def _token_claims(user: User) -> dict[str, int]:
 
 def _auth_success_response(user: User):
   token = create_access_token(identity=str(user.id), additional_claims=_token_claims(user))
-  response = jsonify({"user": user.to_dict()})
+  response = jsonify({"user": user.to_dict(), "csrf_token": get_csrf_token(token)})
   set_access_cookies(response, token)
   return response
 
@@ -168,4 +170,5 @@ def logout():
 def me():
   user_id = int(get_jwt_identity())
   user = User.query.get_or_404(user_id)
-  return jsonify({"user": user.to_dict()})
+  csrf_token = get_jwt().get("csrf")
+  return jsonify({"user": user.to_dict(), "csrf_token": csrf_token})

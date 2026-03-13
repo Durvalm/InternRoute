@@ -7,12 +7,49 @@ const API_URL =
     : process.env.NODE_ENV === "production"
       ? ""
       : "http://localhost:5000";
+const CSRF_COOKIE_NAME = "internroute_csrf_token";
+const CSRF_STORAGE_KEY = "internroute_csrf_token_value";
+
+type CsrfTokenPayload = {
+  csrf_token?: unknown;
+};
 
 function requireApiUrl(): string {
   if (API_URL) {
     return API_URL;
   }
   throw new Error("NEXT_PUBLIC_API_URL is required in production.");
+}
+
+function readCsrfTokenFromCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  const csrfCookie = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${CSRF_COOKIE_NAME}=`))
+    ?.split("=")[1];
+  if (!csrfCookie) return null;
+  return decodeURIComponent(csrfCookie);
+}
+
+function readCsrfTokenFromStorage(): string | null {
+  if (typeof window === "undefined") return null;
+  const token = window.localStorage.getItem(CSRF_STORAGE_KEY);
+  if (!token) return null;
+  const normalized = token.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function storeCsrfToken(token: unknown): void {
+  if (typeof window === "undefined") return;
+  if (typeof token !== "string") return;
+  const normalized = token.trim();
+  if (!normalized) return;
+  window.localStorage.setItem(CSRF_STORAGE_KEY, normalized);
+}
+
+function clearStoredCsrfToken(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(CSRF_STORAGE_KEY);
 }
 
 export class ApiError extends Error {
@@ -49,13 +86,10 @@ export async function apiRequest<T>(path: string, options?: ApiRequestOptions): 
   }
 
   const requiresCsrf = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
-  if (requiresCsrf && !headers.has("X-CSRF-TOKEN") && typeof document !== "undefined") {
-    const csrfToken = document.cookie
-      .split("; ")
-      .find((cookie) => cookie.startsWith("internroute_csrf_token="))
-      ?.split("=")[1];
+  if (requiresCsrf && !headers.has("X-CSRF-TOKEN")) {
+    const csrfToken = readCsrfTokenFromCookie() || readCsrfTokenFromStorage();
     if (csrfToken) {
-      headers.set("X-CSRF-TOKEN", decodeURIComponent(csrfToken));
+      headers.set("X-CSRF-TOKEN", csrfToken);
     }
   }
 
@@ -74,6 +108,10 @@ export async function apiRequest<T>(path: string, options?: ApiRequestOptions): 
   }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      clearStoredCsrfToken();
+    }
+
     if (res.status === 401 && !skipAuthRedirect && typeof window !== "undefined") {
       const { clearUser } = await import("@/lib/user");
       clearUser();
@@ -122,5 +160,10 @@ export async function apiRequest<T>(path: string, options?: ApiRequestOptions): 
     throw new ApiError(message, res.status, retryAfterSeconds);
   }
 
-  return res.json() as Promise<T>;
+  const payload = (await res.json()) as T;
+  const csrfToken = (payload as CsrfTokenPayload).csrf_token;
+  if (csrfToken !== undefined) {
+    storeCsrfToken(csrfToken);
+  }
+  return payload;
 }
