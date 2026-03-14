@@ -13,12 +13,15 @@ import {
   ChevronDown,
   ChevronUp,
   Clock3,
-  Code2,
-  FileText,
   GraduationCap,
   Info,
   Lightbulb,
   Map,
+  Sparkles,
+  Trophy,
+  Briefcase,
+  FileText,
+  Code2,
   Target,
   XCircle
 } from "lucide-react";
@@ -30,13 +33,6 @@ type Season = {
   summary: string;
   details: string;
   tone: "peak" | "medium" | "quiet";
-};
-
-type RoadmapStep = {
-  title: string;
-  description: string;
-  stageState: "current" | "next" | "later";
-  icon: ComponentType<{ size?: string | number; className?: string }>;
 };
 
 type InfoCardProps = {
@@ -119,39 +115,6 @@ const seasons: Season[] = [
     summary: "Preparation time for the next cycle.",
     details: "Less hiring happens in this period; it is a good time to build skills, projects, and practice LeetCode.",
     tone: "quiet"
-  }
-];
-
-const roadmap: RoadmapStep[] = [
-  {
-    title: "The Setup (You are here)",
-    description: "Understand the game, the timeline, and the strategy.",
-    stageState: "current",
-    icon: Map
-  },
-  {
-    title: "Coding Skills",
-    description: "Build the technical foundation (language + fundamentals).",
-    stageState: "next",
-    icon: Code2
-  },
-  {
-    title: "Killer Projects",
-    description: "Build 2-3 projects that prove you can build real software and strengthen your resume.",
-    stageState: "later",
-    icon: Target
-  },
-  {
-    title: "Resume & Brand",
-    description: "Craft a resume that survives ATS and gets recruiter attention.",
-    stageState: "later",
-    icon: FileText
-  },
-  {
-    title: "The Application Machine",
-    description: "Apply to 100+ roles efficiently, learn the workflow, and improve your response rate (including OA prep).",
-    stageState: "later",
-    icon: CheckCircle2
   }
 ];
 
@@ -683,47 +646,150 @@ export default function IntroPage() {
         </div>
       </div>
 
-      <section className="bg-white rounded-3xl border border-slate-200 p-5 md:p-6 shadow-sm">
-        <div className="text-center max-w-xl mx-auto mb-6">
-          <h2 className="text-xl md:text-2xl font-bold text-slate-900">Internship Path</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            This platform is designed as a linear progression.
+      <section className="bg-white rounded-3xl border border-slate-200 p-5 md:p-6 shadow-sm space-y-6">
+        <h2 className="text-2xl font-bold text-slate-900">Understanding the Playbook</h2>
+
+        <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5 md:p-6">
+          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <Target size={18} className="text-indigo-600" />
+            The Core Philosophy
+          </h3>
+          <div className="mt-4 space-y-4 text-slate-600 text-[15px] leading-relaxed">
+            <p>
+              If you&apos;re in the U.S. read this: <strong>getting internships is not about how insanely talented you are</strong> or being a
+              developer since you were 14 years old. Let me explain.
+            </p>
+            <p>
+              There are brilliant developers all around the world, in many countries, who will never have the
+              opportunities you have just because they are not in the U.S. <strong>So you see, it&apos;s not about skills.</strong>
+            </p>
+            <p>
+              At the end of the day, it&apos;ll be someone checking a piece of paper (your resume). Skills are an important part of it, but there&apos;s a <strong>playbook to get a job as a Software Engineer</strong>{" "}
+              that kids in top schools know. A lot of them have relatives who work in the field, and they know exactly
+              what they need to do.
+            </p>
+            <p className="font-semibold text-indigo-700">
+              You need to work smart, not harder, do the things that can
+              actually get you a job. If you follow this path, you&apos;ll learn it.
+            </p>
+          </div>
+        </article>
+
+        <div>
+          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <Trophy size={18} className="text-amber-500" />
+            The Core Four: Your Foundation
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">
+            These four pillars work together as a system. Master these, and you&apos;ll have what you need to compete.
           </p>
         </div>
 
-        <div className="relative max-w-3xl mx-auto">
-          <div className="absolute left-6 top-3 bottom-3 w-px bg-slate-200" />
-          <div className="space-y-4">
-            {roadmap.map((step, index) => (
-              <div
-                key={step.title}
-                className="relative flex gap-4 items-start"
-              >
-                <div
-                  className={`shrink-0 w-12 h-12 rounded-lg flex items-center justify-center z-10 border ${step.stageState === "current"
-                    ? "bg-slate-900 border-slate-900 text-white shadow-md"
-                    : step.stageState === "next"
-                      ? "bg-white border-indigo-400 text-indigo-600"
-                      : "bg-white border-slate-300 text-slate-500"
-                    }`}
-                >
-                  <step.icon size={18} />
+        <div className="space-y-4">
+          {[
+            {
+              step: "Step 1",
+              icon: Code2,
+              iconShell: "bg-gradient-to-br from-indigo-500 to-blue-500 text-white",
+              title: "Coding Skills - Build Your Technical Foundation",
+              what: "Learn how to code and solve challenges in a practical way, we recommend Python, but if you already know another language it's fine. We have a built in IDE for you to showcase some of your coding skills and pass this module.",
+              why: "Basic coding is fundamental, a lot of a Software Engineer's job is to write and read code, you need to get really good at this. Interviews require solving challenges, and building software requires a lot of coding, so don't skip this."
+            },
+            {
+              step: "Step 2",
+              icon: Target,
+              iconShell: "bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white",
+              title: "Projects - Build Real World Software & Populate Your Resume with Proof",
+              what: "Learn backend development and build 2–3 real projects that demonstrate your skills. Your projects should include things like a backend framework, APIs, and a database.",
+              why: "That's how real applications work: servers, APIs, and databases. This is much closer to what you’ll actually do in a software engineering job. Projects will populate your resume and show recruiters proof that you can build real software, not just solve coding challenges."
+            },
+            {
+              step: "Step 3",
+              icon: FileText,
+              iconShell: "bg-emerald-500 text-white",
+              title: "Resume - Present Your Work to Get Hired",
+              what: "We teach you how to use the right tools and build a resume that passes ATS and gets attention from recruiters. More importantly, we teach you how to do that even as a beginner with not-so-impressive projects yet, by framing your work the right way and showing clear proof of skills.",
+              why: "At the end of the day, it is a person checking a resume. It does not even matter how good you are if your resume does not communicate it fast. This is one of the most important parts: if you are mass applying with a bad resume, you are mostly wasting time."
+            },
+            {
+              step: "Step 4",
+              icon: CheckCircle2,
+              iconShell: "bg-amber-500 text-white",
+              title: "Applications - Get in Front of Recruiters",
+              what: "We teach you the real application workflow: how many applications to send, where to find them, how to uncover hidden opportunities, and how to track everything without chaos. You will learn the tools top CS students use, including automation workflows, so you can apply at scale while still keeping quality.",
+              why: "There is a specific strategy to applying. If you do not learn it, you will spend too much time applying, apply to too few roles, miss early openings, and lose opportunities. The students who know the system move faster, stay consistent, and get more interview chances."
+            }
+          ].map((item) => (
+            <article key={item.step} className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
+              <div className="flex items-start gap-4">
+                <div className={`h-12 w-12 shrink-0 rounded-xl flex items-center justify-center ${item.iconShell}`}>
+                  <item.icon size={20} />
                 </div>
-
-                <div className="pt-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base md:text-lg font-bold text-slate-900">{step.title}</h3>
-                    {step.stageState === "current" ? (
-                      <span className="rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
-                        Current
-                      </span>
-                    ) : null}
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">{item.step}</p>
+                  <h4 className="mt-1 text-xl font-bold text-slate-900">{item.title}</h4>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">What</p>
+                      <p className="mt-1 text-sm text-slate-600 leading-relaxed">{item.what}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Why</p>
+                      <p className="mt-1 text-sm text-slate-600 leading-relaxed">{item.why}</p>
+                    </div>
                   </div>
-                  <p className="text-slate-500 mt-1 text-sm leading-relaxed">{step.description}</p>
                 </div>
               </div>
-            ))}
-          </div>
+            </article>
+          ))}
+        </div>
+
+        <div>
+          <h3 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+            <Sparkles size={20} className="text-indigo-500" />
+            Beyond the Basics
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">
+            These modules help you level up once you&apos;ve mastered the fundamentals.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <article className="rounded-2xl border border-slate-200 p-5 bg-white">
+            <h4 className="text-2xl font-bold text-slate-900">Interview Prep</h4>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Getting the interview is half the battle. Learn behavioral interview strategies, technical interview tips,
+              and how to tell your story effectively.
+            </p>
+            <p className="mt-4 text-sm font-medium text-indigo-600 flex items-center gap-2">
+              <Sparkles size={14} />
+              Be ready to perform
+            </p>
+          </article>
+
+          <article className="rounded-2xl border border-slate-200 p-5 bg-white">
+            <h4 className="text-2xl font-bold text-slate-900">LeetCode</h4>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              LeetCode is important for Big Tech and top-tier companies, but it&apos;s <strong>not required for beginners</strong>.
+              Focus on solid projects first, then come back to this when you&apos;re ready to target FAANG-level roles.
+            </p>
+            <p className="mt-4 text-sm font-medium text-amber-600 flex items-center gap-2">
+              <AlertTriangle size={14} />
+              Advanced, skip if starting out
+            </p>
+          </article>
+
+          <article className="rounded-2xl border border-slate-200 p-5 bg-white">
+            <h4 className="text-2xl font-bold text-slate-900">Opportunities</h4>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Discover programs, fellowships, diversity initiatives, and other experiences that can strengthen your
+              resume beyond traditional internships.
+            </p>
+            <p className="mt-4 text-sm font-medium text-indigo-600 flex items-center gap-2">
+              <Briefcase size={14} />
+              Expand your options
+            </p>
+          </article>
         </div>
       </section>
 
