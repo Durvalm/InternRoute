@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import Image from "next/image";
 import {
+  ArrowRight,
   AlertTriangle,
   BadgeCheck,
   BookMarked,
@@ -28,7 +29,7 @@ const inspirationProjects = [
     title: "YourLifeSimplified",
     subtitle: "Task Manager",
     summary: "A simple productivity app. Strong first project for practicing backend endpoints and persistent task data.",
-    stack: ["Python", "Django", "SQL"],
+    stack: ["Python", "FastAPI", "SQL"],
     imageSrc: "/projects/your_life_simplified.png",
     imageAlt: "YourLifeSimplified task manager interface screenshot",
     githubUrl: "https://github.com/Durvalm/YourLifeSimplified"
@@ -37,7 +38,7 @@ const inspirationProjects = [
     title: "RealEstate Platform",
     subtitle: "Listing Site",
     summary: "Property listings + favorites + profiles. Great practice for API flows and relational database modeling.",
-    stack: ["Python", "Django", "API + Data Layer"],
+    stack: ["Python", "FastAPI", "API + Data Layer"],
     imageSrc: "/projects/real_estate_2.png",
     imageAlt: "RealEstate Platform listings interface screenshot",
     githubUrl: "https://github.com/Durvalm/RealEstate"
@@ -69,28 +70,44 @@ const portfolioCardBlueprint = [
 ] as const;
 
 const projectIdeaPrompts = [
-  "Solve a real problem you already understand (class schedule, club workflow, family business task).",
-  "Pick a project where users can create/read/update data and not just view static content.",
-  "If stuck, clone a familiar product category: task app, booking app, listings app, tracker app.",
-  "Original ideas are better long-term, but copying a known idea is totally fine when you are starting."
-];
+  {
+    title: "Solve a small real problem you understand",
+    description:
+      "Class schedules, club workflows, expense tracking, organizing notes. Build around problems you or people around you actually face."
+  },
+  {
+    title: "Build real backend logic, not just pages",
+    description:
+      "Your project should store data, update it, and return it through APIs. Static pages do not show backend engineering ability."
+  },
+  {
+    title: "Make sure users can perform actions",
+    description:
+      "Users should be able to create, edit, and delete meaningful data: tasks, bookings, posts, orders, profiles, and similar flows."
+  },
+  {
+    title: "Do not worry about originality at first",
+    description:
+      "Cloning common app types is completely fine. What matters most is the engineering quality behind your implementation."
+  }
+] as const;
 
 const projectIdeaExamples = [
   {
-    title: "Campus Club Ops",
+    title: "Campus Club Manager",
     summary: "Manage events, members, and attendance with roles and internal notes."
   },
   {
-    title: "Student Deadline Radar",
-    summary: "Track assignment deadlines and reminders with user-specific dashboards."
+    title: "Assignment Tracker",
+    summary: "Track deadlines, reminders, and coursework progress with user-specific views."
   },
   {
-    title: "Family Business Orders Hub",
+    title: "Order Tracker for Small Businesses",
     summary: "Simple order intake + status updates + searchable order history."
   },
   {
-    title: "Neighborhood Service Booking",
-    summary: "Book appointments, manage availability, and handle user requests."
+    title: "Appointment Booking System",
+    summary: "Users schedule appointments while businesses manage availability and requests."
   }
 ];
 
@@ -445,43 +462,61 @@ export default function ProjectsPage() {
               <h3 className="text-lg md:text-xl font-bold">Why Backend?</h3>
               <p className="mt-3 text-sm md:text-base leading-relaxed text-indigo-100">
                 These skills matter in almost every direction: full stack, mobile, and even data-focused roles.
-                Most products need a backend foundation to handle logic and data correctly.
+                Real world software applications need a backend foundation to handle logic and data correctly.
               </p>
               <p className="mt-3 text-sm md:text-base leading-relaxed text-indigo-100">
-                If you want mobile, that is fine. Learn backend deeply here and use AI for mobile/frontend speed if needed.
-                What matters most in this phase is proving backend knowledge.
+                Once you learn the skills that power real-world applications, which is close to what you will do as a
+                software engineer, you can build your own projects too. This section is two wins in one: learn backend
+                skills and create projects that prove experience and build your resume.
               </p>
-              <div className="mt-4 rounded-xl border border-indigo-300/20 bg-white/10 p-3">
-                <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-300">Modern Tip</p>
-                <p className="mt-1 text-xs text-indigo-100">
-                  You can use AI for UI speed, but do not outsource your backend learning.
-                </p>
-              </div>
+             
             </div>
           </aside>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white p-4 md:p-5 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-700">Fast Track</p>
+            <h2 className="mt-1 text-base md:text-lg font-bold text-slate-900">
+              Already have backend skills and strong projects?
+            </h2>
+            <p className="mt-1 text-xs md:text-sm text-slate-700">
+              Skip the course path and go straight to your project submissions.
+            </p>
+          </div>
+          <a
+            href="#portfolio-board"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-600 text-white px-4 py-2 text-xs font-semibold hover:bg-emerald-700 transition-colors"
+          >
+            Go to Project Submission
+            <ArrowRight size={14} />
+          </a>
         </div>
       </section>
 
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <BookMarked size={20} className="text-indigo-600" />
-          <h2 className="text-lg md:text-xl font-bold text-slate-900">Learning Path (Course Options)</h2>
+          <h2 className="text-lg md:text-xl font-bold text-slate-900">How to learn backend</h2>
         </div>
 
         <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="space-y-5">
             <div>
-              <h3 className="text-lg font-bold text-slate-900">Why Django for Beginners</h3>
+              <h3 className="text-lg font-bold text-slate-900">Learn a Backend Framework (FastAPI)</h3>
               <p className="mt-3 text-sm md:text-base text-slate-600 leading-relaxed">
-                Django is a <strong>backend framework</strong> built with Python. For beginners, it is one of the fastest ways
-                to build real software with useful backend concepts.
+                FastAPI is a <strong>backend framework</strong> built with Python. It is a strong choice to learn modern API
+                development while building real projects.
               </p>
               <p className="mt-3 text-sm md:text-base text-slate-600 leading-relaxed">
-                You can build full projects with minimal setup and learn the core flow: server logic, API endpoints,
-                and database integration. It is a practical way to get your first full-stack project shipped.
+                There are many backend frameworks: Django, Flask, FastAPI, etc... and that is only in Python. Every programming
+                language has its own frameworks to build backend servers. The core goal is always the same: learn
+                server logic, API endpoints, and database integration well enough to build real products.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
-                {["Backend Framework", "API Layer", "Database Layer", "Server Logic", "HTML Basics"].map((skill) => (
+                {["Backend Framework", "API Layer", "Database Layer", "Server Logic", "Architecture Basics"].map((skill) => (
                   <span
                     key={skill}
                     className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 text-[11px] font-semibold"
@@ -492,23 +527,33 @@ export default function ProjectsPage() {
               </div>
               <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
                 <p className="text-sm md:text-base font-semibold text-amber-900 leading-relaxed">
-                  If you use another language or do not want Django, find another backend framework for that language.
+                  If you use another language, apply this same roadmap with that language's backend frameworks.
+                </p>
+              </div>
+              <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2.5">
+                <p className="text-sm md:text-base text-indigo-900 leading-relaxed">
+                  Since these tools are used to build backend servers, these courses teach in a very practical way:
+                  setting up databases, building APIs, and wiring real backend features. You might miss some theory
+                  at first, and that is fine.
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <h4 className="lg:col-span-2 text-sm font-bold uppercase tracking-wider text-slate-500">
+                Course Recommendations
+              </h4>
               <article className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-indigo-700 border border-indigo-200">
                   <FlaskConical size={17} />
                 </div>
-                <p className="mt-3 text-sm font-bold text-slate-900">Paid Option: Django Practical Guide</p>
+                <p className="mt-3 text-sm font-bold text-slate-900">Paid Option: FastAPI The Complete Course</p>
                 <p className="mt-2 text-sm md:text-base text-slate-600 leading-relaxed">
-                  In this course you learn Django and build a full-stack Blog project while touching databases, HTML,
-                  and backend architecture.
+                  This course includes a project with a frontend UI website at the end. It is a very good way to
+                  start building projects while learning backend fundamentals.
                 </p>
                 <a
-                  href="https://www.udemy.com/course/python-django-the-practical-guide/?couponCode=NEWYEARCAREER"
+                  href="https://www.udemy.com/course/fastapi-the-complete-course/"
                   target="_blank"
                   rel="noreferrer"
                   className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-indigo-700"
@@ -521,24 +566,149 @@ export default function ProjectsPage() {
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-emerald-700 border border-emerald-200">
                   <Code2 size={17} />
                 </div>
-                <p className="mt-3 text-sm font-bold text-slate-900">Free Option: YouTube Course</p>
+                <p className="mt-3 text-sm font-bold text-slate-900">Free Option: FastAPI Full Course</p>
                 <p className="mt-2 text-sm md:text-base text-slate-600 leading-relaxed">
-                  Free Django path. Goal is the same: learn backend fundamentals and build one real project with API + data handling.
+                  This is an incredible course. It goes deep into backend topics like databases, SQL, and APIs.
+                  The downside: it does not build a UI/website, so you will still need to apply this knowledge by
+                  building projects with an interface after finishing it.
                 </p>
                 <a
-                  href="https://www.youtube.com/watch?v=PtQiiknWUcI"
+                  href="https://youtube.com/watch?v=0sOvCWFmrtA"
                   target="_blank"
                   rel="noreferrer"
                   className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-emerald-700"
                 >
                   Open YouTube Course
                 </a>
+
+                <details className="mt-4 rounded-lg border border-emerald-200 bg-white px-3 py-2.5 open:border-emerald-300">
+                  <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-slate-900">Complementary Courses (Optional)</span>
+                    <span className="text-xs font-semibold text-emerald-700">Click to expand</span>
+                  </summary>
+                  <div className="mt-3 space-y-3">
+                    <article className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-sm font-semibold text-slate-900">FastAPI Architecture Deep Dive (2h)</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Goes deeper into application architecture and FastAPI structure. It includes a UI, but
+                        does not really teach how to build one in depth.
+                      </p>
+                      <a
+                        href="https://youtu.be/SR5NYCdzKkc?si=xABwiJ0PS6qtWGkN"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-emerald-700"
+                      >
+                        Open Architecture Course
+                      </a>
+                    </article>
+
+                    <article className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-sm font-semibold text-slate-900">Python + FastAPI + HTML Playlist</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Goes a bit more into HTML coding if you want more UI exposure while still practicing backend.
+                      </p>
+                      <a
+                        href="https://youtube.com/playlist?list=PL-osiE80TeTsak-c-QsVeg0YYG_0TeyXI&si=WWZldYIpXigjFXbX"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-emerald-700"
+                      >
+                        Open Playlist
+                      </a>
+                    </article>
+                  </div>
+                </details>
               </article>
             </div>
 
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3">
+              <p className="text-sm md:text-base font-semibold text-emerald-900">
+                It is exciting: these courses cover skills that map directly to real-world backend work.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  "HTTP fundamentals",
+                  "APIs & REST APIs",
+                  "API endpoints and routing",
+                  "Request and response handling",
+                  "Data validation",
+                  "Databases and CRUD operations",
+                  "Authentication and security",
+                  "Backend project structure",
+                  "Reading and using documentation",
+                  "Testing APIs",
+                  "Deployment basics"
+                ].map((topic) => (
+                  <span
+                    key={topic}
+                    className="rounded-md border border-emerald-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-emerald-800"
+                  >
+                    {topic}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <details className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white shadow-sm open:border-indigo-200 open:from-indigo-50/60">
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-3 px-4 py-3">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-700">Practical Guidance</p>
+                  <p className="mt-1 text-sm md:text-base font-semibold text-slate-900">
+                    Focus on backend first. Add UI strategically.
+                  </p>
+                </div>
+                <span className="text-xs font-semibold text-indigo-700">Click to expand</span>
+              </summary>
+
+              <div className="px-4 pb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <article className="rounded-lg border border-slate-200 bg-white p-3">
+                    <p className="text-sm font-semibold text-slate-900">Projects with a UI are nicer, not strictly necessary</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      To build cool projects, a UI is nice to have. You can get it through web, mobile, or other client platforms.
+                    </p>
+                    <p className="mt-2 text-sm text-slate-600">
+                      The key is patience: you will not learn everything at once. Focus on incremental learning and keep stacking skills over time.
+                    </p>
+                  </article>
+
+                  <article className="rounded-lg border border-slate-200 bg-white p-3">
+                    <p className="text-sm font-semibold text-slate-900">Do not specialize in UI right now</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      The highest-leverage concepts here are backend concepts: system thinking, server flow, APIs, and data.
+                    </p>
+                    <p className="mt-2 text-sm text-slate-600">
+                      With strong backend knowledge, you can explain exactly what your project is doing: the logic,
+                      data flow, storage decisions, and how requests move through the system.
+                    </p>
+                  </article>
+
+                  <article className="rounded-lg border border-slate-200 bg-white p-3">
+                    <p className="text-sm font-semibold text-slate-900">UI learning paths (later)</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      JavaScript + React for web, Swift for iOS, Kotlin for Android. You can also embed basic
+                      HTML/CSS in FastAPI for simple interfaces, but that is not the standard frontend path.
+                    </p>
+                  </article>
+
+                  <article className="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+                    <p className="text-sm font-semibold text-indigo-900">Recommended workflow for this module</p>
+                    <p className="mt-1 text-sm text-indigo-900/90">
+                      Write your backend yourself, use AI to generate UI code, and study that generated code so you
+                      still learn while shipping faster.
+                    </p>
+                  </article>
+                </div>
+              </div>
+            </details>
+
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-sm md:text-base text-slate-700">
-                Already have backend skills and strong projects? Skip the course and submit directly when submissions are enabled.
+              <p className="text-sm md:text-base font-semibold text-slate-900">Want to go deeper into full stack later?</p>
+              <p className="mt-1 text-sm md:text-base text-slate-700 leading-relaxed">
+                If you want to code both backend and frontend, look for FastAPI + React courses, or pair another
+                backend framework with a frontend web or mobile framework. The exact stack can vary, but the system thinking you
+                build here carries over.
               </p>
             </div>
           </div>
@@ -568,49 +738,55 @@ export default function ProjectsPage() {
               <p className="mt-2 text-sm text-indigo-100">Share GitHub links to validate backend readiness.</p>
             </div>
           </div>
+          <div className="rounded-2xl border border-white/20 bg-white/10 p-4 md:p-5">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <h3 className="text-base md:text-lg font-bold">By the End of This Module</h3>
+              <span className="rounded-full border border-white/30 bg-white/15 px-3 py-1 text-[11px] font-semibold text-indigo-50">
+                Target: ~4 Months
+              </span>
+            </div>
+            <ul className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+              {moduleOutcomes.map((outcome) => (
+                <li key={outcome} className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-indigo-50">
+                  {outcome}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 md:p-7 shadow-sm">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h2 className="text-lg md:text-xl font-bold text-slate-900">By the End of This Module</h2>
-          <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-            Target: ~4 Months
-          </span>
-        </div>
-        <ul className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          {moduleOutcomes.map((outcome) => (
-            <li key={outcome} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">
-              {outcome}
-            </li>
-          ))}
-        </ul>
       </section>
 
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Lightbulb size={19} className="text-amber-500" />
-          <h2 className="text-lg md:text-xl font-bold text-slate-900">Pick Your Project Ideas</h2>
+          <h2 className="text-lg md:text-xl font-bold text-slate-900">Pick Your Project Idea</h2>
         </div>
         <p className="text-sm md:text-base text-slate-500">
-          Start with ideas that are useful and realistic. Original ideas are better, but it is okay to copy familiar app types to learn faster.
+          Start with something realistic. The goal is not to invent the next startup, it is to build something that demonstrates real engineering skills.
         </p>
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
+          <p className="text-sm md:text-base font-semibold text-indigo-900">
+            A strong backend project usually includes authentication, a database, and at least 3-4 API endpoints.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_1fr] gap-4">
           <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <h3 className="text-lg font-bold text-slate-900">How to Pick Well</h3>
+            <h3 className="text-lg font-bold text-slate-900">How to Pick a Good Project</h3>
             <ul className="mt-3 space-y-2">
               {projectIdeaPrompts.map((prompt) => (
-                <li key={prompt} className="flex items-start gap-2 text-sm text-slate-600">
+                <li key={prompt.title} className="flex items-start gap-2 text-sm text-slate-600">
                   <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
-                  <span>{prompt}</span>
+                  <span>
+                    <strong className="text-slate-800">{prompt.title}.</strong> {prompt.description}
+                  </span>
                 </li>
               ))}
             </ul>
           </article>
 
           <article className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h3 className="text-lg font-bold text-slate-900">Original Idea Starters</h3>
+            <h3 className="text-lg font-bold text-slate-900">Project Idea Starters</h3>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {projectIdeaExamples.map((idea) => (
                 <div key={idea.title} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -684,9 +860,23 @@ export default function ProjectsPage() {
             </article>
           ))}
         </div>
+
+        <article className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5">
+          <p className="text-sm md:text-base text-slate-700 leading-relaxed">
+            These projects were not even in my first resume. I kept improving and started building more sophisticated
+            projects over time.
+          </p>
+          <p className="mt-2 text-sm md:text-base text-slate-700 leading-relaxed">
+            You will see my first resume in the Resume module, including some of the projects I had at that point.
+          </p>
+          <p className="mt-2 text-sm md:text-base font-medium text-indigo-900 leading-relaxed">
+            This is normal: our first projects usually are not great, but the concepts we learn from them are what
+            move us forward.
+          </p>
+        </article>
       </section>
 
-      <section className="space-y-4">
+      <section id="portfolio-board" className="space-y-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">Your Portfolio Board</h2>
@@ -1071,6 +1261,10 @@ export default function ProjectsPage() {
               actually want, deploy your app, and iterate based on real feedback.
             </p>
             <p className="mt-2 text-slate-600 leading-relaxed">
+              Another way to break plateaus: choose a project that scares you at first and requires at least one
+              technology you do not know yet (for example, WebSockets for real-time messaging).
+            </p>
+            <p className="mt-2 text-slate-600 leading-relaxed">
               This is much stronger than projects nobody uses. You get resume metrics and behavioral interview material,
               including answers like: "A time where your user changed your perspective on something."
             </p>
@@ -1080,6 +1274,22 @@ export default function ProjectsPage() {
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">Next: Resume Module</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Turn your projects into resume bullets that pass ATS and get recruiter attention.
+          </p>
+        </div>
+        <a
+          href="/resume"
+          className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition-all w-full md:w-auto bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+        >
+          Continue to Resume
+          <ArrowRight size={18} />
+        </a>
       </section>
     </div>
   );
