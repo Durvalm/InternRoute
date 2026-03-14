@@ -925,18 +925,99 @@ export default function SkillsPage() {
         </div>
       </section>
 
+      <section className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white p-4 md:p-5 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-700">Fast Track</p>
+            <h2 className="mt-1 text-base md:text-lg font-bold text-slate-900">
+              Already good at basic coding?
+            </h2>
+            <p className="mt-1 text-xs md:text-sm text-slate-700">
+              Solve the challenges below to prove it, then move to the next module.
+            </p>
+          </div>
+          <a
+            href="#readiness-check"
+            className="inline-flex items-center justify-center rounded-full bg-emerald-600 text-white px-4 py-2 text-xs font-semibold hover:bg-emerald-700 transition-colors"
+          >
+            Go to Challenges
+          </a>
+        </div>
+      </section>
+
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <BookOpen size={24} className="text-indigo-600" />
             <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">How to Learn</h2>
           </div>
-          <a
-            href="#readiness-check"
-            className="rounded-full bg-indigo-50 text-indigo-700 px-4 py-2 text-xs font-semibold"
-          >
-            Already know the basics? Skip to Challenges
-          </a>
+        </div>
+
+        <article className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-600">Learning Playbook</p>
+              <h3 className="mt-1 text-lg font-bold text-slate-900">How to Actually Learn Coding</h3>
+              <p className="mt-2 text-xs md:text-sm leading-relaxed text-slate-600 max-w-3xl">
+                Start with a course to learn syntax and basic programming. Hopefully this course has lots of challenges, if not, then use a proactive approach: every time you
+                learn something new, think of a small challenge or mini program using that concept, and implement it.
+                That is how concepts turn into real coding skill.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">The Practical Loop</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] md:text-xs font-semibold text-slate-700">
+                <span className="rounded-full bg-white border border-slate-200 px-2.5 py-1">1. Learn concept in course</span>
+                <span className="text-slate-400">→</span>
+                <span className="rounded-full bg-white border border-slate-200 px-2.5 py-1">2. Think small challenges</span>
+                <span className="text-slate-400">→</span>
+                <span className="rounded-full bg-white border border-slate-200 px-2.5 py-1">3. Implement it yourself</span>
+                <span className="text-slate-400">→</span>
+                <span className="rounded-full bg-white border border-slate-200 px-2.5 py-1">4. Solve more, go harder</span>
+              </div>
+
+              <ul className="mt-3 space-y-2 text-xs md:text-sm text-slate-700">
+                <li>
+                  <strong>Do a Python course first</strong> (or your preferred language) to learn the basic syntax and programming foundations.
+                </li>
+                <li>
+                  <strong>Do a lot of challenges:</strong> this should be your default habit while learning.
+                </li>
+                <li>
+                  <strong>If your course has low practice volume,</strong> add extra coding challenges, look up some basic challenges online and start solving from easy to hard.
+                </li>
+              </ul>
+            </div>
+
+            <div className="rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">Real Learning Example</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-700">
+                When I was learning to code, I took a course that required me to solve around <strong>40 challenges</strong>.
+                If I could not solve one, the instructor walked through the solution step by step.
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-700">
+                We started from basic calculator and miles-to-kilometers converter type problems, then progressed to
+                bigger implementations like a full Blackjack game and simulation-style problems.
+              </p>
+            </div>
+          </div>
+
+
+        </article>
+
+        <article className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+          <p className="text-xs md:text-sm leading-relaxed text-indigo-900">
+            We have an IDE below for you to code and solve small challenges. These are not hard challenges, and you
+            should be able to solve at least the first 4 with ease.
+          </p>
+        </article>
+
+        <div className="flex items-center gap-3">
+          <BookOpen size={20} className="text-indigo-600" />
+          <h3 className="text-base md:text-lg font-bold text-slate-900">Recommended Courses</h3>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -944,12 +1025,12 @@ export default function SkillsPage() {
             <p className="text-xs font-bold uppercase tracking-wider text-amber-600">Paid Option</p>
             <h3 className="mt-2 text-lg font-bold text-slate-900">The Art of Doing (Python Course)</h3>
             <p className="mt-3 text-xs leading-relaxed text-slate-600">
-              Strongly recommended if you can get it. It already includes many challenge-style exercises, and
-              the instructor teaches you how to think through and solve them.
+              Strongly recommended if you can get it. It includes many challenge-style exercises and actively forces
+              implementation, not just passive watching.
             </p>
             <p className="mt-3 text-xs leading-relaxed text-slate-700">
-              You can do this same challenge-first method for free too. Also, if you prefer another language,
-              find an equivalent course/tutorial and keep the same practice routine.
+              Great for challenge-based learning because the instructor walks through solutions when you get stuck.
+              Use the same method in any language: learn concept, solve challenge, repeat.
             </p>
             <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between gap-4">
               <p className="text-xs font-semibold text-slate-500">Udemy Course</p>
@@ -972,8 +1053,8 @@ export default function SkillsPage() {
               and type everything yourself instead of only watching.
             </p>
             <p className="mt-3 text-xs leading-relaxed text-slate-700">
-              This video has some exercises, but add more online challenges while learning to lock in knowledge.
-              That same approach works for Python and for any other language.
+              This one has fewer built-in challenges than the paid option, so you should add extra online coding
+              challenges while learning. Keep the same challenge-first approach from easy to hard.
             </p>
             <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between gap-4">
               <p className="text-xs font-semibold text-slate-500">YouTube</p>
@@ -1018,15 +1099,25 @@ export default function SkillsPage() {
           </div>
         </div>
 
+        <article className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 md:p-5 shadow-sm">
+          <h3 className="text-sm md:text-base font-bold text-amber-900">How to Use This 5-Challenge Checkpoint</h3>
+          <p className="mt-2 text-xs md:text-sm leading-relaxed text-amber-900/90">
+            You should be comfortable solving at least the first 4 challenges. If not, that's when you know to keep learning more basic coding and solving more basic problems before moving on.
+          </p>
+          <p className="mt-2 text-xs md:text-sm leading-relaxed text-amber-900/90">
+            The 5th challenge is intentionally trickier. Try to solve it first; if you cannot, I don't blame you for looking up how t solve it and the idea behind it, it's a known challenge in the community.
+          </p>
+        </article>
+
         <article className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 md:p-5 shadow-sm">
           <h3 className="text-sm md:text-base font-bold text-indigo-900">Challenge Rules (Read This First)</h3>
           <p className="mt-2 text-xs md:text-sm leading-relaxed text-indigo-900/90">
-            Don&apos;t cheat by copying final solutions. The struggle here is the training that makes projects and interviews possible later.
+            Don&apos;t use AI for this. Coding skills are the bare minimum, you need to have this on locks to move on.
           </p>
           <ul className="mt-3 space-y-2 text-xs md:text-sm text-slate-700 list-disc pl-5">
-            <li>Try your own approach first; only use hints after a real attempt.</li>
-            <li>Implement your code inside the pre-defined function signature shown in the challenge.</li>
+            <li>Implement your code inside the pre-defined function signature shown in the challenge and return the necessary value to solve the problem.</li>
             <li>Use your IDE actively: write code, click Run Code, read errors/output, and iterate.</li>
+            <li>If your code is not working, check the error message, debug, and keep trying.</li>
             <li>Submit only when your local runs are stable and your output matches the expected behavior.</li>
           </ul>
         </article>
@@ -1255,6 +1346,32 @@ export default function SkillsPage() {
             </div>
           </div>
         </div>
+
+        <article className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 md:p-5 shadow-sm">
+          <h3 className="text-sm md:text-base font-bold text-emerald-900">You&apos;re Practicing the Real Interview Format</h3>
+          <p className="mt-2 text-xs md:text-sm leading-relaxed text-emerald-900/90">
+            This exact setup, reading the problem on the left and solving in a pre-defined function on the right, is
+            the same style used in coding interviews, LeetCode problems, and many online assessments (OAs).
+          </p>
+          <p className="mt-2 text-xs md:text-sm leading-relaxed text-emerald-900/90">
+            It&apos;s exciting that you get to experience this before your first real interviews.
+          </p>
+        </article>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base md:text-lg font-bold text-slate-900">Ready for the next step?</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Move to Projects and start building real software with APIs, databases, and deployment.
+            </p>
+          </div>
+          <a
+            href="/projects"
+            className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition-colors"
+          >
+            Continue to Projects Module
+          </a>
+        </section>
       </section>
     </div>
   );
