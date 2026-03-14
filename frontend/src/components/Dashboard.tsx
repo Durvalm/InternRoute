@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import ReadinessWidget from "@/components/ReadinessWidget";
+import ReadinessBreakdownWidget from "@/components/ReadinessBreakdownWidget";
 import CountdownWidget from "@/components/CountdownWidget";
 import ActionItemsWidget from "@/components/ActionItemsWidget";
 import QuickResourcesWidget from "@/components/QuickResourcesWidget";
@@ -10,6 +12,7 @@ import { apiRequest } from "@/lib/api";
 type ModuleProgress = {
   module_key: string;
   module_name: string;
+  overall_weight?: number;
   score: number;
   is_unlocked: boolean;
   unlock_threshold: number;
@@ -63,6 +66,7 @@ type DashboardSummary = {
 export default function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showReadinessBreakdown, setShowReadinessBreakdown] = useState(false);
   const leetcodeReadiness =
     summary?.module_progress.find((module) => module.module_key === "leetcode")?.score ?? 0;
 
@@ -103,6 +107,24 @@ export default function Dashboard() {
               leetcode: leetcodeReadiness,
             }}
           />
+          <div className="flex justify-start">
+            <button
+              type="button"
+              onClick={() => setShowReadinessBreakdown((prev) => !prev)}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              aria-expanded={showReadinessBreakdown}
+            >
+              <BarChart3 size={14} />
+              How readiness is calculated
+              {showReadinessBreakdown ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+          </div>
+          {showReadinessBreakdown ? (
+            <ReadinessBreakdownWidget
+              modules={summary?.module_progress ?? []}
+              readyThreshold={summary?.recruiting?.ready_threshold ?? 62}
+            />
+          ) : null}
           <ActionItemsWidget
             moduleProgress={summary?.module_progress ?? []}
             nextAction={summary?.next_action ?? null}

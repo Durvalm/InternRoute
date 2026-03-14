@@ -27,6 +27,7 @@ class ModuleState:
   module_id: int
   module_key: str
   module_name: str
+  overall_weight: int
   score: int
   is_unlocked: bool
   unlock_threshold: int
@@ -37,6 +38,7 @@ class ModuleState:
     return {
       "module_key": self.module_key,
       "module_name": self.module_name,
+      "overall_weight": self.overall_weight,
       "score": self.score,
       "is_unlocked": self.is_unlocked,
       "unlock_threshold": self.unlock_threshold,
@@ -200,6 +202,7 @@ def _build_module_states(user: User) -> list[ModuleState]:
       module_id=module.id,
       module_key=module.key,
       module_name=module.name,
+      overall_weight=module.overall_weight,
       score=scores_by_module_id.get(module.id, 0),
       is_unlocked=previous_modules_complete,
       unlock_threshold=module.unlock_threshold,
