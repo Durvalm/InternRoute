@@ -744,6 +744,38 @@ export default function IntroPage() {
           ))}
         </div>
 
+        <article className="rounded-2xl border border-indigo-200 bg-white p-4 md:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-600">Interview Signal Loop</p>
+              <h4 className="mt-1 text-sm md:text-base font-bold text-slate-900">
+                If interviews are not happening, at least one of the Core Four is broken.
+              </h4>
+            </div>
+            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
+              Keep iterating
+            </span>
+          </div>
+
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-900 px-3 py-3">
+            <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold text-white">
+              <span className="rounded-full bg-white/15 px-2.5 py-1">Coding Skills</span>
+              <span className="text-white/60">{"->"}</span>
+              <span className="rounded-full bg-white/15 px-2.5 py-1">Projects</span>
+              <span className="text-white/60">{"->"}</span>
+              <span className="rounded-full bg-white/15 px-2.5 py-1">Resume</span>
+              <span className="text-white/60">{"->"}</span>
+              <span className="rounded-full bg-white/15 px-2.5 py-1">Applications</span>
+              <span className="text-white/60">{"->"}</span>
+              <span className="rounded-full bg-indigo-500/70 px-2.5 py-1">Interviews</span>
+            </div>
+          </div>
+
+          <p className="mt-3 text-xs text-slate-600">
+            Even after you complete these modules, you keep looping through the same four to get better internship outcomes.
+          </p>
+        </article>
+
         <div>
           <h3 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
             <Sparkles size={20} className="text-indigo-500" />
