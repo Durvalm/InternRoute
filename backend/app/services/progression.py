@@ -216,6 +216,10 @@ def _build_module_states(user: User) -> list[ModuleState]:
   return states
 
 
+def get_module_states_for_user(user: User) -> list[ModuleState]:
+  return _build_module_states(user)
+
+
 def _unmet_prerequisite_states_for_module_key(
   module_states: list[ModuleState],
   module_key: str,

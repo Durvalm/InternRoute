@@ -14,7 +14,8 @@ import {
   Settings,
   LogOut,
   GraduationCap,
-  Sparkles
+  Sparkles,
+  BarChart3
 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 import { trackLogoutClicked } from "@/lib/analytics";
@@ -35,6 +36,8 @@ const navItems = [
   { icon: Code2, label: "Leetcode", href: "/leetcode" },
   { icon: Sparkles, label: "Opportunities", href: "/opportunities" }
 ];
+
+const adminNavItems = [{ icon: BarChart3, label: "Admin", href: "/admin" }];
 
 function getInitials(name: string): string {
   const parts = name
@@ -77,6 +80,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
   const userName = user?.name?.trim() || "Student";
   const initials = getInitials(userName);
+  const visibleNavItems = user?.is_superuser ? [...navItems, ...adminNavItems] : navItems;
 
   return (
     <div className="flex flex-col h-full bg-white text-slate-600">
@@ -95,7 +99,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
         <div className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
           Preparation
         </div>
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const active = pathname === item.href;
           return (
             <Link
