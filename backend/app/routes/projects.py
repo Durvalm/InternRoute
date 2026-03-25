@@ -4,17 +4,16 @@ from urllib.parse import urlparse
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from sqlalchemy.orm import joinedload
 
 from ..analytics import track_event
 from ..extensions import db
 from ..models import ProjectSubmission, User
-from ..services.progression import module_completion_allowed_or_error, sync_projects_submission_progress
+from ..services.progression import sync_projects_submission_progress
+from ..services.project_analyzer import ProjectAnalyzerError, analyze_github_project
 
 bp = Blueprint("projects", __name__, url_prefix="/projects")
 
 _ALLOWED_GITHUB_HOSTS = {"github.com", "www.github.com"}
-_REVIEW_DECISIONS = {"pass", "fail"}
 
 
 def _normalize_optional_url(value: object) -> str | None:
@@ -66,21 +65,12 @@ def _is_valid_http_url(value: str) -> bool:
   return scheme in {"http", "https"} and bool(parsed.netloc)
 
 
-def _normalize_optional_note(value: object) -> str | None:
-  if value is None:
-    return None
-  if not isinstance(value, str):
-    return None
-  normalized = value.strip()
-  return normalized or None
-
-
 def _current_user() -> User:
   user_id = int(get_jwt_identity())
   return User.query.get_or_404(user_id)
 
 
-def _serialize_submission(submission: ProjectSubmission, *, include_user: bool = False) -> dict[str, object]:
+def _serialize_submission(submission: ProjectSubmission) -> dict[str, object]:
   payload: dict[str, object] = {
     "id": submission.id,
     "user_id": submission.user_id,
@@ -91,13 +81,26 @@ def _serialize_submission(submission: ProjectSubmission, *, include_user: bool =
     "created_at": submission.created_at.isoformat() if submission.created_at else None,
     "updated_at": submission.updated_at.isoformat() if submission.updated_at else None,
   }
-  if include_user:
-    payload["user"] = {
-      "id": submission.user.id if submission.user else submission.user_id,
-      "email": submission.user.email if submission.user else None,
-      "name": submission.user.name if submission.user else None,
-    }
   return payload
+
+
+def _build_evaluation_note(
+  *,
+  has_api_layer: bool,
+  has_database_layer: bool,
+  summary: str,
+) -> str:
+  def yes_no(value: bool) -> str:
+    return "Yes" if value else "No"
+
+  lines = [
+    "AI Evaluation:",
+    f"- API layer: {yes_no(has_api_layer)}",
+    f"- Database layer: {yes_no(has_database_layer)}",
+  ]
+  if summary.strip():
+    lines.append(f"Summary: {summary.strip()}")
+  return "\n".join(lines)[:2000]
 
 
 @bp.get("/submissions")
@@ -133,91 +136,49 @@ def create_submission():
   if deployed_url is not None and not _is_valid_http_url(deployed_url):
     return jsonify({"error": "deployed_url must be a valid http(s) URL"}), 400
 
+  try:
+    analysis = analyze_github_project(owner=owner, repo=repo, repo_url=repo_url)
+  except ProjectAnalyzerError as err:
+    return jsonify({"error": str(err), "error_code": err.code}), err.status_code
+
+  status = "pass" if analysis.passed else "fail"
+  review_notes = _build_evaluation_note(
+    has_api_layer=analysis.has_api_layer,
+    has_database_layer=analysis.has_database_layer,
+    summary=analysis.summary,
+  )
   submission = ProjectSubmission(
     user_id=user.id,
     repo_url=repo_url,
     deployed_url=deployed_url,
-    status="pending",
+    status=status,
+    review_notes=review_notes,
   )
   db.session.add(submission)
-  db.session.commit()
-  track_event(
-    "project_submitted",
-    user_id=user.id,
-    properties={
-      "project_id": submission.id,
-      "module_key": "projects",
-    },
-  )
-
-  return jsonify({"submission": _serialize_submission(submission)}), 201
-
-
-@bp.get("/admin/submissions")
-@jwt_required()
-def list_admin_submissions():
-  user = _current_user()
-  if not user.is_superuser:
-    return jsonify({"error": "Superuser access required."}), 403
-
-  submissions = (
-    ProjectSubmission.query
-    .options(joinedload(ProjectSubmission.user))
-    .order_by(ProjectSubmission.created_at.desc(), ProjectSubmission.id.desc())
-    .all()
-  )
-  return jsonify({"submissions": [_serialize_submission(item, include_user=True) for item in submissions]})
-
-
-@bp.post("/submissions/<int:submission_id>/review")
-@jwt_required()
-def review_submission(submission_id: int):
-  user = _current_user()
-  if not user.is_superuser:
-    return jsonify({"error": "Superuser access required."}), 403
-
-  payload = request.get_json() or {}
-  decision_raw = payload.get("decision")
-  has_api = payload.get("has_api")
-  has_database = payload.get("has_database")
-  note = _normalize_optional_note(payload.get("note"))
-
-  if not isinstance(decision_raw, str):
-    return jsonify({"error": "decision must be provided"}), 400
-  decision = decision_raw.strip().lower()
-  if decision not in _REVIEW_DECISIONS:
-    return jsonify({"error": "decision must be either 'pass' or 'fail'"}), 400
-  if not isinstance(has_api, bool):
-    return jsonify({"error": "has_api must be a boolean"}), 400
-  if not isinstance(has_database, bool):
-    return jsonify({"error": "has_database must be a boolean"}), 400
-
-  if decision == "pass" and not (has_api and has_database):
-    return jsonify({"error": "To mark pass, both has_api and has_database must be true."}), 400
-
-  submission = ProjectSubmission.query.get_or_404(submission_id)
-  if decision == "pass":
-    allowed, error_payload = module_completion_allowed_or_error(submission.user_id, "projects")
-    if not allowed and error_payload is not None:
-      return jsonify(error_payload), 409
-
-  submission.status = decision
-  submission.review_notes = note
+  db.session.flush()
   computed = sync_projects_submission_progress(
     submission.user_id,
     commit=True,
     emit_module_completion_events=True,
   )
 
+  track_event(
+    "project_evaluated",
+    user_id=user.id,
+    properties={
+      "project_id": submission.id,
+      "module_key": "projects",
+      "status": status,
+      "has_api_layer": analysis.has_api_layer,
+      "has_database_layer": analysis.has_database_layer,
+    },
+  )
+
   return jsonify(
     {
       "submission": _serialize_submission(submission),
-      "review_checklist": {
-        "has_api": has_api,
-        "has_database": has_database,
-      },
-      "reviewer_user_id": user.id,
+      "evaluation": analysis.to_dict(),
       "module_progress": computed["module_progress"],
       "category_readiness": computed["category_readiness"],
     }
-  )
+  ), 201
