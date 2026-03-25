@@ -134,40 +134,24 @@ type ProjectSubmissionsResponse = {
   submissions: ProjectSubmission[];
 };
 
+type ProjectEvaluation = {
+  has_database_layer: boolean;
+  has_api_layer: boolean;
+  summary: string;
+  evidence: {
+    database: string[];
+    api: string[];
+  };
+  confidence: "low" | "medium" | "high";
+  passed: boolean;
+};
+
 type ProjectSubmissionCreateResponse = {
   submission: ProjectSubmission;
+  evaluation: ProjectEvaluation;
 };
 
-type ViewerResponse = {
-  user: {
-    is_superuser: boolean;
-  };
-};
-
-type AdminProjectSubmission = ProjectSubmission & {
-  user_id: number | null;
-  user: {
-    id: number;
-    email: string | null;
-    name: string | null;
-  } | null;
-};
-
-type AdminProjectSubmissionsResponse = {
-  submissions: AdminProjectSubmission[];
-};
-
-type ReviewDecision = "pass" | "fail";
 type PortfolioCardState = "complete" | "active" | "locked";
-
-type ReviewDraft = {
-  hasApi: boolean;
-  hasDatabase: boolean;
-  note: string;
-  isSaving: boolean;
-  error: string | null;
-  success: string | null;
-};
 
 const statusPillClasses: Record<SubmissionStatus, string> = {
   pending: "bg-amber-50 border-amber-200 text-amber-700",
@@ -176,21 +160,10 @@ const statusPillClasses: Record<SubmissionStatus, string> = {
 };
 
 const statusLabel: Record<SubmissionStatus, string> = {
-  pending: "Pending Review",
+  pending: "Pending",
   pass: "Pass",
   fail: "Not Yet"
 };
-
-function createReviewDraft(): ReviewDraft {
-  return {
-    hasApi: false,
-    hasDatabase: false,
-    note: "",
-    isSaving: false,
-    error: null,
-    success: null,
-  };
-}
 
 export default function ProjectsPage() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -201,20 +174,6 @@ export default function ProjectsPage() {
   const [listError, setListError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<ProjectSubmission[]>([]);
-  const [isSuperuser, setIsSuperuser] = useState(false);
-  const [adminSubmissions, setAdminSubmissions] = useState<AdminProjectSubmission[]>([]);
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [adminError, setAdminError] = useState<string | null>(null);
-  const [reviewDrafts, setReviewDrafts] = useState<Record<number, ReviewDraft>>({});
-
-  const loadViewerRole = useCallback(async () => {
-    try {
-      const data = await apiRequest<ViewerResponse>("/auth/me");
-      setIsSuperuser(Boolean(data.user?.is_superuser));
-    } catch (err) {
-      setIsSuperuser(false);
-    }
-  }, []);
 
   const loadSubmissions = useCallback(async () => {
     setIsLoading(true);
@@ -230,95 +189,9 @@ export default function ProjectsPage() {
     }
   }, []);
 
-  const loadAdminSubmissions = useCallback(async () => {
-    if (!isSuperuser) {
-      setAdminSubmissions([]);
-      setAdminError(null);
-      return;
-    }
-
-    setAdminLoading(true);
-    setAdminError(null);
-    try {
-      const data = await apiRequest<AdminProjectSubmissionsResponse>("/projects/admin/submissions");
-      const nextSubmissions = data.submissions || [];
-      setAdminSubmissions(nextSubmissions);
-      setReviewDrafts((previous) => {
-        const next = { ...previous };
-        for (const submission of nextSubmissions) {
-          if (!next[submission.id]) {
-            next[submission.id] = createReviewDraft();
-          }
-        }
-        return next;
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not load admin submissions.";
-      setAdminError(message);
-    } finally {
-      setAdminLoading(false);
-    }
-  }, [isSuperuser]);
-
-  const updateReviewDraft = useCallback((submissionId: number, patch: Partial<ReviewDraft>) => {
-    setReviewDrafts((previous) => ({
-      ...previous,
-      [submissionId]: {
-        ...(previous[submissionId] ?? createReviewDraft()),
-        ...patch,
-      },
-    }));
-  }, []);
-
-  const submitAdminReview = useCallback(async (submissionId: number, decision: ReviewDecision) => {
-    const draft = reviewDrafts[submissionId] ?? createReviewDraft();
-    if (decision === "pass" && !(draft.hasApi && draft.hasDatabase)) {
-      updateReviewDraft(submissionId, {
-        error: "To mark pass, check both API layer and Database layer.",
-        success: null,
-      });
-      return;
-    }
-
-    updateReviewDraft(submissionId, { isSaving: true, error: null, success: null });
-    try {
-      await apiRequest<{ submission: ProjectSubmission }>(`/projects/submissions/${submissionId}/review`, {
-        method: "POST",
-        body: JSON.stringify({
-          decision,
-          has_api: draft.hasApi,
-          has_database: draft.hasDatabase,
-          note: draft.note.trim() || null,
-        }),
-      });
-
-      updateReviewDraft(submissionId, {
-        isSaving: false,
-        error: null,
-        success: decision === "pass" ? "Marked as pass." : "Marked as not yet.",
-      });
-      await loadSubmissions();
-      await loadAdminSubmissions();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not submit review.";
-      updateReviewDraft(submissionId, { isSaving: false, error: message, success: null });
-    }
-  }, [loadAdminSubmissions, loadSubmissions, reviewDrafts, updateReviewDraft]);
-
-  useEffect(() => {
-    void loadViewerRole();
-  }, [loadViewerRole]);
-
   useEffect(() => {
     void loadSubmissions();
   }, [loadSubmissions]);
-
-  useEffect(() => {
-    if (!isSuperuser) {
-      return;
-    }
-    void loadAdminSubmissions();
-  }, [isSuperuser, loadAdminSubmissions]);
 
   const statusSummary = useMemo(() => {
     let pending = 0;
@@ -385,7 +258,7 @@ export default function ProjectsPage() {
 
     setIsSubmitting(true);
     try {
-      await apiRequest<ProjectSubmissionCreateResponse>("/projects/submissions", {
+      const data = await apiRequest<ProjectSubmissionCreateResponse>("/projects/submissions", {
         method: "POST",
         body: JSON.stringify({
           repo_url: repoUrl.trim(),
@@ -395,7 +268,11 @@ export default function ProjectsPage() {
 
       setRepoUrl("");
       setDeployedUrl("");
-      setSuccessMessage("Project submitted. Status set to pending review.");
+      const result = data.evaluation;
+      const icon = (value: boolean) => (value ? "Yes" : "No");
+      setSuccessMessage(
+        `AI evaluation complete: ${result.passed ? "Pass" : "Not Yet"} (API: ${icon(result.has_api_layer)}, DB: ${icon(result.has_database_layer)}).`
+      );
       await loadSubmissions();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not submit project.";
@@ -880,7 +757,7 @@ export default function ProjectsPage() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">Your Portfolio Board</h2>
-            <p className="mt-1 text-sm text-slate-500">Submit GitHub links now. Manual review status appears below.</p>
+            <p className="mt-1 text-sm text-slate-500">Submit GitHub links now. AI evaluation appears below.</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -901,7 +778,7 @@ export default function ProjectsPage() {
             <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Submit Project</p>
             <h3 className="mt-1 text-lg font-bold text-slate-900">Add GitHub Repository</h3>
             <p className="mt-2 text-sm text-slate-600">
-              Submit your own project idea. We review backend quality and mark pass/fail.
+              Submit your own project idea. AI evaluates backend quality and marks pass/fail.
             </p>
 
             <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
@@ -959,8 +836,8 @@ export default function ProjectsPage() {
               <FileText size={16} className="text-slate-600" />
             </div>
             <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Submission History</p>
-            <h3 className="mt-1 text-lg font-bold text-slate-900">Review Status</h3>
-            <p className="mt-2 text-sm text-slate-600">Statuses update to pending, pass, or not yet after review.</p>
+            <h3 className="mt-1 text-lg font-bold text-slate-900">Evaluation Status</h3>
+            <p className="mt-2 text-sm text-slate-600">Statuses update to pass or not yet after AI evaluation.</p>
 
             {listError ? (
               <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
@@ -977,7 +854,7 @@ export default function ProjectsPage() {
 
             {!isLoading && !listError && submissions.length === 0 ? (
               <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-600">
-                No submissions yet. Submit your first project to start review.
+                No submissions yet. Submit your first project to start evaluation.
               </div>
             ) : null}
 
@@ -1018,10 +895,10 @@ export default function ProjectsPage() {
                       ) : null}
                       {submission.review_notes ? (
                         <p className="mt-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-600">
-                          Reviewer note: {submission.review_notes}
+                          Evaluator note: {submission.review_notes}
                         </p>
                       ) : (
-                        <p className="mt-2 text-xs text-slate-400">No reviewer note yet.</p>
+                        <p className="mt-2 text-xs text-slate-400">No evaluator note yet.</p>
                       )}
                     </div>
                   );
@@ -1030,149 +907,6 @@ export default function ProjectsPage() {
             ) : null}
           </article>
         </div>
-
-        {isSuperuser ? (
-          <article className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div>
-                <p className="text-[11px] uppercase tracking-wider font-bold text-indigo-700">Admin Panel</p>
-                <h3 className="mt-1 text-lg font-bold text-slate-900">Project Review Queue</h3>
-                <p className="mt-1 text-sm text-slate-600">
-                  Review all user submissions and mark pass or not yet with a note.
-                </p>
-              </div>
-              <span className="rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs font-semibold text-indigo-700">
-                {adminSubmissions.length} total submissions
-              </span>
-            </div>
-
-            {adminError ? (
-              <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{adminError}</div>
-            ) : null}
-
-            {adminLoading ? (
-              <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm text-indigo-700">
-                <Loader2 size={15} className="animate-spin" />
-                Loading review queue...
-              </div>
-            ) : null}
-
-            {!adminLoading && !adminError && adminSubmissions.length === 0 ? (
-              <div className="mt-4 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-600">
-                No submissions in the queue yet.
-              </div>
-            ) : null}
-
-            {!adminLoading && !adminError && adminSubmissions.length > 0 ? (
-              <div className="mt-4 grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {adminSubmissions.map((submission) => {
-                  const createdAt = submission.created_at
-                    ? new Date(submission.created_at).toLocaleString()
-                    : "Unknown time";
-                  const draft = reviewDrafts[submission.id] ?? createReviewDraft();
-
-                  return (
-                    <article key={submission.id} className="rounded-xl border border-indigo-200 bg-white p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs text-slate-500">
-                            User:{" "}
-                            <span className="font-semibold text-slate-700">
-                              {submission.user?.name || submission.user?.email || `User #${submission.user_id}`}
-                            </span>
-                          </p>
-                          {submission.user?.email ? (
-                            <p className="text-xs text-slate-500">{submission.user.email}</p>
-                          ) : null}
-                        </div>
-                        <span className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold ${statusPillClasses[submission.status]}`}>
-                          {statusLabel[submission.status]}
-                        </span>
-                      </div>
-
-                      <a
-                        href={submission.repo_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-3 block text-sm font-semibold text-indigo-700 hover:underline break-all"
-                      >
-                        {submission.repo_url}
-                      </a>
-                      <p className="mt-1 text-xs text-slate-500">Submitted: {createdAt}</p>
-                      {submission.deployed_url ? (
-                        <a
-                          href={submission.deployed_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-1 inline-flex text-xs font-semibold text-slate-600 hover:underline"
-                        >
-                          Deployed URL
-                        </a>
-                      ) : null}
-
-                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={draft.hasApi}
-                            onChange={(event) => updateReviewDraft(submission.id, { hasApi: event.target.checked })}
-                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          API layer verified
-                        </label>
-                        <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={draft.hasDatabase}
-                            onChange={(event) => updateReviewDraft(submission.id, { hasDatabase: event.target.checked })}
-                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          Database layer verified
-                        </label>
-                      </div>
-
-                      <textarea
-                        value={draft.note}
-                        onChange={(event) => updateReviewDraft(submission.id, { note: event.target.value })}
-                        placeholder="Reviewer note (optional)"
-                        className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                        rows={3}
-                      />
-
-                      {draft.error ? (
-                        <p className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-2 text-xs text-rose-700">{draft.error}</p>
-                      ) : null}
-                      {draft.success ? (
-                        <p className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-xs text-emerald-700">{draft.success}</p>
-                      ) : null}
-
-                      <div className="mt-3 flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => void submitAdminReview(submission.id, "pass")}
-                          disabled={draft.isSaving}
-                          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400"
-                        >
-                          {draft.isSaving ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
-                          Mark Pass
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void submitAdminReview(submission.id, "fail")}
-                          disabled={draft.isSaving}
-                          className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-400"
-                        >
-                          {draft.isSaving ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
-                          Mark Not Yet
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            ) : null}
-          </article>
-        ) : null}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {portfolioCards.map((card) => {
@@ -1242,7 +976,7 @@ export default function ProjectsPage() {
           <h2 className="text-lg font-bold text-slate-900">Pass/Fail Rule (No Grades)</h2>
         </div>
         <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-          A project is either <strong>Pass</strong> or <strong>Not Yet</strong>. Review focuses on backend quality:
+          A project is either <strong>Pass</strong> or <strong>Not Yet</strong>. AI evaluation focuses on backend quality:
           can your system handle requests through a backend layer and correctly manage persistent data.
         </p>
         <p className="mt-2 text-sm text-slate-600 leading-relaxed">
