@@ -355,11 +355,12 @@ def finalize_assessment():
   if created_project_submissions > 0:
     module_sync_data = sync_projects_submission_progress(
       user.id,
+      bypass_prerequisites=True,
       commit=False,
       emit_module_completion_events=True,
     )
 
-  if resume_submission is not None and resume_submission.status == "succeeded":
+  if resume_submission is not None and resume_submission.status == "succeeded" and project_pass_count >= 1:
     module_sync_data = sync_resume_submission_progress(
       user.id,
       commit=False,

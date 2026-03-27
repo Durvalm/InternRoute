@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.orm import joinedload
 
-from ..models import Module, Task, User, UserTaskCompletion
+from ..models import Module, OnboardingAssessment, Task, User, UserTaskCompletion
 from ..utils import days_until
 from ..services.progression import (
   get_module_states_for_user,
@@ -13,6 +13,7 @@ from ..services.progression import (
   module_completion_allowed_or_error,
   recompute_and_persist_user_progress,
   set_task_completion_internal,
+  sync_projects_submission_progress,
 )
 from ..services.recruiting import build_recruiting_view
 
@@ -58,7 +59,20 @@ def summary():
 
   today = date.today()
 
-  computed = recompute_and_persist_user_progress(user.id, commit=True)
+  has_completed_onboarding_assessment = (
+    OnboardingAssessment.query
+    .filter_by(user_id=user.id, status="completed")
+    .first()
+    is not None
+  )
+  if has_completed_onboarding_assessment:
+    computed = sync_projects_submission_progress(
+      user.id,
+      bypass_prerequisites=True,
+      commit=True,
+    )
+  else:
+    computed = recompute_and_persist_user_progress(user.id, commit=True)
   recruiting = build_recruiting_view(
     today=today,
     readiness_score=computed["progress"],

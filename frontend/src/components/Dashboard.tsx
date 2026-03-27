@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import ReadinessWidget from "@/components/ReadinessWidget";
 import ReadinessBreakdownWidget from "@/components/ReadinessBreakdownWidget";
@@ -72,20 +72,19 @@ export default function Dashboard() {
   const leetcodeReadiness =
     summary?.module_progress.find((module) => module.module_key === "leetcode")?.score ?? 0;
 
-  useEffect(() => {
-    let active = true;
-    apiRequest<DashboardSummary>("/dashboard/summary")
-      .then((data) => {
-        if (active) setSummary(data);
-      })
-      .catch(() => {
-        if (active) setError("Failed to load dashboard data.");
-      });
-
-    return () => {
-      active = false;
-    };
+  const loadDashboardSummary = useCallback(async () => {
+    try {
+      const data = await apiRequest<DashboardSummary>("/dashboard/summary");
+      setSummary(data);
+      setError(null);
+    } catch {
+      setError("Failed to load dashboard data.");
+    }
   }, []);
+
+  useEffect(() => {
+    void loadDashboardSummary();
+  }, [loadDashboardSummary]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -165,7 +164,10 @@ export default function Dashboard() {
       </div>
       <SkillPlacementOnboardingModal
         open={showSkillPlacementModal}
-        onClose={() => setShowSkillPlacementModal(false)}
+        onClose={() => {
+          setShowSkillPlacementModal(false);
+          void loadDashboardSummary();
+        }}
         userName={summary?.user_name}
       />
     </>
