@@ -124,6 +124,8 @@ type ProjectSubmission = {
   id: number;
   repo_url: string;
   deployed_url: string | null;
+  source_type: "github" | "upload";
+  source_label: string | null;
   status: SubmissionStatus;
   review_notes: string | null;
   created_at: string | null;
@@ -987,17 +989,25 @@ export default function ProjectsPage() {
                   const createdAt = submission.created_at
                     ? new Date(submission.created_at).toLocaleString()
                     : "Unknown time";
+                  const showRepoLink = submission.source_type !== "upload";
+                  const repoLabel = submission.source_type === "upload"
+                    ? (submission.source_label || "Uploaded project")
+                    : submission.repo_url;
                   return (
                     <div key={submission.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                       <div className="flex items-start justify-between gap-3">
-                        <a
-                          href={submission.repo_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sm font-semibold text-indigo-700 hover:underline break-all"
-                        >
-                          {submission.repo_url}
-                        </a>
+                        {showRepoLink ? (
+                          <a
+                            href={submission.repo_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm font-semibold text-indigo-700 hover:underline break-all"
+                          >
+                            {repoLabel}
+                          </a>
+                        ) : (
+                          <p className="text-sm font-semibold text-slate-700 break-all">{repoLabel}</p>
+                        )}
                         <span className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold ${statusPillClasses[submission.status]}`}>
                           {submission.status === "pass" ? <CheckCircle2 size={12} className="mr-1" /> : null}
                           {submission.status === "fail" ? <XCircle size={12} className="mr-1" /> : null}
@@ -1070,6 +1080,10 @@ export default function ProjectsPage() {
                     ? new Date(submission.created_at).toLocaleString()
                     : "Unknown time";
                   const draft = reviewDrafts[submission.id] ?? createReviewDraft();
+                  const showRepoLink = submission.source_type !== "upload";
+                  const repoLabel = submission.source_type === "upload"
+                    ? (submission.source_label || "Uploaded project")
+                    : submission.repo_url;
 
                   return (
                     <article key={submission.id} className="rounded-xl border border-indigo-200 bg-white p-4">
@@ -1090,14 +1104,18 @@ export default function ProjectsPage() {
                         </span>
                       </div>
 
-                      <a
-                        href={submission.repo_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-3 block text-sm font-semibold text-indigo-700 hover:underline break-all"
-                      >
-                        {submission.repo_url}
-                      </a>
+                      {showRepoLink ? (
+                        <a
+                          href={submission.repo_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 block text-sm font-semibold text-indigo-700 hover:underline break-all"
+                        >
+                          {repoLabel}
+                        </a>
+                      ) : (
+                        <p className="mt-3 block text-sm font-semibold text-slate-700 break-all">{repoLabel}</p>
+                      )}
                       <p className="mt-1 text-xs text-slate-500">Submitted: {createdAt}</p>
                       {submission.deployed_url ? (
                         <a

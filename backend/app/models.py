@@ -136,6 +136,8 @@ class ProjectSubmission(db.Model):
   user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
   repo_url = db.Column(db.String(500), nullable=False)
   deployed_url = db.Column(db.String(500), nullable=True)
+  source_type = db.Column(db.String(32), nullable=False, default="github", server_default="github")
+  source_label = db.Column(db.String(255), nullable=True)
   status = db.Column(db.String(32), nullable=False, default="pending", server_default="pending")
   review_notes = db.Column(db.Text, nullable=True)
   created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -189,6 +191,66 @@ class ResumeSubmission(db.Model):
       return []
     try:
       parsed = json.loads(self.improvements_json)
+    except Exception:
+      return []
+    if not isinstance(parsed, list):
+      return []
+    return [str(item) for item in parsed if isinstance(item, str)]
+
+
+class OnboardingAssessment(db.Model):
+  __tablename__ = "onboarding_assessments"
+
+  id = db.Column(db.Integer, primary_key=True)
+  user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+  status = db.Column(db.String(32), nullable=False, default="draft", server_default="draft")
+  track_key = db.Column(db.String(64), nullable=True)
+  can_skip_coding_skills = db.Column(db.Boolean, nullable=False, default=False, server_default=db.text("false"))
+  coding_skip_confidence = db.Column(db.Float, nullable=True)
+  resume_submission_id = db.Column(db.Integer, db.ForeignKey("resume_submissions.id"), nullable=True)
+  completed_at = db.Column(db.DateTime, nullable=True)
+  created_at = db.Column(db.DateTime, default=datetime.utcnow)
+  updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+  user = db.relationship("User", backref=db.backref("onboarding_assessments", lazy=True))
+  resume_submission = db.relationship("ResumeSubmission", foreign_keys=[resume_submission_id], lazy="joined")
+
+
+class OnboardingProjectAssessment(db.Model):
+  __tablename__ = "onboarding_project_assessments"
+
+  id = db.Column(db.Integer, primary_key=True)
+  assessment_id = db.Column(db.Integer, db.ForeignKey("onboarding_assessments.id"), nullable=False)
+  slot_index = db.Column(db.Integer, nullable=False)
+  input_mode = db.Column(db.String(32), nullable=False, default="repo", server_default="repo")
+  repo_url = db.Column(db.String(500), nullable=True)
+  uploaded_file_name = db.Column(db.String(255), nullable=True)
+  has_api = db.Column(db.Boolean, nullable=True)
+  has_database = db.Column(db.Boolean, nullable=True)
+  has_coding_skills = db.Column(db.Boolean, nullable=True)
+  coding_confidence = db.Column(db.Float, nullable=True)
+  project_pass = db.Column(db.Boolean, nullable=True)
+  is_coding_signal_only = db.Column(db.Boolean, nullable=False, default=False, server_default=db.text("false"))
+  evidence_files_json = db.Column(db.Text, nullable=True)
+  analysis_notes = db.Column(db.Text, nullable=True)
+  created_at = db.Column(db.DateTime, default=datetime.utcnow)
+  updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+  __table_args__ = (
+    db.UniqueConstraint("assessment_id", "slot_index", name="uq_onboarding_project_slot"),
+  )
+
+  assessment = db.relationship(
+    "OnboardingAssessment",
+    backref=db.backref("project_assessments", lazy=True, cascade="all, delete-orphan"),
+  )
+
+  @property
+  def evidence_files(self) -> list[str]:
+    if not self.evidence_files_json:
+      return []
+    try:
+      parsed = json.loads(self.evidence_files_json)
     except Exception:
       return []
     if not isinstance(parsed, list):

@@ -115,9 +115,13 @@ def list_submissions():
 @jwt_required()
 def score_resume():
   user_id = int(get_jwt_identity())
-  allowed, error_payload = module_completion_allowed_or_error(user_id, "resume")
-  if not allowed and error_payload is not None:
-    return jsonify(error_payload), 409
+  context = (request.args.get("context") or "").strip().lower()
+  is_onboarding_context = context == "onboarding"
+
+  if not is_onboarding_context:
+    allowed, error_payload = module_completion_allowed_or_error(user_id, "resume")
+    if not allowed and error_payload is not None:
+      return jsonify(error_payload), 409
 
   retry_after = _check_rate_limit(user_id, limit=RESUME_SCORE_LIMIT_PER_MINUTE)
   if retry_after is not None:
