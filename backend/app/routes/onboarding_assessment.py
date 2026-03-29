@@ -27,6 +27,7 @@ from ..services.project_assessment import (
   analyze_repo_url,
   analyze_uploaded_input,
 )
+from ..services.onboarding_timeline import build_onboarding_timeline_plan
 
 bp = Blueprint("onboarding_assessment", __name__, url_prefix="/onboarding")
 
@@ -35,27 +36,27 @@ CODING_SKIP_CONFIDENCE_THRESHOLD = 0.65
 TRACK_METADATA: dict[str, dict[str, Any]] = {
   "foundation_start": {
     "title": "Foundation Start",
-    "summary": "No problem. We'll start with coding fundamentals and build proof progressively.",
+    "summary": "You're early in the journey, which is normal. We'll build strong coding fundamentals first, then turn that into project proof.",
     "sequence": ["Coding", "Projects", "Resume"],
   },
   "coding_base_build_depth": {
     "title": "Coding Base, Needs Build Depth",
-    "summary": "You show coding signal, but portfolio depth needs to improve before applications.",
+    "summary": "You already show coding ability. The main gap now is project depth that proves your skills in real scenarios.",
     "sequence": ["Projects", "Resume", "Applications"],
   },
   "emerging_builder": {
     "title": "Emerging Builder",
-    "summary": "You have real signal. Build one more strong project, then improve resume for launch.",
+    "summary": "You have real builder signal. One more strong project plus resume polish should get you ready to push applications harder.",
     "sequence": ["Projects", "Resume", "Applications"],
   },
   "strong_builder_needs_positioning": {
     "title": "Strong Builder, Needs Positioning",
-    "summary": "Technical base is strong. Main leverage now is resume quality and positioning.",
+    "summary": "Your technical base looks strong. Biggest leverage now is positioning that signal through a high-converting resume.",
     "sequence": ["Resume", "Applications", "Interview Prep"],
   },
   "acceleration_track": {
     "title": "Acceleration Track",
-    "summary": "You can fast-track to applications and interview prep with focused iteration.",
+    "summary": "You can move fast. Focus on applications and interview prep while tightening weak spots through quick iteration.",
     "sequence": ["Projects", "Resume", "Applications"],
   },
 }
@@ -257,6 +258,12 @@ def finalize_assessment():
 
   if assessment.status == "completed":
     track_data = TRACK_METADATA.get(assessment.track_key or "foundation_start", TRACK_METADATA["foundation_start"])
+    completed_track_key = assessment.track_key or "foundation_start"
+    timeline_plan = build_onboarding_timeline_plan(
+      today=datetime.utcnow().date(),
+      graduation_date=user.graduation_date,
+      track_key=completed_track_key,
+    )
     completed_slots = (
       OnboardingProjectAssessment.query
       .filter_by(assessment_id=assessment.id)
@@ -278,12 +285,13 @@ def finalize_assessment():
 
     return jsonify({
       "assessment_id": assessment.id,
-      "track_key": assessment.track_key,
+      "track_key": completed_track_key,
       "track": track_data,
       "can_skip_coding_skills": bool(assessment.can_skip_coding_skills),
       "coding_skip_confidence": assessment.coding_skip_confidence,
       "project_pass_count": completed_project_pass_count,
       "resume_score": completed_resume_score,
+      "timeline_plan": timeline_plan,
       "already_finalized": True,
     })
 
@@ -399,6 +407,12 @@ def finalize_assessment():
     },
   )
 
+  timeline_plan = build_onboarding_timeline_plan(
+    today=datetime.utcnow().date(),
+    graduation_date=user.graduation_date,
+    track_key=track_key,
+  )
+
   return jsonify({
     "assessment_id": assessment.id,
     "track_key": track_key,
@@ -407,6 +421,7 @@ def finalize_assessment():
     "coding_skip_confidence": max_coding_confidence,
     "project_pass_count": project_pass_count,
     "resume_score": resume_score,
+    "timeline_plan": timeline_plan,
     "module_progress": module_sync_data.get("module_progress") if module_sync_data else [],
     "category_readiness": module_sync_data.get("category_readiness") if module_sync_data else {},
   })
