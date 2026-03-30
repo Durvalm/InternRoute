@@ -136,24 +136,40 @@ type ProjectSubmissionsResponse = {
   submissions: ProjectSubmission[];
 };
 
-type ProjectEvaluation = {
-  has_database_layer: boolean;
-  has_api_layer: boolean;
-  summary: string;
-  evidence: {
-    database: string[];
-    api: string[];
+type ViewerResponse = {
+  user: {
+    is_superuser: boolean;
   };
-  confidence: "low" | "medium" | "high";
-  passed: boolean;
+};
+
+type AdminProjectSubmission = ProjectSubmission & {
+  user_id: number | null;
+  user: {
+    id: number;
+    email: string | null;
+    name: string | null;
+  } | null;
+};
+
+type AdminProjectSubmissionsResponse = {
+  submissions: AdminProjectSubmission[];
 };
 
 type ProjectSubmissionCreateResponse = {
   submission: ProjectSubmission;
-  evaluation: ProjectEvaluation;
 };
 
+type ReviewDecision = "pass" | "fail";
 type PortfolioCardState = "complete" | "active" | "locked";
+
+type ReviewDraft = {
+  hasApi: boolean;
+  hasDatabase: boolean;
+  note: string;
+  isSaving: boolean;
+  error: string | null;
+  success: string | null;
+};
 
 const statusPillClasses: Record<SubmissionStatus, string> = {
   pending: "bg-amber-50 border-amber-200 text-amber-700",
@@ -162,10 +178,21 @@ const statusPillClasses: Record<SubmissionStatus, string> = {
 };
 
 const statusLabel: Record<SubmissionStatus, string> = {
-  pending: "Pending",
+  pending: "Pending Review",
   pass: "Pass",
   fail: "Not Yet"
 };
+
+function createReviewDraft(): ReviewDraft {
+  return {
+    hasApi: false,
+    hasDatabase: false,
+    note: "",
+    isSaving: false,
+    error: null,
+    success: null,
+  };
+}
 
 export default function ProjectsPage() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -176,6 +203,20 @@ export default function ProjectsPage() {
   const [listError, setListError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<ProjectSubmission[]>([]);
+  const [isSuperuser, setIsSuperuser] = useState(false);
+  const [adminSubmissions, setAdminSubmissions] = useState<AdminProjectSubmission[]>([]);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState<string | null>(null);
+  const [reviewDrafts, setReviewDrafts] = useState<Record<number, ReviewDraft>>({});
+
+  const loadViewerRole = useCallback(async () => {
+    try {
+      const data = await apiRequest<ViewerResponse>("/auth/me");
+      setIsSuperuser(Boolean(data.user?.is_superuser));
+    } catch (_err) {
+      setIsSuperuser(false);
+    }
+  }, []);
 
   const loadSubmissions = useCallback(async () => {
     setIsLoading(true);
@@ -191,9 +232,93 @@ export default function ProjectsPage() {
     }
   }, []);
 
+  const loadAdminSubmissions = useCallback(async () => {
+    if (!isSuperuser) {
+      setAdminSubmissions([]);
+      setAdminError(null);
+      return;
+    }
+
+    setAdminLoading(true);
+    setAdminError(null);
+    try {
+      const data = await apiRequest<AdminProjectSubmissionsResponse>("/projects/admin/submissions");
+      const nextSubmissions = data.submissions || [];
+      setAdminSubmissions(nextSubmissions);
+      setReviewDrafts((previous) => {
+        const next = { ...previous };
+        for (const submission of nextSubmissions) {
+          if (!next[submission.id]) {
+            next[submission.id] = createReviewDraft();
+          }
+        }
+        return next;
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not load admin submissions.";
+      setAdminError(message);
+    } finally {
+      setAdminLoading(false);
+    }
+  }, [isSuperuser]);
+
+  const updateReviewDraft = useCallback((submissionId: number, patch: Partial<ReviewDraft>) => {
+    setReviewDrafts((previous) => ({
+      ...previous,
+      [submissionId]: {
+        ...(previous[submissionId] ?? createReviewDraft()),
+        ...patch,
+      },
+    }));
+  }, []);
+
+  const submitAdminReview = useCallback(async (submissionId: number, decision: ReviewDecision) => {
+    const draft = reviewDrafts[submissionId] ?? createReviewDraft();
+    if (decision === "pass" && !(draft.hasApi && draft.hasDatabase)) {
+      updateReviewDraft(submissionId, {
+        error: "To mark pass, check both API layer and Database layer.",
+        success: null,
+      });
+      return;
+    }
+
+    updateReviewDraft(submissionId, { isSaving: true, error: null, success: null });
+    try {
+      await apiRequest<{ submission: ProjectSubmission }>(`/projects/submissions/${submissionId}/review`, {
+        method: "POST",
+        body: JSON.stringify({
+          decision,
+          has_api: draft.hasApi,
+          has_database: draft.hasDatabase,
+          note: draft.note.trim() || null,
+        }),
+      });
+
+      updateReviewDraft(submissionId, {
+        isSaving: false,
+        error: null,
+        success: decision === "pass" ? "Marked as pass." : "Marked as not yet.",
+      });
+      await loadSubmissions();
+      await loadAdminSubmissions();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not submit review.";
+      updateReviewDraft(submissionId, { isSaving: false, error: message, success: null });
+    }
+  }, [loadAdminSubmissions, loadSubmissions, reviewDrafts, updateReviewDraft]);
+
+  useEffect(() => {
+    void loadViewerRole();
+  }, [loadViewerRole]);
+
   useEffect(() => {
     void loadSubmissions();
   }, [loadSubmissions]);
+
+  useEffect(() => {
+    if (!isSuperuser) return;
+    void loadAdminSubmissions();
+  }, [isSuperuser, loadAdminSubmissions]);
 
   const statusSummary = useMemo(() => {
     let pending = 0;
@@ -260,7 +385,7 @@ export default function ProjectsPage() {
 
     setIsSubmitting(true);
     try {
-      const data = await apiRequest<ProjectSubmissionCreateResponse>("/projects/submissions", {
+      await apiRequest<ProjectSubmissionCreateResponse>("/projects/submissions", {
         method: "POST",
         body: JSON.stringify({
           repo_url: repoUrl.trim(),
@@ -270,11 +395,7 @@ export default function ProjectsPage() {
 
       setRepoUrl("");
       setDeployedUrl("");
-      const result = data.evaluation;
-      const icon = (value: boolean) => (value ? "Yes" : "No");
-      setSuccessMessage(
-        `AI evaluation complete: ${result.passed ? "Pass" : "Not Yet"} (API: ${icon(result.has_api_layer)}, DB: ${icon(result.has_database_layer)}).`
-      );
+      setSuccessMessage("Project submitted. Status set to pending review.");
       await loadSubmissions();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not submit project.";
