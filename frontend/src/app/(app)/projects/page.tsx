@@ -136,40 +136,24 @@ type ProjectSubmissionsResponse = {
   submissions: ProjectSubmission[];
 };
 
+type ProjectEvaluation = {
+  has_database_layer: boolean;
+  has_api_layer: boolean;
+  summary: string;
+  evidence: {
+    database: string[];
+    api: string[];
+  };
+  confidence: "low" | "medium" | "high";
+  passed: boolean;
+};
+
 type ProjectSubmissionCreateResponse = {
   submission: ProjectSubmission;
+  evaluation: ProjectEvaluation;
 };
 
-type ViewerResponse = {
-  user: {
-    is_superuser: boolean;
-  };
-};
-
-type AdminProjectSubmission = ProjectSubmission & {
-  user_id: number | null;
-  user: {
-    id: number;
-    email: string | null;
-    name: string | null;
-  } | null;
-};
-
-type AdminProjectSubmissionsResponse = {
-  submissions: AdminProjectSubmission[];
-};
-
-type ReviewDecision = "pass" | "fail";
 type PortfolioCardState = "complete" | "active" | "locked";
-
-type ReviewDraft = {
-  hasApi: boolean;
-  hasDatabase: boolean;
-  note: string;
-  isSaving: boolean;
-  error: string | null;
-  success: string | null;
-};
 
 const statusPillClasses: Record<SubmissionStatus, string> = {
   pending: "bg-amber-50 border-amber-200 text-amber-700",
@@ -178,21 +162,10 @@ const statusPillClasses: Record<SubmissionStatus, string> = {
 };
 
 const statusLabel: Record<SubmissionStatus, string> = {
-  pending: "Pending Review",
+  pending: "Pending",
   pass: "Pass",
   fail: "Not Yet"
 };
-
-function createReviewDraft(): ReviewDraft {
-  return {
-    hasApi: false,
-    hasDatabase: false,
-    note: "",
-    isSaving: false,
-    error: null,
-    success: null,
-  };
-}
 
 export default function ProjectsPage() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -203,20 +176,6 @@ export default function ProjectsPage() {
   const [listError, setListError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<ProjectSubmission[]>([]);
-  const [isSuperuser, setIsSuperuser] = useState(false);
-  const [adminSubmissions, setAdminSubmissions] = useState<AdminProjectSubmission[]>([]);
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [adminError, setAdminError] = useState<string | null>(null);
-  const [reviewDrafts, setReviewDrafts] = useState<Record<number, ReviewDraft>>({});
-
-  const loadViewerRole = useCallback(async () => {
-    try {
-      const data = await apiRequest<ViewerResponse>("/auth/me");
-      setIsSuperuser(Boolean(data.user?.is_superuser));
-    } catch (err) {
-      setIsSuperuser(false);
-    }
-  }, []);
 
   const loadSubmissions = useCallback(async () => {
     setIsLoading(true);
@@ -232,95 +191,9 @@ export default function ProjectsPage() {
     }
   }, []);
 
-  const loadAdminSubmissions = useCallback(async () => {
-    if (!isSuperuser) {
-      setAdminSubmissions([]);
-      setAdminError(null);
-      return;
-    }
-
-    setAdminLoading(true);
-    setAdminError(null);
-    try {
-      const data = await apiRequest<AdminProjectSubmissionsResponse>("/projects/admin/submissions");
-      const nextSubmissions = data.submissions || [];
-      setAdminSubmissions(nextSubmissions);
-      setReviewDrafts((previous) => {
-        const next = { ...previous };
-        for (const submission of nextSubmissions) {
-          if (!next[submission.id]) {
-            next[submission.id] = createReviewDraft();
-          }
-        }
-        return next;
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not load admin submissions.";
-      setAdminError(message);
-    } finally {
-      setAdminLoading(false);
-    }
-  }, [isSuperuser]);
-
-  const updateReviewDraft = useCallback((submissionId: number, patch: Partial<ReviewDraft>) => {
-    setReviewDrafts((previous) => ({
-      ...previous,
-      [submissionId]: {
-        ...(previous[submissionId] ?? createReviewDraft()),
-        ...patch,
-      },
-    }));
-  }, []);
-
-  const submitAdminReview = useCallback(async (submissionId: number, decision: ReviewDecision) => {
-    const draft = reviewDrafts[submissionId] ?? createReviewDraft();
-    if (decision === "pass" && !(draft.hasApi && draft.hasDatabase)) {
-      updateReviewDraft(submissionId, {
-        error: "To mark pass, check both API layer and Database layer.",
-        success: null,
-      });
-      return;
-    }
-
-    updateReviewDraft(submissionId, { isSaving: true, error: null, success: null });
-    try {
-      await apiRequest<{ submission: ProjectSubmission }>(`/projects/submissions/${submissionId}/review`, {
-        method: "POST",
-        body: JSON.stringify({
-          decision,
-          has_api: draft.hasApi,
-          has_database: draft.hasDatabase,
-          note: draft.note.trim() || null,
-        }),
-      });
-
-      updateReviewDraft(submissionId, {
-        isSaving: false,
-        error: null,
-        success: decision === "pass" ? "Marked as pass." : "Marked as not yet.",
-      });
-      await loadSubmissions();
-      await loadAdminSubmissions();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not submit review.";
-      updateReviewDraft(submissionId, { isSaving: false, error: message, success: null });
-    }
-  }, [loadAdminSubmissions, loadSubmissions, reviewDrafts, updateReviewDraft]);
-
-  useEffect(() => {
-    void loadViewerRole();
-  }, [loadViewerRole]);
-
   useEffect(() => {
     void loadSubmissions();
   }, [loadSubmissions]);
-
-  useEffect(() => {
-    if (!isSuperuser) {
-      return;
-    }
-    void loadAdminSubmissions();
-  }, [isSuperuser, loadAdminSubmissions]);
 
   const statusSummary = useMemo(() => {
     let pending = 0;
@@ -387,7 +260,7 @@ export default function ProjectsPage() {
 
     setIsSubmitting(true);
     try {
-      await apiRequest<ProjectSubmissionCreateResponse>("/projects/submissions", {
+      const data = await apiRequest<ProjectSubmissionCreateResponse>("/projects/submissions", {
         method: "POST",
         body: JSON.stringify({
           repo_url: repoUrl.trim(),
@@ -397,7 +270,11 @@ export default function ProjectsPage() {
 
       setRepoUrl("");
       setDeployedUrl("");
-      setSuccessMessage("Project submitted. Status set to pending review.");
+      const result = data.evaluation;
+      const icon = (value: boolean) => (value ? "Yes" : "No");
+      setSuccessMessage(
+        `AI evaluation complete: ${result.passed ? "Pass" : "Not Yet"} (API: ${icon(result.has_api_layer)}, DB: ${icon(result.has_database_layer)}).`
+      );
       await loadSubmissions();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not submit project.";
@@ -882,7 +759,7 @@ export default function ProjectsPage() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">Your Portfolio Board</h2>
-            <p className="mt-1 text-sm text-slate-500">Submit GitHub links now. Manual review status appears below.</p>
+            <p className="mt-1 text-sm text-slate-500">Submit GitHub links now. AI evaluation appears below.</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -903,7 +780,7 @@ export default function ProjectsPage() {
             <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Submit Project</p>
             <h3 className="mt-1 text-lg font-bold text-slate-900">Add GitHub Repository</h3>
             <p className="mt-2 text-sm text-slate-600">
-              Submit your own project idea. We review backend quality and mark pass/fail.
+              Submit your own project idea. AI evaluates backend quality and marks pass/fail.
             </p>
 
             <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
@@ -961,8 +838,8 @@ export default function ProjectsPage() {
               <FileText size={16} className="text-slate-600" />
             </div>
             <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Submission History</p>
-            <h3 className="mt-1 text-lg font-bold text-slate-900">Review Status</h3>
-            <p className="mt-2 text-sm text-slate-600">Statuses update to pending, pass, or not yet after review.</p>
+            <h3 className="mt-1 text-lg font-bold text-slate-900">Evaluation Status</h3>
+            <p className="mt-2 text-sm text-slate-600">Statuses update to pass or not yet after AI evaluation.</p>
 
             {listError ? (
               <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
@@ -979,7 +856,7 @@ export default function ProjectsPage() {
 
             {!isLoading && !listError && submissions.length === 0 ? (
               <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-600">
-                No submissions yet. Submit your first project to start review.
+                No submissions yet. Submit your first project to start evaluation.
               </div>
             ) : null}
 
@@ -1028,10 +905,10 @@ export default function ProjectsPage() {
                       ) : null}
                       {submission.review_notes ? (
                         <p className="mt-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-600">
-                          Reviewer note: {submission.review_notes}
+                          Evaluator note: {submission.review_notes}
                         </p>
                       ) : (
-                        <p className="mt-2 text-xs text-slate-400">No reviewer note yet.</p>
+                        <p className="mt-2 text-xs text-slate-400">No evaluator note yet.</p>
                       )}
                     </div>
                   );
@@ -1260,7 +1137,7 @@ export default function ProjectsPage() {
           <h2 className="text-lg font-bold text-slate-900">Pass/Fail Rule (No Grades)</h2>
         </div>
         <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-          A project is either <strong>Pass</strong> or <strong>Not Yet</strong>. Review focuses on backend quality:
+          A project is either <strong>Pass</strong> or <strong>Not Yet</strong>. AI evaluation focuses on backend quality:
           can your system handle requests through a backend layer and correctly manage persistent data.
         </p>
         <p className="mt-2 text-sm text-slate-600 leading-relaxed">
