@@ -424,9 +424,9 @@ function getTimelineGuidance(plan: OnboardingTimelinePlan): { title: string; sum
   }
   if (plan.recommendation_key === "lower_then_peak" || plan.recommendation_key === "off_then_peak") {
     return {
-      title: "Use this window to prepare, then push next cycle",
+      title: "You're in time for this cycle - use the extra runway",
       summary:
-        "Jobs can still be open from August through March, but your best move is to keep improving now and make your main push in the next August cycle with a stronger profile.",
+        "You can compete in this recruiting cycle. Use this lead time to sharpen projects and resume, then push hard when August opens and listings increase.",
     };
   }
   if (plan.recommendation_key === "lower_no_wait" || plan.recommendation_key === "off_no_wait") {
@@ -1212,7 +1212,9 @@ export default function SkillPlacementOnboardingModal({ open, onClose, userName 
                       </p>
                       <p className="mt-1.5 text-sm text-emerald-700">
                         {effectiveTimelinePlan.recommended_season === "peak"
-                          ? `You'll be ready in ${formatMonthYearLabel(effectiveTimelinePlan.estimated_ready_date)}, inside this window`
+                          ? effectiveTimelinePlan.recommendation_key === "apply_in_peak"
+                            ? `You'll be ready in ${formatMonthYearLabel(effectiveTimelinePlan.estimated_ready_date)}, inside this window`
+                            : `You'll be ready in ${formatMonthYearLabel(effectiveTimelinePlan.estimated_ready_date)}, before this window opens`
                           : seasonLabel(effectiveTimelinePlan.recommended_season)}
                       </p>
                     </div>

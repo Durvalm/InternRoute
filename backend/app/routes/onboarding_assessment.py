@@ -83,6 +83,15 @@ def _get_or_create_draft_assessment(user_id: int) -> OnboardingAssessment:
   return assessment
 
 
+def _get_latest_completed_assessment(user_id: int) -> OnboardingAssessment | None:
+  return (
+    OnboardingAssessment.query
+    .filter_by(user_id=user_id, status="completed")
+    .order_by(OnboardingAssessment.completed_at.desc(), OnboardingAssessment.id.desc())
+    .first()
+  )
+
+
 def _get_or_create_slot(assessment_id: int, slot_index: int) -> OnboardingProjectAssessment:
   slot = OnboardingProjectAssessment.query.filter_by(assessment_id=assessment_id, slot_index=slot_index).first()
   if slot is not None:
@@ -145,6 +154,25 @@ def _resolve_resume_submission(user_id: int, submission_id: int | None) -> Resum
   return ResumeSubmission.query.filter_by(id=submission_id, user_id=user_id).first()
 
 
+def _existing_onboarding_auto_project_submission(
+  *,
+  user_id: int,
+  source_type: str,
+  repo_url: str,
+  source_label: str | None,
+) -> ProjectSubmission | None:
+  query = (
+    ProjectSubmission.query
+    .filter_by(user_id=user_id, source_type=source_type)
+    .filter(ProjectSubmission.review_notes.ilike("Onboarding assessment auto-review%"))
+  )
+  if source_type == "github":
+    return query.filter_by(repo_url=repo_url).first()
+  if source_label:
+    return query.filter_by(source_label=source_label).first()
+  return query.filter_by(repo_url=repo_url).first()
+
+
 @bp.post("/projects/analyze")
 @jwt_required()
 def analyze_project():
@@ -181,6 +209,12 @@ def analyze_project():
       normalized_repo_url = None
       uploaded_file_name = file_name
   except ProjectAssessmentError as err:
+    print(
+      "[onboarding_assessment] analyze_project_error "
+      f"user_id={user.id} slot_index={slot_index} input_mode={input_mode} "
+      f"error_code={err.code} error={str(err)}",
+      flush=True,
+    )
     return jsonify({"error": str(err), "error_code": err.code}), err.status_code
 
   assessment = _get_or_create_draft_assessment(user.id)
@@ -212,10 +246,21 @@ def analyze_project():
     },
   )
 
-  return jsonify({
+  response_payload = {
     "assessment_id": assessment.id,
     "slot": _serialize_slot(slot),
-  })
+  }
+  print(
+    "[onboarding_assessment] analyze_project_signals "
+    f"user_id={user.id} slot_index={slot_index} input_mode={input_mode} "
+    f"has_api={slot.has_api} has_database={slot.has_database} "
+    f"has_coding_skills={slot.has_coding_skills} project_pass={slot.project_pass} "
+    f"coding_confidence={slot.coding_confidence} "
+    f"evidence_files={json.dumps(slot.evidence_files, ensure_ascii=True)} "
+    f"analysis_notes={json.dumps(slot.analysis_notes, ensure_ascii=True)}",
+    flush=True,
+  )
+  return jsonify(response_payload)
 
 
 @bp.post("/resume/link")
@@ -245,10 +290,21 @@ def finalize_assessment():
   user = _current_user()
   payload = request.get_json() or {}
 
-  assessment = _get_or_create_draft_assessment(user.id)
+  assessment = (
+    OnboardingAssessment.query
+    .filter_by(user_id=user.id, status="draft")
+    .order_by(OnboardingAssessment.created_at.desc(), OnboardingAssessment.id.desc())
+    .first()
+  )
+  if assessment is None:
+    latest_completed = _get_latest_completed_assessment(user.id)
+    if latest_completed is not None:
+      assessment = latest_completed
+    else:
+      assessment = _get_or_create_draft_assessment(user.id)
 
   resume_submission_id_raw = payload.get("resume_submission_id")
-  if resume_submission_id_raw is not None:
+  if resume_submission_id_raw is not None and assessment.status != "completed":
     if not isinstance(resume_submission_id_raw, int):
       return jsonify({"error": "resume_submission_id must be an integer when provided"}), 400
     resume_submission = _resolve_resume_submission(user.id, resume_submission_id_raw)
@@ -331,6 +387,7 @@ def finalize_assessment():
   assessment.coding_skip_confidence = max_coding_confidence if coding_confidences else None
 
   created_project_submissions = 0
+  seen_onboarding_fingerprints: set[str] = set()
   for slot in slots:
     if not _slot_has_input(slot):
       continue
@@ -339,6 +396,21 @@ def finalize_assessment():
 
     source_type = "github" if slot.input_mode == "repo" else "upload"
     repo_url = slot.repo_url or f"https://internroute.local/onboarding-upload/{assessment.id}/slot-{slot.slot_index + 1}"
+    source_label = slot.uploaded_file_name if source_type == "upload" else None
+    fingerprint = f"{source_type}:{repo_url if source_type == 'github' else (source_label or repo_url)}"
+    if fingerprint in seen_onboarding_fingerprints:
+      continue
+    seen_onboarding_fingerprints.add(fingerprint)
+
+    existing_submission = _existing_onboarding_auto_project_submission(
+      user_id=user.id,
+      source_type=source_type,
+      repo_url=repo_url,
+      source_label=source_label,
+    )
+    if existing_submission is not None:
+      continue
+
     review_note_parts = [
       f"Onboarding assessment auto-review (assessment #{assessment.id}, slot {slot.slot_index + 1}).",
       f"has_api={slot.has_api}",
@@ -352,7 +424,7 @@ def finalize_assessment():
       repo_url=repo_url,
       deployed_url=None,
       source_type=source_type,
-      source_label=slot.uploaded_file_name if source_type == "upload" else None,
+      source_label=source_label,
       status="pass" if bool(slot.project_pass) else "fail",
       review_notes=" ".join(review_note_parts),
     )

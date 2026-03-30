@@ -1,8 +1,0 @@
-PROBLEMS WITH ONBOARDING:
-
-- (#1) I probably need to check what prompt is being used to indicate coding skills or not and how this is being handled. Are we selecting a sample of files for 'has coding skills' or using the same file sampling as for ('has_db' and 'has_api')?
-
-
-- Create Roadmap in dashboard
-
-- problem with 'intro' wont be completed after onboarding and it's a predecessor for the other modules

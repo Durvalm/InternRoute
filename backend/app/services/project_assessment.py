@@ -39,7 +39,7 @@ Goal:
 Pick files that are most useful to determine:
 1) API/backend endpoint implementation
 2) Database/persistence implementation
-3) Whether code quality/fundamentals are strong enough to skip beginner coding challenges
+3) Whether code quality is strong enough to skip our Coding Skills module
 
 Rules:
 - Return ONLY a JSON array of file paths.
@@ -68,17 +68,23 @@ Return ONLY valid JSON:
 Judgement criteria:
 - has_api_layer: true only if there is real server-side API route/handler implementation.
 - has_database_layer: true only if there is real persistent DB integration (ORM/driver/schema/query/migration).
-- has_coding_skills: true only if there is clear evidence the user can skip beginner coding challenges.
+- has_coding_skills: true only if there is clear evidence the user can likely pass our Coding Skills module now.
 
-For has_coding_skills, require strong evidence of basic programming fluency in real code:
-- variables/state
-- conditionals
-- loops/iteration
-- function decomposition
-- ability to combine these in coherent logic
+Use this Coding Skills benchmark (challenge-level reference):
+1) word_counter:
+   Count repeated words and return formatted entries like "word:count".
+2) summarize_orders:
+   From parallel arrays (users, amounts), aggregate per-user order count and total amount.
+3) cart_total:
+   Compute cart total from prices, quantities, and coupon rules.
 
-Important for coding skip:
-- Be strict. Mark true only when evidence suggests the user should skip beginner challenges on variables, loops, conditionals, functions.
+Coding-skip decision:
+- Do not require the submitted code to match these exact problem shapes.
+- If the project solves a different problem with similar or greater coding depth, count that as valid evidence.
+- has_coding_skills is independent from has_api_layer and has_database_layer.
+- This module is above beginner syntax: it expects multi-step logic and meaningful collection/data processing.
+- Code that is mostly input/output flow with very simple branching is usually not enough by itself.
+- Mark has_coding_skills=true when code evidence strongly suggests the user could likely pass this Coding Skills module now.
 - If uncertain, return false.
 
 Use only provided files. Keep evidence paths from provided files only.
@@ -95,6 +101,7 @@ class ProjectAssessmentError(RuntimeError):
 class TextFile:
   path: str
   content: str
+
 
 def _request_json(
   *,
@@ -565,6 +572,7 @@ def _evaluate_with_ai(
   )
   payload: dict[str, Any] = {
     "model": model_name,
+    "temperature": 0,
     "input": [
       {
         "role": "system",
@@ -792,12 +800,13 @@ def analyze_repo_url(repo_url: str) -> dict[str, object]:
     files=readable_files,
   )
 
-  return _compose_result(
+  final_result = _compose_result(
     source_kind="repo",
     canonical_repo_url=canonical_url,
     ai_result=ai_result,
     evidence_files=[path for path, _ in readable_files],
   )
+  return final_result
 
 
 def analyze_uploaded_input(file_name: str, content_type: str | None, file_bytes: bytes) -> dict[str, object]:
@@ -848,10 +857,10 @@ def analyze_uploaded_input(file_name: str, content_type: str | None, file_bytes:
     total_paths=len(all_paths),
     files=sampled_files,
   )
-
-  return _compose_result(
+  final_result = _compose_result(
     source_kind=source_kind,
     canonical_repo_url=None,
     ai_result=ai_result,
     evidence_files=[path for path, _ in sampled_files],
   )
+  return final_result
