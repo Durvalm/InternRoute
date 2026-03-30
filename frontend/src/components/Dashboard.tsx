@@ -1,76 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { BarChart3, ChevronDown, ChevronUp } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ReadinessWidget from "@/components/ReadinessWidget";
-import ReadinessBreakdownWidget from "@/components/ReadinessBreakdownWidget";
 import CountdownWidget from "@/components/CountdownWidget";
-import ActionItemsWidget from "@/components/ActionItemsWidget";
 import QuickResourcesWidget from "@/components/QuickResourcesWidget";
 import SkillPlacementOnboardingModal from "@/components/SkillPlacementOnboardingModal";
+import FocusNowCard from "@/components/dashboard/FocusNowCard";
+import JourneyTimeline from "@/components/dashboard/JourneyTimeline";
 import { apiRequest } from "@/lib/api";
+import type { DashboardSummary, RebaselineResponse } from "@/components/dashboard/types";
 
-type ModuleProgress = {
-  module_key: string;
-  module_name: string;
-  overall_weight?: number;
-  score: number;
-  is_unlocked: boolean;
-  unlock_threshold: number;
-  has_tasks: boolean;
-  has_bonus_tasks: boolean;
-};
-
-type RecruitingScenario = {
-  id: string;
-  name: string;
-  header: string;
-  subtext: string;
-  color_theme: "indigo" | "emerald" | "amber" | "slate";
-  countdown_label: string;
-  countdown_target: string;
-  countdown_days: number;
-  countdown_direction: "until" | "since";
-  show_one_summer_badge: boolean;
-};
-
-type RecruitingSummary = {
-  season: "peak" | "lower" | "off";
-  ready_threshold: number;
-  readiness_status: "ready" | "not_ready";
-  summers_left: number | null;
-  next_peak_date: string;
-  recruiting_window_end: string | null;
-  season_explainer: string;
-  scenario: RecruitingScenario;
-};
-
-type DashboardSummary = {
-  user_name: string | null;
-  progress: number;
-  category_readiness: {
-    coding: number;
-    projects: number;
-    resume: number;
-  };
-  module_progress: ModuleProgress[];
-  next_action: string | null;
-  season_status: "prep" | "window";
-  days_until_recruiting: number;
-  recruiting_date: string;
-  days_until_window_close: number | null;
-  recruiting_window_end: string | null;
-  graduation_date: string | null;
-  recruiting: RecruitingSummary;
-};
+type DashboardTab = "today" | "journey";
 
 export default function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showReadinessBreakdown, setShowReadinessBreakdown] = useState(false);
   const [showSkillPlacementModal, setShowSkillPlacementModal] = useState(false);
-  const leetcodeReadiness =
-    summary?.module_progress.find((module) => module.module_key === "leetcode")?.score ?? 0;
+  const [activeTab, setActiveTab] = useState<DashboardTab>("today");
+  const [isRebaselining, setIsRebaselining] = useState(false);
+
+  const leetcodeReadiness = useMemo(
+    () => summary?.module_progress.find((module) => module.module_key === "leetcode")?.score ?? 0,
+    [summary],
+  );
 
   const loadDashboardSummary = useCallback(async () => {
     try {
@@ -100,68 +52,112 @@ export default function Dashboard() {
     window.history.replaceState({}, "", nextUrl);
   }, []);
 
+  const rebaselineTimeline = useCallback(async () => {
+    setIsRebaselining(true);
+    try {
+      const response = await apiRequest<RebaselineResponse>("/dashboard/journey/rebaseline", { method: "POST" });
+      setSummary((previous) => {
+        if (!previous) return previous;
+        return {
+          ...previous,
+          progress: response.progress,
+          category_readiness: response.category_readiness,
+          module_progress: response.module_progress,
+          next_action: response.next_action,
+          journey: response.journey,
+        };
+      });
+      setError(null);
+    } catch {
+      setError("Failed to rebaseline timeline.");
+    } finally {
+      setIsRebaselining(false);
+    }
+  }, []);
+
+  const readyThreshold = summary?.journey?.readiness_threshold ?? summary?.recruiting?.ready_threshold ?? 62;
+
   return (
     <>
-      <div className="space-y-6 max-w-7xl mx-auto pb-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              Good afternoon{summary?.user_name ? `, ${summary.user_name}` : ""}! 👋
-            </h1>
-            <p className="text-slate-500">You're making great progress toward your internship goal.</p>
-          </div>
+      <div className="mx-auto max-w-7xl space-y-6 pb-10">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Good afternoon{summary?.user_name ? `, ${summary.user_name}` : ""}!
+          </h1>
+          <p className="text-slate-500">You're making progress toward your internship goal.</p>
         </div>
 
-        {error ? <p className="text-sm text-red-500">{error}</p> : null}
+        <div className="border-b border-slate-200">
+          <nav className="flex items-center gap-6">
+            <button
+              type="button"
+              onClick={() => setActiveTab("today")}
+              className={`border-b-2 px-1 py-2 text-sm font-medium ${
+                activeTab === "today"
+                  ? "border-indigo-600 text-indigo-700"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("journey")}
+              className={`border-b-2 px-1 py-2 text-sm font-medium ${
+                activeTab === "journey"
+                  ? "border-indigo-600 text-indigo-700"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              My Journey
+            </button>
+          </nav>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div className="lg:col-span-2 flex flex-col gap-6">
-            <ReadinessWidget
-              progress={summary?.progress ?? 0}
-              categories={{
-                ...(summary?.category_readiness ?? { coding: 0, projects: 0, resume: 0 }),
-                leetcode: leetcodeReadiness,
-              }}
-            />
-            <div className="flex justify-start">
-              <button
-                type="button"
-                onClick={() => setShowReadinessBreakdown((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                aria-expanded={showReadinessBreakdown}
-              >
-                <BarChart3 size={14} />
-                How readiness is calculated
-                {showReadinessBreakdown ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
-            </div>
-            {showReadinessBreakdown ? (
-              <ReadinessBreakdownWidget
-                modules={summary?.module_progress ?? []}
-                readyThreshold={summary?.recruiting?.ready_threshold ?? 62}
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+        {activeTab === "today" ? (
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              <ReadinessWidget
+                progress={summary?.progress ?? 0}
+                readinessThreshold={readyThreshold}
+                categories={{
+                  ...(summary?.category_readiness ?? { coding: 0, projects: 0, resume: 0 }),
+                  leetcode: leetcodeReadiness,
+                }}
               />
-            ) : null}
-            <ActionItemsWidget
-              moduleProgress={summary?.module_progress ?? []}
-              nextAction={summary?.next_action ?? null}
-            />
-          </div>
 
-          <div className="lg:col-span-1 flex flex-col gap-6">
-            <CountdownWidget
-              seasonStatus={summary?.season_status}
-              daysUntilRecruiting={summary?.days_until_recruiting}
-              recruitingDate={summary?.recruiting_date}
-              daysUntilWindowClose={summary?.days_until_window_close}
-              recruitingWindowEnd={summary?.recruiting_window_end}
-              graduationDate={summary?.graduation_date}
-              readiness={summary?.progress}
-              recruiting={summary?.recruiting}
-            />
-            <QuickResourcesWidget />
+              <FocusNowCard
+                moduleProgress={summary?.module_progress ?? []}
+                journeyModules={summary?.journey?.modules ?? []}
+                nextAction={summary?.next_action ?? null}
+              />
+            </div>
+
+            <div className="space-y-6 lg:col-span-1">
+              <CountdownWidget
+                seasonStatus={summary?.season_status}
+                daysUntilRecruiting={summary?.days_until_recruiting}
+                recruitingDate={summary?.recruiting_date}
+                daysUntilWindowClose={summary?.days_until_window_close}
+                recruitingWindowEnd={summary?.recruiting_window_end}
+                graduationDate={summary?.graduation_date}
+                readiness={summary?.progress}
+                recruiting={summary?.recruiting}
+              />
+              <QuickResourcesWidget />
+            </div>
           </div>
-        </div>
+        ) : (
+          <JourneyTimeline
+            journey={summary?.journey ?? null}
+            onRebaseline={rebaselineTimeline}
+            rebasing={isRebaselining}
+          />
+        )}
       </div>
+
       <SkillPlacementOnboardingModal
         open={showSkillPlacementModal}
         onClose={() => {

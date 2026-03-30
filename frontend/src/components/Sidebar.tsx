@@ -39,6 +39,27 @@ const navItems = [
 
 const adminNavItems = [{ icon: BarChart3, label: "Admin", href: "/admin" }];
 
+type SidebarModuleProgress = {
+  module_key: string;
+  score: number;
+  unlock_threshold: number;
+  has_tasks: boolean;
+};
+
+type SidebarSummaryPayload = {
+  module_progress: SidebarModuleProgress[];
+};
+
+const moduleKeyByHref: Record<string, string> = {
+  "/intro": "timeline",
+  "/skills": "coding",
+  "/projects": "projects",
+  "/resume": "resume",
+  "/applications": "applications",
+  "/interview-prep": "interview_prep",
+  "/leetcode": "leetcode",
+};
+
 function getInitials(name: string): string {
   const parts = name
     .trim()
@@ -53,6 +74,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setCurrentUser] = useState<StoredUser | null>(null);
+  const [moduleProgress, setModuleProgress] = useState<SidebarModuleProgress[]>([]);
 
   const handleLogout = async () => {
     onClose?.();
@@ -78,6 +100,33 @@ export default function Sidebar({ onClose }: SidebarProps) {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    apiRequest<SidebarSummaryPayload>("/dashboard/summary")
+      .then((payload) => {
+        if (!active) return;
+        setModuleProgress(payload.module_progress ?? []);
+      })
+      .catch(() => {
+        if (!active) return;
+        setModuleProgress([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
+
+  const currentModuleKey = moduleProgress.find(
+    (module) => module.has_tasks && module.score < module.unlock_threshold,
+  )?.module_key;
+  const normalizedCurrentModuleKey = currentModuleKey === "intro" ? "timeline" : currentModuleKey;
+  const completedModuleKeys = new Set(
+    moduleProgress
+      .filter((module) => module.has_tasks && module.score >= module.unlock_threshold)
+      .map((module) => (module.module_key === "intro" ? "timeline" : module.module_key)),
+  );
+
   const userName = user?.name?.trim() || "Student";
   const initials = getInitials(userName);
   const visibleNavItems = user?.is_superuser ? [...navItems, ...adminNavItems] : navItems;
@@ -101,6 +150,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
         </div>
         {visibleNavItems.map((item) => {
           const active = pathname === item.href;
+          const linkedModuleKey = moduleKeyByHref[item.href];
+          const isCurrent = linkedModuleKey != null && linkedModuleKey === normalizedCurrentModuleKey;
+          const isCompleted = linkedModuleKey != null && completedModuleKeys.has(linkedModuleKey);
           return (
             <Link
               key={item.label}
@@ -113,7 +165,16 @@ export default function Sidebar({ onClose }: SidebarProps) {
               onClick={onClose}
             >
               <item.icon size={18} className={active ? "text-indigo-600" : "text-slate-400"} />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {linkedModuleKey ? (
+                isCompleted ? (
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" aria-label="completed module" />
+                ) : isCurrent ? (
+                  <span className="h-2 w-2 rounded-full bg-indigo-600" aria-label="current module" />
+                ) : (
+                  <span className="h-2 w-2 rounded-full bg-slate-300" aria-label="upcoming module" />
+                )
+              ) : null}
             </Link>
           );
         })}

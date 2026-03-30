@@ -49,6 +49,7 @@ class UserProgress(db.Model):
   category_resume = db.Column(db.Integer, default=0)
   coding_override_score = db.Column(db.Integer, nullable=True)
   coding_override_source = db.Column(db.String(100), nullable=True)
+  journey_anchor_date = db.Column(db.Date, nullable=True)
   updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
   user = db.relationship("User", backref=db.backref("progress", uselist=False))

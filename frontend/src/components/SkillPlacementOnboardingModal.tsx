@@ -740,6 +740,15 @@ export default function SkillPlacementOnboardingModal({ open, onClose, userName 
 
   const skipProjects = () => {
     if (isProjectAnalyzing || isResumeAnalyzing || isFinalizing) return;
+    const shouldSkip = typeof window === "undefined"
+      ? true
+      : window.confirm(
+        hasAnyProjectSignal
+          ? "If you skip projects, we might place you in a lower track than your real level. Are you sure you want to skip?"
+          : "No projects yet is totally fine. We'll place you in a beginner track if you skip. Do you want to continue?",
+      );
+    if (!shouldSkip) return;
+
     setProjects((previous) =>
       previous.map((project) => ({
         ...project,

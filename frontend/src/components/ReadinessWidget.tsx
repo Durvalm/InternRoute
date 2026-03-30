@@ -13,6 +13,7 @@ type CategoryProgressProps = {
 
 type ReadinessWidgetProps = {
   progress: number;
+  readinessThreshold?: number;
   categories?: {
     coding: number;
     projects: number;
@@ -21,34 +22,46 @@ type ReadinessWidgetProps = {
   };
 };
 
-export default function ReadinessWidget({ progress, categories }: ReadinessWidgetProps) {
+export default function ReadinessWidget({ progress, readinessThreshold = 62, categories }: ReadinessWidgetProps) {
   const coding = categories?.coding ?? 0;
   const projects = categories?.projects ?? 0;
   const resume = categories?.resume ?? 0;
   const leetcode = categories?.leetcode ?? 0;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-      <div className="flex items-center justify-between mb-6">
+    <section className="rounded-xl border border-slate-200 bg-white p-6">
+      <div className="mb-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
-            <TrendingUp size={24} />
-          </div>
+          <TrendingUp size={20} className="text-slate-700" />
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Overall Readiness</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Overall Readiness</h2>
             <p className="text-sm text-slate-500">Your preparedness for the recruiting season</p>
           </div>
         </div>
-        <span className="text-3xl font-bold text-indigo-600">{progress}%</span>
+        <span className="text-3xl font-semibold text-indigo-600">{progress}%</span>
       </div>
 
-      <div className="w-full bg-slate-100 rounded-full h-4 mb-8 overflow-hidden">
-        <div
-          className="bg-indigo-600 h-4 rounded-full transition-all duration-1000 ease-out relative"
-          style={{ width: `${progress}%` }}
-        >
-          <div className="absolute top-0 left-0 bottom-0 right-0 bg-white/20 animate-[shimmer_2s_infinite] bg-[length:200%_100%] bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+      <div className="relative mb-8 pb-3">
+        <div className="relative h-4 w-full overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="relative h-4 rounded-full bg-indigo-600 transition-all duration-1000 ease-out"
+            style={{ width: `${progress}%` }}
+          >
+            <div className="absolute bottom-0 left-0 right-0 top-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent bg-[length:200%_100%]"></div>
+          </div>
+          <div
+            className="pointer-events-none absolute -bottom-1 -top-1 w-0.5 -translate-x-1/2 rounded-full bg-slate-400"
+            style={{ left: `${readinessThreshold}%` }}
+            aria-hidden="true"
+          />
         </div>
+        <p
+          className="pointer-events-none absolute top-4 -translate-x-1/2 text-xs font-medium text-slate-500"
+          style={{ left: `${readinessThreshold}%` }}
+          aria-hidden="true"
+        >
+          {readinessThreshold}%
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -89,7 +102,7 @@ export default function ReadinessWidget({ progress, categories }: ReadinessWidge
           details={leetcode >= 100 ? "Target Met" : leetcode >= 70 ? "Strong Grind" : "In Progress"}
         />
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -100,21 +113,21 @@ function CategoryProgress({
   color,
   bgColor,
   bgLight,
-  details
+  details,
 }: CategoryProgressProps) {
   return (
-    <div className={`p-4 rounded-xl border border-slate-100 ${bgLight}`}>
-      <div className="flex justify-between items-start mb-2">
-        <div className={`p-1.5 rounded-md bg-white shadow-sm ${color}`}>
-          <Icon size={18} />
+    <article className={`rounded-xl border border-slate-100 p-4 ${bgLight}`}>
+      <div className="mb-2 flex items-start justify-between">
+        <div className={`rounded-md bg-white p-1.5 shadow-sm ${color}`}>
+          <Icon size={16} />
         </div>
         <span className={`text-lg font-bold ${color}`}>{percentage}%</span>
       </div>
-      <h3 className="font-medium text-slate-900 mb-1">{label}</h3>
-      <p className="text-xs text-slate-500 mb-3">{details}</p>
-      <div className="w-full bg-white rounded-full h-2 overflow-hidden">
+      <h3 className="mb-1 font-medium text-slate-900">{label}</h3>
+      <p className="mb-3 text-xs text-slate-500">{details}</p>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-white">
         <div className={`h-2 rounded-full ${bgColor}`} style={{ width: `${percentage}%` }}></div>
       </div>
-    </div>
+    </article>
   );
 }

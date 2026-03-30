@@ -9,11 +9,11 @@ SEASON_LOWER = "lower"
 SEASON_OFF = "off"
 
 TRACK_DURATION_WEEKS: dict[str, int] = {
-  "foundation_start": 30,  # ~7 months
-  "coding_base_build_depth": 22,  # ~5 months
-  "emerging_builder": 9,  # ~2 months
-  "strong_builder_needs_positioning": 5,  # ~1 month
-  "acceleration_track": 1,  # ~1 week
+  "foundation_start": 31,  # ~7 months
+  "coding_base_build_depth": 23,  # ~5 months
+  "emerging_builder": 10,  # ~2 months
+  "strong_builder_needs_positioning": 6,  # ~1 month
+  "acceleration_track": 2,  # ~2 weeks
 }
 
 

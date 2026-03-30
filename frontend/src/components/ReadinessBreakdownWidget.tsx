@@ -96,8 +96,13 @@ export default function ReadinessBreakdownWidget({
   const codingScore = scoreByKey.coding ?? 0;
   const projectsScore = scoreByKey.projects ?? 0;
   const resumeScore = scoreByKey.resume ?? 0;
+  const applicationsScore = scoreByKey.applications ?? 0;
   const meetsMinimumMilestone =
-    introScore >= 100 && codingScore >= 100 && projectsScore >= 80 && resumeScore >= 80;
+    introScore >= 100 &&
+    codingScore >= 100 &&
+    projectsScore >= 80 &&
+    resumeScore >= 80 &&
+    applicationsScore >= 100;
 
   if (!visualModules.length) {
     return null;
@@ -165,6 +170,7 @@ export default function ReadinessBreakdownWidget({
               <li>Coding Skills: 100%</li>
               <li>Projects: 80%</li>
               <li>Resume: 80%</li>
+              <li>Applications: 100%</li>
               <li>{readyThreshold}% readiness: minimum to start competing for internships</li>
             </ul>
 

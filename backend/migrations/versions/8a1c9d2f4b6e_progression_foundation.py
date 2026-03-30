@@ -78,12 +78,12 @@ def upgrade():
     op.bulk_insert(
         modules_table,
         [
-            {"key": "timeline", "name": "Timeline & Strategy", "category": "other", "overall_weight": 5, "unlock_threshold": 80, "sort_order": 1},
+            {"key": "timeline", "name": "Intro", "category": "other", "overall_weight": 5, "unlock_threshold": 100, "sort_order": 1},
             {"key": "coding", "name": "Coding Skills", "category": "coding", "overall_weight": 20, "unlock_threshold": 80, "sort_order": 2},
             {"key": "projects", "name": "Projects", "category": "projects", "overall_weight": 30, "unlock_threshold": 80, "sort_order": 3},
             {"key": "resume", "name": "Resume", "category": "resume", "overall_weight": 10, "unlock_threshold": 80, "sort_order": 4},
-            {"key": "applications", "name": "Applications", "category": "other", "overall_weight": 5, "unlock_threshold": 80, "sort_order": 5},
-            {"key": "interview_prep", "name": "Interview Prep", "category": "other", "overall_weight": 5, "unlock_threshold": 80, "sort_order": 6},
+            {"key": "applications", "name": "Applications", "category": "other", "overall_weight": 5, "unlock_threshold": 100, "sort_order": 5},
+            {"key": "interview_prep", "name": "Interview Prep", "category": "other", "overall_weight": 5, "unlock_threshold": 100, "sort_order": 6},
             {"key": "leetcode", "name": "Leetcode", "category": "other", "overall_weight": 25, "unlock_threshold": 80, "sort_order": 7},
         ],
     )
