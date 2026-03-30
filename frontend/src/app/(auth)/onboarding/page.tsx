@@ -47,7 +47,7 @@ export default function OnboardingPage() {
         })
       });
       storeUser(data.user);
-      router.push("/dashboard");
+      router.push("/dashboard?welcome_assessment=1");
     } catch (err) {
       const message = err instanceof Error && err.message ? err.message : "Something went wrong. Please try again.";
       setError(message);

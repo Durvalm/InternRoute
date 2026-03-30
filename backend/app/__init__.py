@@ -8,6 +8,7 @@ from .routes.skills import bp as skills_bp
 from .routes.projects import bp as projects_bp
 from .routes.resume import bp as resume_bp
 from .routes.leetcode import bp as leetcode_bp
+from .routes.onboarding_assessment import bp as onboarding_assessment_bp
 from .monitoring import init_error_monitoring
 
 
@@ -55,6 +56,7 @@ def create_app():
   app.register_blueprint(projects_bp)
   app.register_blueprint(resume_bp)
   app.register_blueprint(leetcode_bp)
+  app.register_blueprint(onboarding_assessment_bp)
 
   @app.after_request
   def apply_security_headers(response):

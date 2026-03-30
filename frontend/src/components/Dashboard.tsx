@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import ReadinessWidget from "@/components/ReadinessWidget";
 import ReadinessBreakdownWidget from "@/components/ReadinessBreakdownWidget";
 import CountdownWidget from "@/components/CountdownWidget";
 import ActionItemsWidget from "@/components/ActionItemsWidget";
 import QuickResourcesWidget from "@/components/QuickResourcesWidget";
+import SkillPlacementOnboardingModal from "@/components/SkillPlacementOnboardingModal";
 import { apiRequest } from "@/lib/api";
 
 type ModuleProgress = {
@@ -67,84 +68,108 @@ export default function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showReadinessBreakdown, setShowReadinessBreakdown] = useState(false);
+  const [showSkillPlacementModal, setShowSkillPlacementModal] = useState(false);
   const leetcodeReadiness =
     summary?.module_progress.find((module) => module.module_key === "leetcode")?.score ?? 0;
 
-  useEffect(() => {
-    let active = true;
-    apiRequest<DashboardSummary>("/dashboard/summary")
-      .then((data) => {
-        if (active) setSummary(data);
-      })
-      .catch(() => {
-        if (active) setError("Failed to load dashboard data.");
-      });
+  const loadDashboardSummary = useCallback(async () => {
+    try {
+      const data = await apiRequest<DashboardSummary>("/dashboard/summary");
+      setSummary(data);
+      setError(null);
+    } catch {
+      setError("Failed to load dashboard data.");
+    }
+  }, []);
 
-    return () => {
-      active = false;
-    };
+  useEffect(() => {
+    void loadDashboardSummary();
+  }, [loadDashboardSummary]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const url = new URL(window.location.href);
+    const shouldOpenPlacementModal = url.searchParams.get("welcome_assessment") === "1";
+    if (!shouldOpenPlacementModal) return;
+
+    setShowSkillPlacementModal(true);
+    url.searchParams.delete("welcome_assessment");
+    const nextSearch = url.searchParams.toString();
+    const nextUrl = `${url.pathname}${nextSearch ? `?${nextSearch}` : ""}${url.hash}`;
+    window.history.replaceState({}, "", nextUrl);
   }, []);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Good afternoon{summary?.user_name ? `, ${summary.user_name}` : ""}! 👋
-          </h1>
-          <p className="text-slate-500">You're making great progress toward your internship goal.</p>
-        </div>
-      </div>
-
-      {error ? <p className="text-sm text-red-500">{error}</p> : null}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <ReadinessWidget
-            progress={summary?.progress ?? 0}
-            categories={{
-              ...(summary?.category_readiness ?? { coding: 0, projects: 0, resume: 0 }),
-              leetcode: leetcodeReadiness,
-            }}
-          />
-          <div className="flex justify-start">
-            <button
-              type="button"
-              onClick={() => setShowReadinessBreakdown((prev) => !prev)}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              aria-expanded={showReadinessBreakdown}
-            >
-              <BarChart3 size={14} />
-              How readiness is calculated
-              {showReadinessBreakdown ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
+    <>
+      <div className="space-y-6 max-w-7xl mx-auto pb-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Good afternoon{summary?.user_name ? `, ${summary.user_name}` : ""}! 👋
+            </h1>
+            <p className="text-slate-500">You're making great progress toward your internship goal.</p>
           </div>
-          {showReadinessBreakdown ? (
-            <ReadinessBreakdownWidget
-              modules={summary?.module_progress ?? []}
-              readyThreshold={summary?.recruiting?.ready_threshold ?? 62}
-            />
-          ) : null}
-          <ActionItemsWidget
-            moduleProgress={summary?.module_progress ?? []}
-            nextAction={summary?.next_action ?? null}
-          />
         </div>
 
-        <div className="lg:col-span-1 flex flex-col gap-6">
-          <CountdownWidget
-            seasonStatus={summary?.season_status}
-            daysUntilRecruiting={summary?.days_until_recruiting}
-            recruitingDate={summary?.recruiting_date}
-            daysUntilWindowClose={summary?.days_until_window_close}
-            recruitingWindowEnd={summary?.recruiting_window_end}
-            graduationDate={summary?.graduation_date}
-            readiness={summary?.progress}
-            recruiting={summary?.recruiting}
-          />
-          <QuickResourcesWidget />
+        {error ? <p className="text-sm text-red-500">{error}</p> : null}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-2 flex flex-col gap-6">
+            <ReadinessWidget
+              progress={summary?.progress ?? 0}
+              categories={{
+                ...(summary?.category_readiness ?? { coding: 0, projects: 0, resume: 0 }),
+                leetcode: leetcodeReadiness,
+              }}
+            />
+            <div className="flex justify-start">
+              <button
+                type="button"
+                onClick={() => setShowReadinessBreakdown((prev) => !prev)}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                aria-expanded={showReadinessBreakdown}
+              >
+                <BarChart3 size={14} />
+                How readiness is calculated
+                {showReadinessBreakdown ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            </div>
+            {showReadinessBreakdown ? (
+              <ReadinessBreakdownWidget
+                modules={summary?.module_progress ?? []}
+                readyThreshold={summary?.recruiting?.ready_threshold ?? 62}
+              />
+            ) : null}
+            <ActionItemsWidget
+              moduleProgress={summary?.module_progress ?? []}
+              nextAction={summary?.next_action ?? null}
+            />
+          </div>
+
+          <div className="lg:col-span-1 flex flex-col gap-6">
+            <CountdownWidget
+              seasonStatus={summary?.season_status}
+              daysUntilRecruiting={summary?.days_until_recruiting}
+              recruitingDate={summary?.recruiting_date}
+              daysUntilWindowClose={summary?.days_until_window_close}
+              recruitingWindowEnd={summary?.recruiting_window_end}
+              graduationDate={summary?.graduation_date}
+              readiness={summary?.progress}
+              recruiting={summary?.recruiting}
+            />
+            <QuickResourcesWidget />
+          </div>
         </div>
       </div>
-    </div>
+      <SkillPlacementOnboardingModal
+        open={showSkillPlacementModal}
+        onClose={() => {
+          setShowSkillPlacementModal(false);
+          void loadDashboardSummary();
+        }}
+        userName={summary?.user_name}
+      />
+    </>
   );
 }

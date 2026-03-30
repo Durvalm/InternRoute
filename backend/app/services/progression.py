@@ -127,6 +127,17 @@ def _next_action(module_states: list[ModuleState]) -> str | None:
 
 
 def _best_successful_resume_score(user_id: int) -> int:
+  projects_module_exists = Module.query.filter_by(key="projects").first() is not None
+  if projects_module_exists:
+    has_passed_project = (
+      ProjectSubmission.query
+      .filter_by(user_id=user_id, status="pass")
+      .first()
+      is not None
+    )
+    if not has_passed_project:
+      return 0
+
   best_score = (
     db.session.query(db.func.max(ResumeSubmission.overall_score))
     .filter(ResumeSubmission.user_id == user_id, ResumeSubmission.status == "succeeded")
@@ -148,6 +159,10 @@ def _build_module_states(user: User) -> list[ModuleState]:
   modules = Module.query.order_by(Module.sort_order.asc()).all()
   if not modules:
     return []
+  user_progress = UserProgress.query.filter_by(user_id=user.id).first()
+  coding_override_score: int | None = None
+  if user_progress is not None and user_progress.coding_override_score is not None:
+    coding_override_score = max(0, min(100, int(user_progress.coding_override_score)))
 
   module_ids = [module.id for module in modules]
   tasks = Task.query.filter(
@@ -181,7 +196,9 @@ def _build_module_states(user: User) -> list[ModuleState]:
     has_tasks_by_module_id[module.id] = has_tasks
     has_bonus_by_module_id[module.id] = has_bonus
 
-    if module.key == "resume":
+    if module.key == "coding" and coding_override_score is not None:
+      score = coding_override_score
+    elif module.key == "resume":
       # Resume readiness should reflect the user's best score achieved so far.
       score = _best_successful_resume_score(user.id)
     elif module.key == "leetcode":
@@ -360,6 +377,7 @@ def set_task_completion_internal(user_id: int, task_id: int, completed: bool) ->
 def sync_projects_submission_progress(
   user_id: int,
   *,
+  bypass_prerequisites: bool = False,
   commit: bool = True,
   emit_module_completion_events: bool = False,
 ) -> dict[str, Any]:
@@ -389,7 +407,9 @@ def sync_projects_submission_progress(
     .first()
     is not None
   )
-  can_complete, _ = module_completion_allowed_or_error(user_id, "projects")
+  can_complete = True
+  if not bypass_prerequisites:
+    can_complete, _ = module_completion_allowed_or_error(user_id, "projects")
 
   desired_completion_by_task_key = {
     "projects_core_1": can_complete and passed_count >= 1,
@@ -507,6 +527,42 @@ def sync_leetcode_progress(
     db.session.add(UserTaskCompletion(user_id=user_id, task_id=task.id))
   if not is_completed and completion is not None:
     db.session.delete(completion)
+
+  return recompute_and_persist_user_progress(
+    user_id,
+    commit=commit,
+    emit_module_completion_events=emit_module_completion_events,
+  )
+
+
+def apply_onboarding_coding_skip(
+  user_id: int,
+  *,
+  confidence: float | None = None,
+  commit: bool = True,
+  emit_module_completion_events: bool = False,
+) -> dict[str, Any]:
+  progress = get_or_create_user_progress(user_id)
+  progress.coding_override_score = 100
+  progress.coding_override_source = "onboarding_assessment"
+
+  coding_module = Module.query.filter_by(key="coding").first()
+  if coding_module is not None:
+    coding_tasks = Task.query.filter_by(module_id=coding_module.id, is_active=True).all()
+    for task in coding_tasks:
+      completion = UserTaskCompletion.query.filter_by(user_id=user_id, task_id=task.id).first()
+      if completion is None:
+        db.session.add(UserTaskCompletion(user_id=user_id, task_id=task.id))
+
+  if confidence is not None:
+    track_event(
+      "coding_skip_applied",
+      user_id=user_id,
+      properties={
+        "source": "onboarding_assessment",
+        "confidence": float(confidence),
+      },
+    )
 
   return recompute_and_persist_user_progress(
     user_id,

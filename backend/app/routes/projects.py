@@ -76,6 +76,8 @@ def _serialize_submission(submission: ProjectSubmission) -> dict[str, object]:
     "user_id": submission.user_id,
     "repo_url": submission.repo_url,
     "deployed_url": submission.deployed_url,
+    "source_type": submission.source_type,
+    "source_label": submission.source_label,
     "status": submission.status,
     "review_notes": submission.review_notes,
     "created_at": submission.created_at.isoformat() if submission.created_at else None,
@@ -151,8 +153,9 @@ def create_submission():
     user_id=user.id,
     repo_url=repo_url,
     deployed_url=deployed_url,
-    status=status,
-    review_notes=review_notes,
+    source_type="github",
+    source_label=None,
+    status="pending",
   )
   db.session.add(submission)
   db.session.flush()
