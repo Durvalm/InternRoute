@@ -155,7 +155,8 @@ def create_submission():
     deployed_url=deployed_url,
     source_type="github",
     source_label=None,
-    status="pending",
+    status=status,
+    review_notes=review_notes,
   )
   db.session.add(submission)
   db.session.flush()
