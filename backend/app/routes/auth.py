@@ -91,7 +91,7 @@ def _verify_google_credential(credential: str, client_id: str) -> dict[str, str]
   try:
     from google.auth.transport.requests import Request as GoogleRequest
     from google.oauth2 import id_token as google_id_token
-  except ModuleNotFoundError as exc:
+  except (ModuleNotFoundError, ImportError) as exc:
     raise RuntimeError("Google auth dependency is not installed.") from exc
 
   try:
