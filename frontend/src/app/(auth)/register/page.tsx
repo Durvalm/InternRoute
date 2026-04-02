@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import { setUser as storeUser } from "@/lib/user";
 
 type AuthResponse = {
@@ -13,6 +14,7 @@ type AuthResponse = {
     graduation_date: string | null;
     is_superuser: boolean;
     onboarding_completed: boolean;
+    password_login_enabled?: boolean;
   };
 };
 
@@ -123,6 +125,9 @@ export default function RegisterPage() {
           {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
+      <div className="mt-4">
+        <GoogleAuthButton mode="signup" onError={setError} disabled={loading} />
+      </div>
       <p className="mt-4 text-xs text-slate-500">
         Already have an account?{" "}
         <a className="text-indigo-600 hover:underline" href="/login">

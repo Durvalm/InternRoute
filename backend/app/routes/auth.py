@@ -1,4 +1,5 @@
 import time
+import secrets
 from threading import Lock
 
 from flask import Blueprint, current_app, request, jsonify
@@ -20,6 +21,7 @@ bp = Blueprint("auth", __name__, url_prefix="/auth")
 AUTH_RATE_LIMIT_WINDOW_SECONDS = 60
 AUTH_LOGIN_LIMIT_PER_WINDOW = 10
 AUTH_REGISTER_LIMIT_PER_WINDOW = 5
+AUTH_GOOGLE_LIMIT_PER_WINDOW = 10
 _RATE_LIMIT_EVENTS: dict[str, list[float]] = {}
 _RATE_LIMIT_LOCK = Lock()
 
@@ -83,6 +85,37 @@ def _auth_success_response(user: User):
   response = jsonify({"user": user.to_dict(), "csrf_token": get_csrf_token(token)})
   set_access_cookies(response, token)
   return response
+
+
+def _verify_google_credential(credential: str, client_id: str) -> dict[str, str]:
+  try:
+    from google.auth.transport.requests import Request as GoogleRequest
+    from google.oauth2 import id_token as google_id_token
+  except ModuleNotFoundError as exc:
+    raise RuntimeError("Google auth dependency is not installed.") from exc
+
+  try:
+    token_payload = google_id_token.verify_oauth2_token(credential, GoogleRequest(), client_id)
+  except Exception as exc:
+    raise ValueError("Invalid Google credential.") from exc
+
+  issuer = str(token_payload.get("iss") or "").strip()
+  if issuer not in {"https://accounts.google.com", "accounts.google.com"}:
+    raise ValueError("Invalid Google issuer.")
+
+  subject = str(token_payload.get("sub") or "").strip()
+  email = str(token_payload.get("email") or "").strip().lower()
+  email_verified = bool(token_payload.get("email_verified"))
+
+  if not subject or not email or not email_verified:
+    raise ValueError("Google account must provide a verified email.")
+
+  name = str(token_payload.get("name") or "").strip() or None
+  return {
+    "sub": subject,
+    "email": email,
+    "name": name,
+  }
 
 
 def _clear_cookie_variants(response, cookie_name: str) -> None:
@@ -163,6 +196,8 @@ def login():
     return jsonify({"error": "Email and password are required"}), 400
 
   user = User.query.filter_by(email=email).first()
+  if user and not bool(user.password_login_enabled):
+    return jsonify({"error": "This account uses Google sign-in. Continue with Google."}), 400
   if not user or not user.check_password(password):
     return jsonify({"error": "Invalid credentials"}), 401
 
@@ -174,6 +209,78 @@ def login():
     user_id=user.id,
     properties={"auth_method": "email_password"},
   )
+  return _auth_success_response(user)
+
+
+@bp.post("/google")
+def google_auth():
+  retry_after = _check_auth_rate_limit(
+    "google_auth",
+    limit=AUTH_GOOGLE_LIMIT_PER_WINDOW,
+    window_seconds=AUTH_RATE_LIMIT_WINDOW_SECONDS,
+  )
+  if retry_after is not None:
+    return _rate_limited_response("Too many Google sign-in attempts. Try again soon.", retry_after)
+
+  client_id = (current_app.config.get("GOOGLE_CLIENT_ID") or "").strip()
+  if not client_id:
+    return jsonify({"error": "Google auth is not configured."}), 503
+
+  data = request.get_json() or {}
+  credential = data.get("credential")
+  if not isinstance(credential, str) or not credential.strip():
+    return jsonify({"error": "credential is required"}), 400
+
+  try:
+    google_user = _verify_google_credential(credential.strip(), client_id)
+  except RuntimeError as exc:
+    return jsonify({"error": str(exc)}), 503
+  except ValueError as exc:
+    return jsonify({"error": str(exc)}), 401
+
+  user = User.query.filter_by(google_sub=google_user["sub"]).first()
+  created = False
+
+  if user is None:
+    user = User.query.filter_by(email=google_user["email"]).first()
+
+  if user is None:
+    user = User(
+      email=google_user["email"],
+      name=google_user["name"],
+      google_sub=google_user["sub"],
+      password_login_enabled=False,
+    )
+    user.set_password(secrets.token_urlsafe(32))
+    _sync_superuser_flag(user)
+
+    progress = UserProgress(user=user)
+    db.session.add_all([user, progress])
+    created = True
+  else:
+    if user.google_sub and user.google_sub != google_user["sub"]:
+      return jsonify({"error": "This email is already linked to another Google account."}), 409
+
+    user.google_sub = google_user["sub"]
+    if not user.name and google_user["name"]:
+      user.name = google_user["name"]
+    _sync_superuser_flag(user)
+
+  db.session.commit()
+
+  if created:
+    track_event(
+      "signup_completed",
+      user_id=user.id,
+      properties={"auth_method": "google"},
+    )
+  else:
+    track_event(
+      "login_succeeded",
+      user_id=user.id,
+      properties={"auth_method": "google"},
+    )
+
   return _auth_success_response(user)
 
 

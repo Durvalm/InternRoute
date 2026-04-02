@@ -122,6 +122,8 @@ class Config:
   if IS_PRODUCTION and not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY is required when APP_ENV=production.")
 
+  GOOGLE_CLIENT_ID = _env_optional_str("GOOGLE_CLIENT_ID")
+
   POSTHOG_API_KEY = (os.getenv("POSTHOG_API_KEY") or "").strip()
   POSTHOG_HOST = _env_str("POSTHOG_HOST", "https://us.i.posthog.com").rstrip("/")
   ANALYTICS_APP_VERSION = (

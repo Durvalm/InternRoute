@@ -24,6 +24,7 @@ type MeResponse = {
     graduation_date: string | null;
     is_superuser: boolean;
     onboarding_completed: boolean;
+    password_login_enabled: boolean;
   };
 };
 
@@ -44,7 +45,8 @@ function toStoredUser(payload: MeResponse["user"]): StoredUser {
     name: payload.name,
     graduation_date: payload.graduation_date,
     is_superuser: payload.is_superuser,
-    onboarding_completed: payload.onboarding_completed
+    onboarding_completed: payload.onboarding_completed,
+    password_login_enabled: payload.password_login_enabled,
   };
 }
 
@@ -52,6 +54,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const [email, setEmail] = useState<string>("");
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
+  const [passwordLoginEnabled, setPasswordLoginEnabled] = useState<boolean>(true);
   const [profile, setProfile] = useState<ProfileState>({
     name: "",
     graduationMonth: ""
@@ -76,6 +79,7 @@ export default function SettingsPage() {
     if (cached) {
       setEmail(cached.email ?? "");
       setOnboardingCompleted(Boolean(cached.onboarding_completed));
+      setPasswordLoginEnabled(cached.password_login_enabled ?? true);
       setProfile((prev) => ({
         ...prev,
         name: cached.name ?? "",
@@ -96,6 +100,7 @@ export default function SettingsPage() {
 
         setEmail(data.user.email ?? "");
         setOnboardingCompleted(data.user.onboarding_completed);
+        setPasswordLoginEnabled(Boolean(data.user.password_login_enabled));
         setProfile(nextProfile);
         setInitialProfile(nextProfile);
         setUser(toStoredUser(data.user));
@@ -149,6 +154,7 @@ export default function SettingsPage() {
       setProfile(nextProfile);
       setInitialProfile(nextProfile);
       setOnboardingCompleted(response.user.onboarding_completed);
+      setPasswordLoginEnabled(Boolean(response.user.password_login_enabled));
       setUser(toStoredUser(response.user));
       setProfileSuccess("Profile updated.");
     } catch (err) {
@@ -322,86 +328,94 @@ export default function SettingsPage() {
         <div className="border-b border-slate-100 px-6 py-5">
           <h2 className="text-lg font-semibold text-slate-900">Security</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Change your account password.
+            {passwordLoginEnabled ? "Change your account password." : "This account currently signs in with Google."}
           </p>
         </div>
 
-        <form className="space-y-4 px-6 py-5" onSubmit={handlePasswordSave}>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Current Password
-              </label>
-              <div className="relative mt-2">
-                <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-10 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400"
-                  autoComplete="current-password"
-                  required
-                />
+        {passwordLoginEnabled ? (
+          <form className="space-y-4 px-6 py-5" onSubmit={handlePasswordSave}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Current Password
+                </label>
+                <div className="relative mt-2">
+                  <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(event) => setCurrentPassword(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-10 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400"
+                    autoComplete="current-password"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  New Password
+                </label>
+                <div className="relative mt-2">
+                  <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-10 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400"
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Confirm New Password
+                </label>
+                <div className="relative mt-2">
+                  <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-10 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400"
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                New Password
-              </label>
-              <div className="relative mt-2">
-                <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(event) => setNewPassword(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-10 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400"
-                  autoComplete="new-password"
-                  required
-                />
+            {passwordError ? (
+              <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                <AlertCircle size={16} />
+                {passwordError}
               </div>
-            </div>
+            ) : null}
+            {passwordSuccess ? (
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                <CheckCircle2 size={16} />
+                {passwordSuccess}
+              </div>
+            ) : null}
 
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Confirm New Password
-              </label>
-              <div className="relative mt-2">
-                <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-10 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400"
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
+            <button
+              type="submit"
+              disabled={savingPassword}
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <ShieldCheck size={16} />
+              {savingPassword ? "Updating..." : "Update Password"}
+            </button>
+          </form>
+        ) : (
+          <div className="px-6 py-5">
+            <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+              This account is using Google sign-in. Password login is not enabled for it yet.
             </div>
           </div>
-
-          {passwordError ? (
-            <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-              <AlertCircle size={16} />
-              {passwordError}
-            </div>
-          ) : null}
-          {passwordSuccess ? (
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-              <CheckCircle2 size={16} />
-              {passwordSuccess}
-            </div>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={savingPassword}
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <ShieldCheck size={16} />
-            {savingPassword ? "Updating..." : "Update Password"}
-          </button>
-        </form>
+        )}
       </section>
     </div>
   );

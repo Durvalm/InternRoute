@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiRequest } from "@/lib/api";
+import { ApiError, apiRequest } from "@/lib/api";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import { setUser as storeUser } from "@/lib/user";
 
 type AuthResponse = {
@@ -13,6 +14,7 @@ type AuthResponse = {
     graduation_date: string | null;
     is_superuser: boolean;
     onboarding_completed: boolean;
+    password_login_enabled?: boolean;
   };
 };
 
@@ -39,7 +41,8 @@ export default function LoginPage() {
       storeUser(data.user);
       router.push(data.user.onboarding_completed ? "/dashboard" : "/onboarding");
     } catch (err) {
-      setError("Invalid email or password.");
+      const message = err instanceof ApiError ? err.message : "Invalid email or password.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -83,6 +86,9 @@ export default function LoginPage() {
           {loading ? "Signing in..." : "Sign in"}
         </button>
       </form>
+      <div className="mt-4">
+        <GoogleAuthButton mode="signin" onError={setError} disabled={loading} />
+      </div>
       <p className="mt-4 text-xs text-slate-500">
         New here?{" "}
         <a className="text-indigo-600 hover:underline" href="/register">

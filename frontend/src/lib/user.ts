@@ -7,6 +7,7 @@ export type StoredUser = {
   graduation_date: string | null;
   is_superuser?: boolean;
   onboarding_completed: boolean;
+  password_login_enabled?: boolean;
 };
 
 const USER_KEY = "internroute_user";
