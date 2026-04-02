@@ -60,6 +60,7 @@ export type RecruitingSummary = {
 
 export type DashboardSummary = {
   user_name: string | null;
+  needs_skill_placement_assessment?: boolean;
   progress: number;
   category_readiness: {
     coding: number;

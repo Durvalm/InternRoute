@@ -305,6 +305,18 @@ def _build_summary_payload(user: User) -> dict[str, Any]:
   else:
     computed = recompute_and_persist_user_progress(user.id, commit=True)
 
+  module_progress_by_key = _module_progress_by_key(computed)
+  coding_module_score = int(
+    module_progress_by_key.get("coding", {}).get("score")
+    or computed.get("category_readiness", {}).get("coding")
+    or 0
+  )
+  needs_skill_placement_assessment = bool(
+    user.onboarding_completed
+    and not has_completed_onboarding_assessment
+    and coding_module_score == 0
+  )
+
   recruiting = build_recruiting_view(
     today=today,
     readiness_score=int(computed["progress"]),
@@ -323,6 +335,7 @@ def _build_summary_payload(user: User) -> dict[str, Any]:
 
   return {
     "user_name": user.name,
+    "needs_skill_placement_assessment": needs_skill_placement_assessment,
     "progress": computed["progress"],
     "category_readiness": computed["category_readiness"],
     "module_progress": computed["module_progress"],

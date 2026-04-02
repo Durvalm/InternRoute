@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSkillPlacementModal, setShowSkillPlacementModal] = useState(false);
+  const [hasHandledPlacementPrompt, setHasHandledPlacementPrompt] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>("today");
   const [isRebaselining, setIsRebaselining] = useState(false);
 
@@ -46,11 +47,20 @@ export default function Dashboard() {
     if (!shouldOpenPlacementModal) return;
 
     setShowSkillPlacementModal(true);
+    setHasHandledPlacementPrompt(true);
     url.searchParams.delete("welcome_assessment");
     const nextSearch = url.searchParams.toString();
     const nextUrl = `${url.pathname}${nextSearch ? `?${nextSearch}` : ""}${url.hash}`;
     window.history.replaceState({}, "", nextUrl);
   }, []);
+
+  useEffect(() => {
+    if (!summary) return;
+    if (hasHandledPlacementPrompt) return;
+    if (!summary.needs_skill_placement_assessment) return;
+    setShowSkillPlacementModal(true);
+    setHasHandledPlacementPrompt(true);
+  }, [summary, hasHandledPlacementPrompt]);
 
   const rebaselineTimeline = useCallback(async () => {
     setIsRebaselining(true);
