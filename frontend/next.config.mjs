@@ -27,6 +27,7 @@ if (rawSentryDsn) {
 }
 if (rawGoogleClientId) {
   scriptSources.push("https://accounts.google.com");
+  styleSources.push("https://accounts.google.com");
   frameSources.push("https://accounts.google.com");
 }
 if (rawPosthogKey && rawPosthogHost) {

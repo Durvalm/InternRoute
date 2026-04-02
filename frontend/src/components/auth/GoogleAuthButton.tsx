@@ -187,7 +187,6 @@ export default function GoogleAuthButton({ mode, onError, disabled = false }: Go
           <div
             ref={buttonRef}
             className={`absolute inset-0 z-10 overflow-hidden rounded-xl opacity-0 ${disabled || submitting || !buttonMounted ? "pointer-events-none" : ""}`}
-            aria-hidden="true"
           />
         </div>
       </div>
