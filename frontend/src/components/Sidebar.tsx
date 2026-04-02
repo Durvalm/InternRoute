@@ -150,9 +150,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
         </div>
         {visibleNavItems.map((item) => {
           const active = pathname === item.href;
-          const linkedModuleKey = moduleKeyByHref[item.href];
-          const isCurrent = linkedModuleKey != null && linkedModuleKey === normalizedCurrentModuleKey;
-          const isCompleted = linkedModuleKey != null && completedModuleKeys.has(linkedModuleKey);
           return (
             <Link
               key={item.label}
@@ -166,15 +163,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
             >
               <item.icon size={18} className={active ? "text-indigo-600" : "text-slate-400"} />
               <span className="flex-1">{item.label}</span>
-              {linkedModuleKey ? (
-                isCompleted ? (
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" aria-label="completed module" />
-                ) : isCurrent ? (
-                  <span className="h-2 w-2 rounded-full bg-indigo-600" aria-label="current module" />
-                ) : (
-                  <span className="h-2 w-2 rounded-full bg-slate-300" aria-label="upcoming module" />
-                )
-              ) : null}
             </Link>
           );
         })}

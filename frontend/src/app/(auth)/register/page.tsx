@@ -20,8 +20,10 @@ export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const validatePassword = (value: string) => {
@@ -38,9 +40,14 @@ export default function RegisterPage() {
       setPasswordError(validation);
       return;
     }
+    if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
+      return;
+    }
 
     setError(null);
     setPasswordError(null);
+    setConfirmPasswordError(null);
     setLoading(true);
 
     try {
@@ -86,14 +93,32 @@ export default function RegisterPage() {
               const next = event.target.value;
               setPassword(next);
               setPasswordError(validatePassword(next));
+              if (confirmPassword) {
+                setConfirmPasswordError(next === confirmPassword ? null : "Passwords do not match.");
+              }
+            }}
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-slate-600">Confirm password</label>
+          <input
+            type="password"
+            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
+            placeholder="Re-enter your password"
+            value={confirmPassword}
+            onChange={(event) => {
+              const next = event.target.value;
+              setConfirmPassword(next);
+              setConfirmPasswordError(next === password ? null : "Passwords do not match.");
             }}
           />
         </div>
         {passwordError ? <p className="text-xs text-amber-600">{passwordError}</p> : null}
+        {confirmPasswordError ? <p className="text-xs text-amber-600">{confirmPasswordError}</p> : null}
         {error ? <p className="text-xs text-red-500">{error}</p> : null}
         <button
           className="w-full rounded-xl bg-night text-white py-3 text-sm font-semibold disabled:opacity-60"
-          disabled={loading || Boolean(passwordError)}
+          disabled={loading || Boolean(passwordError) || Boolean(confirmPasswordError)}
         >
           {loading ? "Creating account..." : "Create account"}
         </button>
