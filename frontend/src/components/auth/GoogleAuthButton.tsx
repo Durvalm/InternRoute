@@ -26,6 +26,7 @@ type GoogleAccountsId = {
   renderButton: (
     parent: HTMLElement,
     options: {
+      type?: "standard" | "icon";
       theme?: "outline" | "filled_blue" | "filled_black";
       size?: "large" | "medium" | "small";
       text?: "signin_with" | "signup_with" | "continue_with";
@@ -120,18 +121,21 @@ export default function GoogleAuthButton({ mode, onError, disabled = false }: Go
 
     const renderGoogleButton = () => {
       target.innerHTML = "";
+      const width = Math.max(Math.min(Math.floor(target.clientWidth), 400), 280);
       googleAccountsId.renderButton(target, {
-        theme: "outline",
+        type: "standard",
+        theme: "filled_black",
         size: "large",
         text: mode === "signup" ? "signup_with" : "continue_with",
         shape: "rectangular",
-        width: Math.max(Math.floor(target.clientWidth), 320),
+        width,
         logo_alignment: "left",
       });
       setButtonMounted(true);
     };
 
     renderGoogleButton();
+    requestAnimationFrame(renderGoogleButton);
     // Let Google own the button node after first render; avoid churn that can break clicks in prod.
     return undefined;
   }, [mode, onError, router, scriptReady]);
@@ -159,13 +163,12 @@ export default function GoogleAuthButton({ mode, onError, disabled = false }: Go
             <span className="bg-white px-3 text-xs font-medium text-slate-500">or continue with</span>
           </div>
         </div>
-        <div
-          className={`rounded-xl border border-slate-300 bg-white px-3 py-2 ${isDisabled ? "pointer-events-none opacity-70" : ""}`}
-          aria-disabled={isDisabled}
-        >
-          <div ref={containerRef} className="flex min-h-[40px] w-full items-center justify-center overflow-hidden rounded-lg" />
+        <div className={`flex justify-center ${isDisabled ? "pointer-events-none opacity-70" : ""}`} aria-disabled={isDisabled}>
+          <div ref={containerRef} className="w-full max-w-[400px]" />
         </div>
-        {!buttonMounted ? <p className="text-xs text-slate-500">Loading Google sign-in...</p> : null}
+        {!buttonMounted ? (
+          <div className="mx-auto h-11 w-full max-w-[400px] animate-pulse rounded-xl border border-slate-200 bg-slate-50" />
+        ) : null}
       </div>
     </>
   );
