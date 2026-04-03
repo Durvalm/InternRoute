@@ -62,7 +62,7 @@ const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "").trim()
 
 export default function GoogleAuthButton({ mode, onError, disabled = false }: GoogleAuthButtonProps) {
   const router = useRouter();
-  const buttonRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const initializedRef = useRef(false);
   const submittingRef = useRef(false);
   const [scriptReady, setScriptReady] = useState(false);
@@ -77,11 +77,11 @@ export default function GoogleAuthButton({ mode, onError, disabled = false }: Go
   }, []);
 
   useEffect(() => {
-    if (!scriptReady || !GOOGLE_CLIENT_ID || !buttonRef.current) return;
+    if (!scriptReady || !GOOGLE_CLIENT_ID || !containerRef.current) return;
     if (!window.google?.accounts?.id) return;
 
     const googleAccountsId = window.google.accounts.id;
-    const target = buttonRef.current;
+    const target = containerRef.current;
 
     if (!initializedRef.current) {
       googleAccountsId.initialize({
@@ -132,22 +132,15 @@ export default function GoogleAuthButton({ mode, onError, disabled = false }: Go
     };
 
     renderGoogleButton();
-
-    const resizeObserver = new ResizeObserver(() => {
-      renderGoogleButton();
-    });
-    resizeObserver.observe(target);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
+    // Let Google own the button node after first render; avoid churn that can break clicks in prod.
+    return undefined;
   }, [mode, onError, router, scriptReady]);
 
   if (!GOOGLE_CLIENT_ID) {
     return null;
   }
 
-  const isDisabled = disabled || submitting || !buttonMounted;
+  const isDisabled = disabled || submitting;
 
   return (
     <>
@@ -166,41 +159,14 @@ export default function GoogleAuthButton({ mode, onError, disabled = false }: Go
             <span className="bg-white px-3 text-xs font-medium text-slate-500">or continue with</span>
           </div>
         </div>
-        <div className="relative">
-          <button
-            type="button"
-            disabled={isDisabled}
-            onClick={() => {
-              if (!buttonMounted) {
-                onError("Google sign-in is still loading.");
-              }
-            }}
-            className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-[17px] font-medium text-slate-800 transition-colors ${
-              isDisabled
-                ? "cursor-not-allowed opacity-70"
-                : "hover:bg-slate-50"
-            }`}
-          >
-            <GoogleGlyph />
-            <span>{mode === "signup" ? "Continue with Google" : "Continue with Google"}</span>
-          </button>
-          <div
-            ref={buttonRef}
-            className={`absolute inset-0 z-10 overflow-hidden rounded-xl opacity-0 ${disabled || submitting || !buttonMounted ? "pointer-events-none" : ""}`}
-          />
+        <div
+          className={`rounded-xl border border-slate-300 bg-white px-3 py-2 ${isDisabled ? "pointer-events-none opacity-70" : ""}`}
+          aria-disabled={isDisabled}
+        >
+          <div ref={containerRef} className="flex min-h-[40px] w-full items-center justify-center overflow-hidden rounded-lg" />
         </div>
+        {!buttonMounted ? <p className="text-xs text-slate-500">Loading Google sign-in...</p> : null}
       </div>
     </>
-  );
-}
-
-function GoogleGlyph() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 18 18" className="h-[18px] w-[18px] shrink-0">
-      <path fill="#EA4335" d="M9 3.48c1.69 0 2.84.73 3.49 1.34l2.54-2.54C13.49.84 11.44 0 9 0 5.48 0 2.44 2.02.96 4.96l2.95 2.29C4.62 5.14 6.62 3.48 9 3.48z" />
-      <path fill="#4285F4" d="M18 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h5.06c-.22 1.13-.87 2.09-1.84 2.73l2.82 2.18C16.68 14.24 18 11.98 18 9.2z" />
-      <path fill="#FBBC05" d="M3.91 10.74c-.18-.54-.28-1.12-.28-1.74s.1-1.2.28-1.74L.96 4.96C.35 6.18 0 7.55 0 9s.35 2.82.96 4.04l2.95-2.3z" />
-      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.82-2.18c-.78.52-1.78.82-3.14.82-2.38 0-4.38-1.66-5.09-3.88L.96 13.04C2.44 15.98 5.48 18 9 18z" />
-    </svg>
   );
 }
