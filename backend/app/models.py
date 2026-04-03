@@ -12,6 +12,9 @@ class User(db.Model):
   password_hash = db.Column(db.String(255), nullable=False)
   google_sub = db.Column(db.String(255), unique=True, nullable=True)
   password_login_enabled = db.Column(db.Boolean, nullable=False, default=True, server_default=db.text("true"))
+  email_verified = db.Column(db.Boolean, nullable=False, default=False, server_default=db.text("false"))
+  email_verified_at = db.Column(db.DateTime, nullable=True)
+  email_verification_sent_at = db.Column(db.DateTime, nullable=True)
   name = db.Column(db.String(120), nullable=True)
   coding_skill_level = db.Column(db.String(50), nullable=True)
   graduation_date = db.Column(db.Date, nullable=True)
@@ -38,6 +41,7 @@ class User(db.Model):
       "is_superuser": self.is_superuser,
       "onboarding_completed": self.onboarding_completed,
       "password_login_enabled": self.password_login_enabled,
+      "email_verified": self.email_verified,
     }
 
 

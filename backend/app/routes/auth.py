@@ -1,5 +1,6 @@
 import time
 import secrets
+from datetime import datetime
 from threading import Lock
 
 from flask import Blueprint, current_app, request, jsonify
@@ -16,12 +17,19 @@ from sqlalchemy.exc import IntegrityError
 from ..analytics import track_event
 from ..extensions import db
 from ..models import User, UserProgress
+from ..services.email import EmailDeliveryError
+from ..services.email_verification import (
+  EmailVerificationError,
+  decode_email_verification_token,
+  send_signup_verification_email,
+)
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 AUTH_RATE_LIMIT_WINDOW_SECONDS = 60
 AUTH_LOGIN_LIMIT_PER_WINDOW = 10
 AUTH_REGISTER_LIMIT_PER_WINDOW = 5
 AUTH_GOOGLE_LIMIT_PER_WINDOW = 10
+AUTH_RESEND_VERIFICATION_LIMIT_PER_WINDOW = 5
 _RATE_LIMIT_EVENTS: dict[str, list[float]] = {}
 _RATE_LIMIT_LOCK = Lock()
 
@@ -153,10 +161,15 @@ def register():
   if not email or not password:
     return jsonify({"error": "Email and password are required"}), 400
 
-  if User.query.filter_by(email=email).first():
+  existing_user = User.query.filter_by(email=email).first()
+  if existing_user:
+    if not bool(existing_user.email_verified):
+      return jsonify(
+        {"error": "Email is pending verification. Check your inbox or request a new link."}
+      ), 409
     return jsonify({"error": "Email already registered"}), 409
 
-  user = User(email=email)
+  user = User(email=email, email_verified=False)
   try:
     user.set_password(password)
   except ValueError:
@@ -171,12 +184,34 @@ def register():
     db.session.rollback()
     return jsonify({"error": "Email already registered"}), 409
 
+  email_delivery = "sent"
+  try:
+    send_signup_verification_email(user)
+    user.email_verification_sent_at = datetime.utcnow()
+    db.session.commit()
+  except EmailDeliveryError:
+    current_app.logger.exception(
+      "Signup verification email delivery failed for user_id=%s email=%s",
+      user.id,
+      user.email,
+    )
+    email_delivery = "failed"
+
   track_event(
-    "signup_completed",
+    "signup_started",
     user_id=user.id,
     properties={"auth_method": "email_password"},
   )
-  return _auth_success_response(user)
+  payload = {
+    "requires_email_verification": True,
+    "email": user.email,
+    "email_delivery": email_delivery,
+  }
+  if email_delivery == "failed":
+    payload["message"] = (
+      "Account created, but verification email failed to send. Request a new verification email."
+    )
+  return jsonify(payload), 202
 
 @bp.post("/login")
 def login():
@@ -200,6 +235,8 @@ def login():
     return jsonify({"error": "This account uses Google sign-in. Continue with Google."}), 400
   if not user or not user.check_password(password):
     return jsonify({"error": "Invalid credentials"}), 401
+  if not bool(user.email_verified):
+    return jsonify({"error": "Email not verified. Check your inbox for the verification link."}), 403
 
   if _sync_superuser_flag(user):
     db.session.commit()
@@ -250,6 +287,8 @@ def google_auth():
       name=google_user["name"],
       google_sub=google_user["sub"],
       password_login_enabled=False,
+      email_verified=True,
+      email_verified_at=datetime.utcnow(),
     )
     user.set_password(secrets.token_urlsafe(32))
     _sync_superuser_flag(user)
@@ -264,6 +303,9 @@ def google_auth():
     user.google_sub = google_user["sub"]
     if not user.name and google_user["name"]:
       user.name = google_user["name"]
+    if not bool(user.email_verified):
+      user.email_verified = True
+      user.email_verified_at = datetime.utcnow()
     _sync_superuser_flag(user)
 
   db.session.commit()
@@ -282,6 +324,90 @@ def google_auth():
     )
 
   return _auth_success_response(user)
+
+
+@bp.post("/email-verification/resend")
+def resend_email_verification():
+  retry_after = _check_auth_rate_limit(
+    "resend_email_verification",
+    limit=AUTH_RESEND_VERIFICATION_LIMIT_PER_WINDOW,
+    window_seconds=AUTH_RATE_LIMIT_WINDOW_SECONDS,
+  )
+  if retry_after is not None:
+    return _rate_limited_response(
+      "Too many verification email requests. Try again soon.",
+      retry_after,
+    )
+
+  data = request.get_json() or {}
+  email = (data.get("email") or "").strip().lower()
+  if not email:
+    return jsonify({"error": "Email is required"}), 400
+
+  user = User.query.filter_by(email=email).first()
+  if user is None:
+    return jsonify({"ok": True}), 200
+  if bool(user.email_verified):
+    return jsonify({"ok": True}), 200
+  if not bool(user.password_login_enabled):
+    return jsonify({"error": "This account uses Google sign-in. Continue with Google."}), 400
+
+  resend_cooldown_seconds = int(
+    current_app.config.get("EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS", 60)
+  )
+  if user.email_verification_sent_at is not None:
+    elapsed_seconds = (datetime.utcnow() - user.email_verification_sent_at).total_seconds()
+    if elapsed_seconds < resend_cooldown_seconds:
+      retry_after = max(1, int(resend_cooldown_seconds - elapsed_seconds))
+      return _rate_limited_response(
+        "Please wait before requesting another verification email.",
+        retry_after,
+      )
+
+  try:
+    send_signup_verification_email(user)
+    user.email_verification_sent_at = datetime.utcnow()
+    db.session.commit()
+  except EmailDeliveryError:
+    current_app.logger.exception(
+      "Resend verification email failed for user_id=%s email=%s",
+      user.id,
+      user.email,
+    )
+    return jsonify({"error": "Could not send verification email right now. Please try again."}), 503
+
+  return jsonify({"ok": True}), 200
+
+
+@bp.post("/email-verification/confirm")
+def confirm_email_verification():
+  data = request.get_json() or {}
+  token = (data.get("token") or "").strip()
+  if not token:
+    return jsonify({"error": "token is required"}), 400
+
+  try:
+    token_payload = decode_email_verification_token(token)
+  except EmailVerificationError as exc:
+    return jsonify({"error": str(exc)}), 400
+
+  user = User.query.get(token_payload.user_id)
+  if user is None or user.email != token_payload.email:
+    return jsonify({"error": "This verification link is invalid."}), 400
+
+  if bool(user.email_verified):
+    return jsonify({"ok": True, "already_verified": True}), 200
+
+  user.email_verified = True
+  user.email_verified_at = datetime.utcnow()
+  db.session.commit()
+
+  track_event(
+    "signup_completed",
+    user_id=user.id,
+    properties={"auth_method": "email_password"},
+  )
+  return jsonify({"ok": True, "already_verified": False}), 200
 
 
 @bp.post("/logout")

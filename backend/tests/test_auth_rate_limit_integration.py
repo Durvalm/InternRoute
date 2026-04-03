@@ -13,7 +13,7 @@ def test_register_rate_limited(client, app):
       "/auth/register",
       json={"email": "rate-limit-a@example.com", "password": "password123"},
     )
-    assert first.status_code == 200
+    assert first.status_code == 202
 
     second = client.post(
       "/auth/register",

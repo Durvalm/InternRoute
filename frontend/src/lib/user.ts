@@ -8,6 +8,7 @@ export type StoredUser = {
   is_superuser?: boolean;
   onboarding_completed: boolean;
   password_login_enabled?: boolean;
+  email_verified?: boolean;
 };
 
 const USER_KEY = "internroute_user";

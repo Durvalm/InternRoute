@@ -1,32 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { apiRequest } from "@/lib/api";
+import { ApiError, apiRequest } from "@/lib/api";
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
-import { setUser as storeUser } from "@/lib/user";
 
-type AuthResponse = {
-  user: {
-    id: number;
-    email: string;
-    name: string | null;
-    graduation_date: string | null;
-    is_superuser: boolean;
-    onboarding_completed: boolean;
-    password_login_enabled?: boolean;
-  };
+type RegisterResponse = {
+  requires_email_verification: boolean;
+  email: string;
+  email_delivery: "sent" | "failed";
+  message?: string;
 };
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [awaitingVerification, setAwaitingVerification] = useState(false);
 
   const validatePassword = (value: string) => {
     if (new TextEncoder().encode(value).length > 72) {
@@ -48,26 +43,80 @@ export default function RegisterPage() {
     }
 
     setError(null);
+    setNotice(null);
     setPasswordError(null);
     setConfirmPasswordError(null);
     setLoading(true);
 
     try {
-      const data = await apiRequest<AuthResponse>("/auth/register", {
+      const data = await apiRequest<RegisterResponse>("/auth/register", {
         method: "POST",
         body: JSON.stringify({ email, password }),
         skipAuthRedirect: true,
       });
-      storeUser(data.user);
-      router.push(data.user.onboarding_completed ? "/dashboard" : "/onboarding");
+      setEmail(data.email || email.trim().toLowerCase());
+      setAwaitingVerification(Boolean(data.requires_email_verification));
+      setNotice(
+        data.email_delivery === "failed"
+          ? data.message || "Account created, but verification email failed to send. Request a new link."
+          : `Verification email sent to ${data.email}.`,
+      );
     } catch (err) {
       const message =
-        err instanceof Error && err.message ? err.message : "Could not create account. Try another email.";
+        err instanceof ApiError ? err.message : "Could not create account. Try another email.";
       setError(message);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleResend = async () => {
+    if (!email.trim()) return;
+    setError(null);
+    setNotice(null);
+    setResending(true);
+
+    try {
+      await apiRequest<{ ok: boolean }>("/auth/email-verification/resend", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+        skipAuthRedirect: true,
+      });
+      setNotice(`Verification email sent to ${email}.`);
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Could not resend verification email. Try again.";
+      setError(message);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  if (awaitingVerification) {
+    return (
+      <div className="rounded-2xl border border-white/60 bg-white/90 p-8 shadow-soft">
+        <h1 className="text-2xl font-semibold">Verify your email</h1>
+        <p className="mt-2 text-sm text-slate-500">
+          Finish signup by opening the verification link sent to <span className="font-medium text-slate-700">{email}</span>.
+        </p>
+        {notice ? <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{notice}</p> : null}
+        {error ? <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p> : null}
+        <div className="mt-6 flex gap-3">
+          <button
+            className="rounded-xl bg-night px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            disabled={resending}
+            onClick={handleResend}
+            type="button"
+          >
+            {resending ? "Sending..." : "Resend email"}
+          </button>
+          <a className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" href="/login">
+            Go to sign in
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl bg-white/90 p-8 shadow-soft border border-white/60">
@@ -118,6 +167,7 @@ export default function RegisterPage() {
         {passwordError ? <p className="text-xs text-amber-600">{passwordError}</p> : null}
         {confirmPasswordError ? <p className="text-xs text-amber-600">{confirmPasswordError}</p> : null}
         {error ? <p className="text-xs text-red-500">{error}</p> : null}
+        {notice ? <p className="text-xs text-emerald-600">{notice}</p> : null}
         <button
           className="w-full rounded-xl bg-night text-white py-3 text-sm font-semibold disabled:opacity-60"
           disabled={loading || Boolean(passwordError) || Boolean(confirmPasswordError)}

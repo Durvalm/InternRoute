@@ -15,6 +15,7 @@ type AuthResponse = {
     is_superuser: boolean;
     onboarding_completed: boolean;
     password_login_enabled?: boolean;
+    email_verified?: boolean;
   };
 };
 
@@ -26,6 +27,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const passwordChanged = searchParams.get("reason") === "password_changed";
+  const emailVerified = searchParams.get("reason") === "email_verified";
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -55,6 +57,11 @@ export default function LoginPage() {
       {passwordChanged ? (
         <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
           Password updated. Please sign in again.
+        </p>
+      ) : null}
+      {emailVerified ? (
+        <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+          Email verified. You can now sign in.
         </p>
       ) : null}
 

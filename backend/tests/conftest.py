@@ -7,6 +7,8 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-key")
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("SUPERUSER_EMAILS", "")
+os.environ.setdefault("EMAIL_DELIVERY_MODE", "log")
+os.environ.setdefault("FRONTEND_APP_URL", "http://localhost:3000")
 
 from app import create_app  # noqa: E402
 from app.extensions import db  # noqa: E402
@@ -49,6 +51,7 @@ def app():
 
     user = User(email="student@example.com")
     user.set_password("password123")
+    user.email_verified = True
     db.session.add(user)
     db.session.flush()
     db.session.add(UserProgress(user_id=user.id))

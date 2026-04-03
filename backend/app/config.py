@@ -124,6 +124,39 @@ class Config:
 
   GOOGLE_CLIENT_ID = _env_optional_str("GOOGLE_CLIENT_ID")
 
+  EMAIL_DELIVERY_MODE = _env_str("EMAIL_DELIVERY_MODE", "log").lower()
+  EMAIL_FROM_ADDRESS = _env_optional_str("EMAIL_FROM_ADDRESS")
+  EMAIL_FROM_NAME = _env_str("EMAIL_FROM_NAME", "InternRoute")
+  SMTP_HOST = _env_optional_str("SMTP_HOST")
+  SMTP_PORT = _env_int("SMTP_PORT", 587)
+  SMTP_USERNAME = _env_optional_str("SMTP_USERNAME")
+  SMTP_PASSWORD = _env_optional_str("SMTP_PASSWORD")
+  SMTP_USE_TLS = _env_bool("SMTP_USE_TLS", default=True)
+  SMTP_USE_SSL = _env_bool("SMTP_USE_SSL", default=False)
+  if SMTP_USE_SSL and SMTP_USE_TLS:
+    raise RuntimeError("Configure either SMTP_USE_SSL or SMTP_USE_TLS, not both.")
+  if EMAIL_DELIVERY_MODE not in {"log", "smtp", "disabled"}:
+    raise RuntimeError("EMAIL_DELIVERY_MODE must be one of: log, smtp, disabled.")
+  if EMAIL_DELIVERY_MODE == "smtp":
+    if not SMTP_HOST:
+      raise RuntimeError("SMTP_HOST is required when EMAIL_DELIVERY_MODE=smtp.")
+    if not EMAIL_FROM_ADDRESS:
+      raise RuntimeError("EMAIL_FROM_ADDRESS is required when EMAIL_DELIVERY_MODE=smtp.")
+
+  EMAIL_VERIFICATION_TOKEN_TTL_SECONDS = _env_int(
+    "EMAIL_VERIFICATION_TOKEN_TTL_SECONDS",
+    60 * 60 * 24,
+  )
+  EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS = _env_int(
+    "EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS",
+    60,
+  )
+  FRONTEND_APP_URL = _env_optional_str("FRONTEND_APP_URL") or (
+    CORS_ALLOWED_ORIGINS[0] if CORS_ALLOWED_ORIGINS else None
+  )
+  if IS_PRODUCTION and not FRONTEND_APP_URL:
+    raise RuntimeError("FRONTEND_APP_URL is required when APP_ENV=production.")
+
   POSTHOG_API_KEY = (os.getenv("POSTHOG_API_KEY") or "").strip()
   POSTHOG_HOST = _env_str("POSTHOG_HOST", "https://us.i.posthog.com").rstrip("/")
   ANALYTICS_APP_VERSION = (

@@ -46,6 +46,7 @@ type AuthResponse = {
     is_superuser: boolean;
     onboarding_completed: boolean;
     password_login_enabled?: boolean;
+    email_verified?: boolean;
   };
 };
 
