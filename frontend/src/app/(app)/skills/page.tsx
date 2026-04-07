@@ -5,12 +5,13 @@ import dynamic from "next/dynamic";
 import {
   BookOpen,
   CheckCircle2,
-  ChevronRight,
   Clock3,
-  Code2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
   Loader2,
-  Play,
-  TerminalSquare
+  Play
 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 
@@ -183,6 +184,17 @@ const CHALLENGE_FALLBACKS: ChallengeUI[] = [
     whatToReturn: "Return a list of groups, where each group is a list of anagram words.",
     supportedFamilies: ["python", "javascript", "typescript", "java", "cpp", "csharp", "go", "rust", "kotlin", "swift", "php", "ruby"]
   }
+];
+
+type LearningGuideStep = {
+  id: string;
+  label: string;
+};
+
+const LEARNING_GUIDE_STEPS: LearningGuideStep[] = [
+  { id: "how-to-learn", label: "How to Learn" },
+  { id: "courses", label: "Courses" },
+  { id: "why-python", label: "Why Python?" }
 ];
 
 function titleFromChallengeId(challengeId: string): string {
@@ -657,6 +669,8 @@ export default function SkillsPage() {
   const [runResult, setRunResult] = useState<RunResponse | null>(null);
   const [submitResult, setSubmitResult] = useState<SubmitResponse | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [learningGuideOpen, setLearningGuideOpen] = useState(true);
+  const [activeLearningStepIndex, setActiveLearningStepIndex] = useState(0);
 
   const activeChallenge = useMemo(
     () => challenges.find((challenge) => challenge.id === activeChallengeId) || challenges[0] || CHALLENGE_FALLBACKS[0],
@@ -685,6 +699,8 @@ export default function SkillsPage() {
     (count, challenge) => count + (completionMap[challenge.id] ? 1 : 0),
     0
   );
+  const activeLearningStep = LEARNING_GUIDE_STEPS[activeLearningStepIndex] ?? LEARNING_GUIDE_STEPS[0];
+  const learningStepNumber = activeLearningStepIndex + 1;
 
   const refreshCodingProgress = useCallback(async () => {
     setLoadingProgress(true);
@@ -843,290 +859,80 @@ export default function SkillsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pb-16 space-y-7">
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
-        <div className="grid grid-cols-1 xl:grid-cols-[1.65fr_1fr] gap-6">
-          <div>
-            <div className="inline-flex items-center gap-3">
-              <span className="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-bold tracking-wider uppercase">
-                Module 02
-              </span>
-              <span className="text-sm font-medium text-slate-500">The Foundation</span>
-            </div>
-
-            <h1 className="mt-4 text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-              The 2 Skills You Need
-            </h1>
-            <p className="mt-3 max-w-3xl text-xs md:text-sm leading-relaxed text-slate-600">
-              To get your next internship, you need to master two specific areas.
-              We split them into separate modules so you can focus.
-            </p>
-
-            <div className="mt-9 relative pl-10 space-y-9">
-              <div className="absolute left-4 top-1 bottom-1 w-px bg-indigo-200" />
-
-              <article className="relative">
-                <span className="absolute -left-[30px] top-1 h-5 w-5 rounded-full bg-indigo-500 ring-4 ring-indigo-100" />
-                <h2 className="text-base md:text-lg font-bold text-indigo-900">1. Programming Language (Python Recommended)</h2>
-                <div className="mt-2 inline-flex items-center gap-2 text-indigo-600 text-xs md:text-sm font-semibold">
-                  <Clock3 size={22} />
-                  ~2 Months
-                </div>
-                <p className="mt-2 text-xs md:text-sm leading-relaxed text-slate-600">
-                  Your main tool for coding interviews, scripts, and logic. We recommend Python to start faster,
-                  but you can choose any language and follow the exact same learning process.
-                </p>
-                <p className="text-xs md:text-sm font-semibold text-indigo-700">
-                  This module uses Python examples, but the strategy works for any language.
-                </p>
-              </article>
-
-              <article className="relative opacity-60">
-                <span className="absolute -left-[30px] top-1 h-5 w-5 rounded-full bg-slate-300" />
-                <h2 className="text-base md:text-lg font-bold text-slate-700">2. Backend Development</h2>
-                <div className="mt-2 inline-flex items-center gap-2 text-slate-500 text-xs md:text-sm font-semibold">
-                  <Clock3 size={22} />
-                  ~4 Months
-                </div>
-                <p className="mt-2 text-xs md:text-sm leading-relaxed text-slate-600">
-                  APIs, Databases, Frameworks, Git. This is how you build real software.
-                </p>
-                <p className="text-xs md:text-sm italic text-slate-500">Covered in the "Projects" module.</p>
-              </article>
-            </div>
-          </div>
-
-          <aside className="rounded-3xl bg-[#201b56] text-white p-6 md:p-8 border border-indigo-950/30 relative overflow-hidden">
-            <div className="absolute -right-8 -top-8 text-indigo-300/15">
-              <TerminalSquare size={180} />
-            </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-lg md:text-xl font-bold">Why Start with Python?</h3>
-                <span className="rounded-full bg-yellow-400 text-slate-900 text-xs font-bold px-3 py-1 uppercase tracking-wide">
-                  Recommended
-                </span>
-              </div>
-              <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
-                It has the <strong>easiest syntax</strong>, letting you focus on logic, not semicolons.
-              </p>
-              <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
-                <strong>Insider Tip:</strong> This also opens Data/AI internship tracks where competition can differ from general SWE.
-              </p>
-              <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
-                Plus, Python is a common language for coding interviews.
-              </p>
-              <p className="mt-3 text-xs md:text-sm leading-relaxed text-indigo-100">
-                Recommendation, not restriction: JavaScript, Java, C++, and others are all valid.
-                Whatever plan you follow for Python, you can apply the same plan to any language.
-              </p>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white p-4 md:p-5 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-700">Fast Track</p>
-            <h2 className="mt-1 text-base md:text-lg font-bold text-slate-900">
-              Already good at basic coding?
-            </h2>
-            <p className="mt-1 text-xs md:text-sm text-slate-700">
-              Solve the challenges below to prove it, then move to the next module.
-            </p>
-          </div>
-          <a
-            href="#readiness-check"
-            className="inline-flex items-center justify-center rounded-full bg-emerald-600 text-white px-4 py-2 text-xs font-semibold hover:bg-emerald-700 transition-colors"
-          >
-            Go to Challenges
-          </a>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <BookOpen size={24} className="text-indigo-600" />
-            <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">How to Learn</h2>
-          </div>
-        </div>
-
-        <article className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-600">Learning Playbook</p>
-              <h3 className="mt-1 text-lg font-bold text-slate-900">How to Actually Learn Coding</h3>
-              <p className="mt-2 text-xs md:text-sm leading-relaxed text-slate-600 max-w-3xl">
-                Start with a course to learn syntax and basic programming. Hopefully this course has lots of challenges, if not, then use a proactive approach: every time you
-                learn something new, think of a small challenge or mini program using that concept, and implement it.
-                That is how concepts turn into real coding skill.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">The Practical Loop</p>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] md:text-xs font-semibold text-slate-700">
-                <span className="rounded-full bg-white border border-slate-200 px-2.5 py-1">1. Learn concept in course</span>
-                <span className="text-slate-400">→</span>
-                <span className="rounded-full bg-white border border-slate-200 px-2.5 py-1">2. Think small challenges</span>
-                <span className="text-slate-400">→</span>
-                <span className="rounded-full bg-white border border-slate-200 px-2.5 py-1">3. Implement it yourself</span>
-                <span className="text-slate-400">→</span>
-                <span className="rounded-full bg-white border border-slate-200 px-2.5 py-1">4. Solve more, go harder</span>
-              </div>
-
-              <ul className="mt-3 space-y-2 text-xs md:text-sm text-slate-700">
-                <li>
-                  <strong>Do a Python course first</strong> (or your preferred language) to learn the basic syntax and programming foundations.
-                </li>
-                <li>
-                  <strong>Do a lot of challenges:</strong> this should be your default habit while learning.
-                </li>
-                <li>
-                  <strong>If your course has low practice volume,</strong> add extra coding challenges, look up some basic challenges online and start solving from easy to hard.
-                </li>
-              </ul>
-            </div>
-
-            <div className="rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-4">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">Real Learning Example</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-700">
-                When I was learning to code, I took a course that required me to solve around <strong>40 challenges</strong>.
-                If I could not solve one, the instructor walked through the solution step by step.
-              </p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-700">
-                We started from basic calculator and miles-to-kilometers converter type problems, then progressed to
-                bigger implementations like a full Blackjack game and simulation-style problems.
-              </p>
-            </div>
-          </div>
-
-
-        </article>
-
-        <article className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
-          <p className="text-xs md:text-sm leading-relaxed text-indigo-900">
-            We have an IDE below for you to code and solve small challenges. These are not hard challenges, and you
-            should be able to solve at least the first 4 with ease.
-          </p>
-        </article>
-
-        <div className="flex items-center gap-3">
-          <BookOpen size={20} className="text-indigo-600" />
-          <h3 className="text-base md:text-lg font-bold text-slate-900">Recommended Courses</h3>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wider text-amber-600">Paid Option</p>
-            <h3 className="mt-2 text-lg font-bold text-slate-900">The Art of Doing (Python Course)</h3>
-            <p className="mt-3 text-xs leading-relaxed text-slate-600">
-              Strongly recommended if you can get it. It includes many challenge-style exercises and actively forces
-              implementation, not just passive watching.
-            </p>
-            <p className="mt-3 text-xs leading-relaxed text-slate-700">
-              Great for challenge-based learning because the instructor walks through solutions when you get stuck.
-              Use the same method in any language: learn concept, solve challenge, repeat.
-            </p>
-            <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between gap-4">
-              <p className="text-xs font-semibold text-slate-500">Udemy Course</p>
-              <a
-                href="https://www.udemy.com/course/the-art-of-doing/"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-indigo-600 text-sm font-bold"
-              >
-                View Course <ChevronRight size={20} />
-              </a>
-            </div>
-          </article>
-
-          <article className="rounded-2xl border border-indigo-200 bg-white p-6 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Free Option</p>
-            <h3 className="mt-2 text-lg font-bold text-slate-900">FreeCodeCamp Python</h3>
-            <p className="mt-3 text-xs leading-relaxed text-slate-600">
-              Excellent free full course on YouTube. Learn actively: pause often, run every concept in your IDE,
-              and type everything yourself instead of only watching.
-            </p>
-            <p className="mt-3 text-xs leading-relaxed text-slate-700">
-              This one has fewer built-in challenges than the paid option, so you should add extra online coding
-              challenges while learning. Keep the same challenge-first approach from easy to hard.
-            </p>
-            <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between gap-4">
-              <p className="text-xs font-semibold text-slate-500">YouTube</p>
-              <a
-                href="https://www.youtube.com/watch?v=rfscVS0vtbw"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-indigo-600 text-sm font-bold"
-              >
-                Watch Video <ChevronRight size={20} />
-              </a>
-            </div>
-          </article>
-        </div>
-
-      </section>
-
+    <div className="max-w-7xl mx-auto pb-16 space-y-6">
       <section id="readiness-check" className="space-y-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <div className="flex items-center gap-2">
-              <Code2 size={24} className="text-slate-700" />
-              <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">Readiness Check</h2>
-            </div>
-            <p className="mt-1 text-xs md:text-sm text-slate-500">
-              Solve the five fixed challenges to unlock measurable coding progress.
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-indigo-700">
+              Module 02
+            </span>
+            <span className="text-sm font-semibold text-slate-500">The Foundation</span>
+          </div>
+
+          <div className="mt-4">
+            <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">Coding Skills</h1>
+            <p className="mt-2 text-sm text-slate-600 max-w-4xl">
+              Your main tool for coding interviews, scripts, and logic. Pass the 5 challenges to complete this module.
+            </p>
+            <p className="mt-1 text-xs text-slate-500 max-w-4xl">
+              Part of the 2 core skills track: coding now, backend depth next in Projects.
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 min-w-[210px] shadow-sm">
-            <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Progress</p>
-            <div className="mt-1 flex items-center justify-between gap-3">
-              <p className="text-xl font-bold text-indigo-600">
-                {loadingProgress ? "..." : `${completedCount}/${totalChallenges}`}
-              </p>
-              <div className="h-3 flex-1 rounded-full bg-slate-100 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-indigo-500"
-                  style={{ width: `${totalChallenges > 0 ? (completedCount / totalChallenges) * 100 : 0}%` }}
-                />
+
+          <div className="mt-6 relative pl-8 space-y-6">
+            <div className="absolute left-2.5 top-2 bottom-2 w-px bg-indigo-200" />
+
+            <article className="relative">
+              <span className="absolute -left-[29px] top-1.5 h-5 w-5 rounded-full bg-indigo-600 ring-4 ring-indigo-100" />
+              <h2 className="text-xl font-semibold text-indigo-900">1. Programming Language (Python Recommended)</h2>
+              <div className="mt-1.5 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">
+                <Clock3 size={16} />
+                ~2 Months
               </div>
-            </div>
+              <p className="mt-2 text-sm text-slate-600">
+                Your main tool for coding interviews, scripts, and logic. We recommend Python to start faster, but
+                you can choose any language and follow the exact same learning process.
+              </p>
+              <p className="mt-1 text-sm font-semibold text-indigo-700">
+                This module uses Python examples, but the strategy works for any language.
+              </p>
+            </article>
+
+            <article className="relative opacity-65">
+              <span className="absolute -left-[29px] top-1.5 h-5 w-5 rounded-full bg-slate-300" />
+              <h2 className="text-xl font-semibold text-slate-600">2. Backend Development</h2>
+              <div className="mt-1.5 inline-flex items-center gap-2 text-sm font-semibold text-slate-500">
+                <Clock3 size={16} />
+                ~4 Months
+              </div>
+              <p className="mt-2 text-sm text-slate-500">APIs, Databases, Frameworks. This is how you build real software.</p>
+              <p className="mt-1 text-sm italic text-slate-400">Covered in the &quot;Projects&quot; module.</p>
+            </article>
           </div>
         </div>
 
-        <article className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 md:p-5 shadow-sm">
-          <h3 className="text-sm md:text-base font-bold text-amber-900">How to Use This 5-Challenge Checkpoint</h3>
-          <p className="mt-2 text-xs md:text-sm leading-relaxed text-amber-900/90">
-            You should be comfortable solving at least the first 4 challenges. If not, that's when you know to keep learning more basic coding and solving more basic problems before moving on.
-          </p>
-          <p className="mt-2 text-xs md:text-sm leading-relaxed text-amber-900/90">
-            The 5th challenge is intentionally trickier. Try to solve it first; if you cannot, I don't blame you for looking up how t solve it and the idea behind it, it's a known challenge in the community.
-          </p>
-        </article>
-
-        <article className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 md:p-5 shadow-sm">
-          <h3 className="text-sm md:text-base font-bold text-indigo-900">Challenge Rules (Read This First)</h3>
-          <p className="mt-2 text-xs md:text-sm leading-relaxed text-indigo-900/90">
-            Don&apos;t use AI for this. Coding skills are the bare minimum, you need to have this on locks to move on.
-          </p>
-          <ul className="mt-3 space-y-2 text-xs md:text-sm text-slate-700 list-disc pl-5">
-            <li>Implement your code inside the pre-defined function signature shown in the challenge and return the necessary value to solve the problem.</li>
+        <details className="rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 group">
+          <summary className="list-none cursor-pointer text-sm leading-relaxed text-amber-900">
+            <span className="font-semibold">Before you start:</span>{" "}
+            Don&apos;t use AI for these. Coding ability is the bare minimum - you need to genuinely own it.
+            Solve inside the function, run tests, debug, submit when stable.
+            <span className="ml-1 font-medium text-amber-800 underline group-open:hidden">See full rules</span>
+            <span className="ml-1 font-medium text-amber-800 underline hidden group-open:inline">Hide rules</span>
+          </summary>
+          <ul className="mt-3 space-y-2 text-sm text-amber-900/90 list-disc pl-5">
+            <li>Implement your code inside the pre-defined function signature and return the required value.</li>
             <li>Use your IDE actively: write code, click Run Code, read errors/output, and iterate.</li>
             <li>If your code is not working, check the error message, debug, and keep trying.</li>
-            <li>Submit only when your local runs are stable and your output matches the expected behavior.</li>
+            <li>Submit only when local runs are stable and your output matches expected behavior.</li>
+            <li>Challenge #5 is intentionally harder. Try it first - if you can&apos;t, it&apos;s okay to look up the concept.</li>
           </ul>
-        </article>
+        </details>
 
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-          <div className="grid grid-cols-1 lg:grid-cols-[260px_330px_minmax(0,1fr)] min-h-[640px]">
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-[250px_minmax(0,1fr)] min-h-[680px]">
             <aside className="border-r border-slate-200 bg-slate-50">
-              <div className="px-4 py-3 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
-                Problem List
+              <div className="px-4 py-3 border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Problem list
               </div>
               <div>
                 {challenges.map((challenge) => {
@@ -1137,15 +943,14 @@ export default function SkillsPage() {
                       key={challenge.id}
                       type="button"
                       onClick={() => setActiveChallengeId(challenge.id)}
-                      className={`w-full text-left px-4 py-3 border-b border-slate-200 transition-colors ${active ? "bg-white border-l-4 border-l-indigo-500" : "hover:bg-white/70"
-                        }`}
+                      className={`w-full text-left px-4 py-3 border-b border-slate-200 transition-colors ${
+                        active ? "bg-white border-l-4 border-l-indigo-600" : "hover:bg-white"
+                      }`}
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="text-xs font-semibold text-slate-400">#{challenge.order}</p>
-                          <p className={`text-sm font-bold ${active ? "text-indigo-900" : "text-slate-700"}`}>
-                            {challenge.title}
-                          </p>
+                          <p className={`text-sm font-semibold leading-tight ${active ? "text-indigo-700" : "text-slate-800"}`}>{challenge.title}</p>
                         </div>
                         {completed ? <CheckCircle2 size={16} className="text-emerald-600 mt-0.5" /> : null}
                       </div>
@@ -1155,62 +960,24 @@ export default function SkillsPage() {
               </div>
             </aside>
 
-            <aside className="border-r border-slate-200 bg-white p-4 md:p-5 space-y-4 overflow-auto">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
-                      Easy
-                    </span>
-                    <span className="text-xs font-semibold text-slate-500">Problem {activeChallenge.order}</span>
-                  </div>
-                  <h3 className="text-base font-bold text-slate-900 leading-tight">{activeChallenge.title}</h3>
-                  <p className="text-xs leading-relaxed text-slate-600">{activeChallenge.description}</p>
-                </div>
-
-                <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Function Signature</p>
-                  <pre className="mt-1 text-xs font-mono whitespace-pre-wrap break-words text-indigo-800">
-                    {activeSignature}
-                  </pre>
-                </div>
-
-                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900">
-                  <p className="font-semibold">What to return</p>
-                  <p className="mt-1">{activeChallenge.whatToReturn}</p>
-                  <p className="mt-2 text-xs text-indigo-700">
-                    Do not print inside your final solution unless the signature says so. Return the value.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Examples</p>
-                  {activeChallenge.examples.map((example, index) => (
-                    <div key={`${activeChallenge.id}-example-${index}`} className="rounded-lg border border-slate-200 bg-white p-3">
-                      <p className="text-xs font-semibold text-slate-500">Example {index + 1}</p>
-                      <p className="mt-1 text-xs font-semibold text-slate-700">Input</p>
-                      <pre className="text-xs font-mono whitespace-pre-wrap break-words text-slate-700">{example.input}</pre>
-                      <p className="mt-2 text-xs font-semibold text-slate-700">Output</p>
-                      <pre className="text-xs font-mono whitespace-pre-wrap break-words text-slate-700">{example.output}</pre>
-                      {example.explanation ? <p className="mt-2 text-xs text-slate-600">{example.explanation}</p> : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </aside>
-
             <div className="flex flex-col min-w-0">
-              <div className="p-4 md:p-5 border-b border-slate-200">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-xs text-slate-600">
-                    Implement <span className="font-mono font-semibold text-slate-800">{activeChallenge.functionName}(...)</span> and return the required value.
-                  </p>
+              <div className="border-b border-slate-200 bg-white p-4 md:p-5 space-y-4">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                        Checkpoint
+                      </span>
+                      <span className="text-xs font-semibold text-slate-500">Problem {activeChallenge.order}</span>
+                    </div>
+                    <h2 className="mt-2 text-2xl font-semibold text-slate-900">{activeChallenge.title}</h2>
+                    <p className="mt-1 text-sm text-slate-600 max-w-3xl">{activeChallenge.description}</p>
+                  </div>
+
                   <div className="flex items-center gap-2">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      Language
-                    </label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Language</label>
                     <select
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700"
+                      className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700"
                       disabled={loadingLanguages || !availableLanguages.length}
                       value={selectedLanguageId ?? ""}
                       onChange={(event) => setSelectedLanguageId(Number(event.target.value))}
@@ -1224,9 +991,30 @@ export default function SkillsPage() {
                     </select>
                   </div>
                 </div>
+
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="text-[11px] uppercase tracking-wide font-semibold text-slate-500">Function signature</p>
+                  <pre className="mt-1 text-xs font-mono whitespace-pre-wrap break-words text-indigo-700">{activeSignature}</pre>
+                </div>
+
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50/60 p-3 text-sm text-indigo-900">
+                  <p className="font-semibold">What to return</p>
+                  <p className="mt-1">{activeChallenge.whatToReturn}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {activeChallenge.examples.slice(0, 2).map((example, index) => (
+                    <div key={`${activeChallenge.id}-example-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{index === 0 ? "Input" : "Expected output"}</p>
+                      <pre className="mt-1 text-xs font-mono whitespace-pre-wrap break-words text-slate-700">
+                        {index === 0 ? example.input : example.output}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="bg-[#231f5a] text-indigo-100 p-0 font-mono relative h-[330px] md:h-[380px] lg:h-[420px]">
+              <div className="bg-indigo-950 text-indigo-100 p-0 font-mono relative h-[320px] md:h-[380px] lg:h-[430px]">
                 {selectedLanguage ? (
                   <MonacoEditor
                     height="100%"
@@ -1252,22 +1040,22 @@ export default function SkillsPage() {
 
               <div className="border-t border-slate-200 bg-white px-5 py-4 space-y-3">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-sm text-slate-500 font-mono">// Ready to run...</p>
+                  <p className="text-sm text-slate-500 font-mono">// Ready to run</p>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={handleRun}
                       disabled={running || submitting || loadingLanguages || !selectedLanguageId}
-                      className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-indigo-700 text-sm font-bold hover:bg-indigo-100 transition-colors disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2 text-indigo-700 text-sm font-semibold hover:bg-indigo-100 transition-colors disabled:opacity-60"
                     >
                       {running ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-                      Run Samples
+                      Run Code
                     </button>
                     <button
                       type="button"
                       onClick={handleSubmit}
                       disabled={running || submitting || loadingLanguages || !selectedLanguageId}
-                      className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-white text-sm font-bold hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-60"
                     >
                       {submitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                       Submit
@@ -1276,14 +1064,14 @@ export default function SkillsPage() {
                 </div>
 
                 {apiError ? (
-                  <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{apiError}</p>
+                  <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{apiError}</p>
                 ) : null}
 
                 {runResult ? (
-                  <div className="rounded-lg border border-slate-200 p-3 space-y-3">
+                  <div className="rounded-md border border-slate-200 p-3 space-y-3">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                       <p className="text-sm font-semibold text-slate-700">
-                        Run Status: <span className="uppercase">{runResult.status}</span>
+                        Run status: <span className="uppercase">{runResult.status}</span>
                       </p>
                       <p className="text-xs text-slate-500">
                         {runResult.time_ms ? `${runResult.time_ms} ms` : "--"} | {runResult.memory_kb ? `${runResult.memory_kb} kb` : "--"}
@@ -1293,15 +1081,14 @@ export default function SkillsPage() {
                       {runResult.sample_results.map((result, index) => (
                         <div
                           key={`${index}-${result.input_preview}`}
-                          className={`rounded-lg border px-3 py-2 text-sm ${result.passed ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
-                            }`}
+                          className={`rounded-md border px-3 py-2 text-sm ${
+                            result.passed ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
+                          }`}
                         >
                           <p className="font-semibold">
                             Sample {index + 1}: {result.passed ? "Pass" : "Fail"} ({result.status})
                           </p>
-                          <p className="text-xs mt-1 text-slate-600">
-                            Input: {result.input_preview || "(none)"}
-                          </p>
+                          <p className="text-xs mt-1 text-slate-600">Input: {result.input_preview || "(none)"}</p>
                           {!result.passed ? (
                             <p className="text-xs text-slate-600 mt-1">
                               Expected: {result.expected_preview || "(empty)"} | Actual: {result.actual_preview || "(empty)"}
@@ -1310,19 +1097,16 @@ export default function SkillsPage() {
                         </div>
                       ))}
                     </div>
-                    {runResult.compile_output ? (
-                      <p className="text-xs text-amber-700">Compile output: {runResult.compile_output}</p>
-                    ) : null}
-                    {runResult.stderr ? (
-                      <p className="text-xs text-red-700">Stderr: {runResult.stderr}</p>
-                    ) : null}
+                    {runResult.compile_output ? <p className="text-xs text-amber-800">Compile output: {runResult.compile_output}</p> : null}
+                    {runResult.stderr ? <p className="text-xs text-red-700">Stderr: {runResult.stderr}</p> : null}
                   </div>
                 ) : null}
 
                 {submitResult ? (
                   <div
-                    className={`rounded-lg border px-3 py-2 text-sm ${submitResult.passed_all_hidden ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
-                      }`}
+                    className={`rounded-md border px-3 py-2 text-sm ${
+                      submitResult.passed_all_hidden ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
+                    }`}
                   >
                     <p className="font-semibold">
                       {submitResult.passed_all_hidden ? "Hidden tests passed." : "Hidden tests not passed yet."}
@@ -1331,47 +1115,292 @@ export default function SkillsPage() {
                       {submitResult.hidden_pass_count}/{submitResult.hidden_total} hidden tests passed.
                       {submitResult.task_completed ? " Task marked complete." : ""}
                     </p>
-                    {submitResult.completion_blocked_reason ? (
-                      <p className="text-xs mt-1 text-amber-800">{submitResult.completion_blocked_reason}</p>
-                    ) : null}
-                    {submitResult.compile_output ? (
-                      <p className="text-xs mt-1 text-amber-700">Compile output: {submitResult.compile_output}</p>
-                    ) : null}
-                    {submitResult.stderr ? (
-                      <p className="text-xs mt-1 text-red-700">Stderr: {submitResult.stderr}</p>
-                    ) : null}
+                    {submitResult.completion_blocked_reason ? <p className="text-xs mt-1 text-amber-900">{submitResult.completion_blocked_reason}</p> : null}
+                    {submitResult.compile_output ? <p className="text-xs mt-1 text-amber-800">Compile output: {submitResult.compile_output}</p> : null}
+                    {submitResult.stderr ? <p className="text-xs mt-1 text-red-700">Stderr: {submitResult.stderr}</p> : null}
                   </div>
                 ) : null}
               </div>
+
             </div>
           </div>
-        </div>
-
-        <article className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 md:p-5 shadow-sm">
-          <h3 className="text-sm md:text-base font-bold text-emerald-900">You&apos;re Practicing the Real Interview Format</h3>
-          <p className="mt-2 text-xs md:text-sm leading-relaxed text-emerald-900/90">
-            This exact setup, reading the problem on the left and solving in a pre-defined function on the right, is
-            the same style used in coding interviews, LeetCode problems, and many online assessments (OAs).
-          </p>
-          <p className="mt-2 text-xs md:text-sm leading-relaxed text-emerald-900/90">
-            It&apos;s exciting that you get to experience this before your first real interviews.
-          </p>
-        </article>
-
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
-            <h3 className="text-base md:text-lg font-bold text-slate-900">Ready for the next step?</h3>
-            <p className="mt-1 text-sm text-slate-600">
-              Move to Projects and start building real software with APIs, databases, and deployment.
+          <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 overflow-x-auto">
+            <p className="text-sm text-slate-700 whitespace-nowrap">
+              <strong>You&apos;re practicing the real interview format.</strong> Problem list on the left, specs above, code in a function below, exactly how OAs and live coding screens work.
             </p>
           </div>
-          <a
-            href="/projects"
-            className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition-colors"
-          >
-            Continue to Projects Module
-          </a>
-        </section>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setLearningGuideOpen((prev) => !prev)}
+          className="w-full px-4 md:px-5 py-4 flex items-center justify-between gap-3 text-left hover:bg-slate-50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-md bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+              <BookOpen size={18} className="text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-slate-900">Learning Guide</p>
+              <p className="text-sm text-slate-500">How to learn, courses, and why Python - 3 reads</p>
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-3 text-sm font-semibold text-slate-500">
+            <div className="flex items-center gap-1.5">
+              {LEARNING_GUIDE_STEPS.map((step, index) => {
+                const completed = index < activeLearningStepIndex;
+                const active = index === activeLearningStepIndex;
+                return (
+                  <span
+                    key={`guide-progress-${step.id}`}
+                    className={`h-1.5 w-7 rounded-full ${completed ? "bg-emerald-500" : active ? "bg-indigo-600" : "bg-slate-200"}`}
+                  />
+                );
+              })}
+            </div>
+            <span>{learningGuideOpen ? "Close" : "Open"}</span>
+            {learningGuideOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </div>
+        </button>
+
+        {learningGuideOpen ? (
+          <>
+            <div className="border-t border-slate-200 px-4 md:px-5">
+              <div className="flex flex-wrap items-center gap-5">
+                {LEARNING_GUIDE_STEPS.map((step, index) => {
+                  const completed = index < activeLearningStepIndex;
+                  const active = index === activeLearningStepIndex;
+                  return (
+                    <button
+                      key={step.id}
+                      type="button"
+                      onClick={() => setActiveLearningStepIndex(index)}
+                      className={`relative -mb-px inline-flex items-center gap-2 border-b-2 py-3 text-sm font-semibold transition-colors ${
+                        active
+                          ? "border-indigo-600 text-indigo-700"
+                          : completed
+                            ? "border-transparent text-emerald-700 hover:text-emerald-800"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${
+                          completed
+                            ? "bg-emerald-600 text-white"
+                            : active
+                              ? "bg-indigo-600 text-white"
+                              : "bg-slate-200 text-slate-600"
+                        }`}
+                      >
+                        {completed ? "✓" : index + 1}
+                      </span>
+                      {step.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="p-5 md:p-6">
+              {activeLearningStep.id === "how-to-learn" ? (
+                <div className="space-y-5">
+                  <header>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-600">Learning playbook</p>
+                    <h2 className="mt-2 text-3xl font-semibold text-slate-900">How to Actually Learn Coding</h2>
+                    <p className="mt-2 text-sm text-slate-600">
+                      Start with a course. Every time you learn something new, implement it as a small challenge.
+                      That&apos;s how it sticks.
+                    </p>
+                    <p className="mt-4 text-sm leading-relaxed text-slate-700">
+                      Every time you learn something new, think of a small challenge or mini program using that concept
+                      and implement it. <strong>That&apos;s how concepts turn into real skill, not by watching, by doing.</strong>
+                    </p>
+                  </header>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">The practical loop</p>
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-4">
+                      {["Learn in course", "Think challenge", "Implement it", "Go harder"].map((item, index) => (
+                        <div key={item} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-center">
+                          <p className="text-[11px] font-semibold text-slate-400">{index + 1}</p>
+                          <p className="mt-1 text-sm font-semibold text-slate-700">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-md border border-slate-200 bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-600">Founder&apos;s note</p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                      When I was learning to code, I took a course that required me to solve around 40 challenges. If
+                      I could not solve one, the instructor walked through it step by step. We started from basic
+                      calculator problems and progressed to bigger implementations.
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-slate-800">
+                      The habit of implementing every concept is what separates people who actually learn from people
+                      who just watch a lot of videos.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              {activeLearningStep.id === "courses" ? (
+                <div className="space-y-5">
+                  <header>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-600">Course recommendations</p>
+                    <h2 className="mt-2 text-3xl font-semibold text-slate-900">Pick one and go deep</h2>
+                    <p className="mt-2 text-sm text-slate-600">
+                      Both options work. The approach is identical: learn concept, implement it, go harder.
+                    </p>
+                  </header>
+
+                  <div className="rounded-md border border-indigo-200 bg-indigo-50/60 px-4 py-3">
+                    <p className="text-sm text-indigo-900">
+                      This module uses Python examples, <strong>but the strategy works for any language.</strong> Apply
+                      the same playbook with your language&apos;s tools.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <article className="rounded-md border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-amber-700">Paid option</p>
+                      <h3 className="mt-2 text-xl font-semibold text-slate-900">The Art of Doing (Python)</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                        Challenge-driven, instructor walks through solutions when you get stuck. Actively forces
+                        implementation, not just watching.
+                      </p>
+                      <a
+                        href="https://www.udemy.com/course/the-art-of-doing/"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 hover:text-indigo-800"
+                      >
+                        Open on Udemy <ChevronRight size={16} />
+                      </a>
+                    </article>
+
+                    <article className="rounded-md border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">Free option</p>
+                      <h3 className="mt-2 text-xl font-semibold text-slate-900">freeCodeCamp Python</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                        Excellent free course on YouTube. Fewer built-in challenges, so supplement with extra coding
+                        problems as you go.
+                      </p>
+                      <a
+                        href="https://www.youtube.com/watch?v=rfscVS0vtbw"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 hover:text-indigo-800"
+                      >
+                        Watch on YouTube <ChevronRight size={16} />
+                      </a>
+                    </article>
+                  </div>
+
+                  <div className="rounded-md border border-slate-200 bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-600">Founder&apos;s note</p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                      The paid option is what I&apos;d use if I were starting today. Regardless of which one you pick:
+                      learn concept, implement it, solve progressively harder challenges.
+                      <strong> Don&apos;t move on until it clicks in code.</strong>
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              {activeLearningStep.id === "why-python" ? (
+                <div className="space-y-5">
+                  <header>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-600">Language choice</p>
+                    <h2 className="mt-2 text-3xl font-semibold text-slate-900">Why we recommend Python</h2>
+                    <p className="mt-2 text-sm text-slate-600">
+                      A recommendation, not a requirement. The same strategy works with any language.
+                    </p>
+                  </header>
+
+                  <div className="rounded-xl border border-indigo-900 bg-indigo-950 p-5 text-indigo-100">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-200">Our recommendation</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <h3 className="text-2xl font-semibold text-white">Python</h3>
+                      <span className="rounded-full bg-amber-400 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-amber-950">
+                        Recommended
+                      </span>
+                    </div>
+                    <div className="mt-4 space-y-3 text-sm md:text-base">
+                      <p><strong>Easiest syntax</strong> - lets you focus on logic, not semicolons and type declarations.</p>
+                      <p><strong>Opens Data/AI roles</strong> - including data engineering, machine learning, and analytics-heavy internships.</p>
+                      <p><strong>Best language for coding interviews</strong> - readable, fast to write, and ideal for solving problems under time pressure.</p>
+                    </div>
+                    <div className="mt-4 rounded-md bg-indigo-900/70 px-3 py-2 text-sm text-indigo-100">
+                      <strong>Recommendation, not restriction.</strong> JavaScript, Java, C++, and others are all valid.
+                      Same strategy, different language.
+                    </div>
+                  </div>
+
+                  <div className="rounded-md border border-slate-200 bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-600">Founder&apos;s note</p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                      My first job wasn&apos;t even in software engineering. My first two jobs were in data engineering.
+                      Python helped me break in faster because I could ship working solutions quickly and communicate
+                      clearly in interviews.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="border-t border-slate-200 px-4 md:px-5 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-slate-400">
+                  Step {learningStepNumber} of {LEARNING_GUIDE_STEPS.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveLearningStepIndex((prev) => Math.max(prev - 1, 0))}
+                    disabled={activeLearningStepIndex === 0}
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={16} />
+                    Previous
+                  </button>
+                  {activeLearningStepIndex < LEARNING_GUIDE_STEPS.length - 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setActiveLearningStepIndex((prev) => Math.min(prev + 1, LEARNING_GUIDE_STEPS.length - 1))}
+                      className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                    >
+                      Next
+                      <ChevronRight size={16} />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700"
+                    >
+                      Done
+                      <CheckCircle2 size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        ) : null}
+      </section>
+
+      <section className="rounded-xl border border-indigo-600 bg-indigo-600 px-5 py-4 md:px-6 md:py-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <p className="text-2xl font-semibold text-white">Ready for the next step?</p>
+          <p className="text-sm text-indigo-100">Pass 4 of 5 challenges and you unlock the Projects module.</p>
+        </div>
+        <a
+          href="/projects"
+          className="inline-flex items-center justify-center rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 transition-colors"
+        >
+          Continue to Projects <ChevronRight size={16} />
+        </a>
       </section>
     </div>
   );
