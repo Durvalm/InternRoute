@@ -861,65 +861,65 @@ export default function SkillsPage() {
   return (
     <div className="max-w-7xl mx-auto pb-16 space-y-6">
       <section id="readiness-check" className="space-y-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
+        <div className="rounded-[13px] border border-slate-200 bg-white p-5 md:p-5">
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-indigo-700">
+            <span className="rounded-full bg-indigo-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-700">
               Module 02
             </span>
-            <span className="text-sm font-semibold text-slate-500">The Foundation</span>
+            <span className="text-[13px] font-semibold text-slate-500">The Foundation</span>
           </div>
 
           <div className="mt-4">
-            <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">Coding Skills</h1>
-            <p className="mt-2 text-sm text-slate-600 max-w-4xl">
+            <h1 className="text-[22px] font-bold leading-tight text-slate-950">Coding Skills</h1>
+            <p className="mt-1.5 max-w-4xl text-[13px] leading-[1.6] text-slate-600">
               Your main tool for coding interviews, scripts, and logic. Pass the 5 challenges to complete this module.
             </p>
-            <p className="mt-1 text-xs text-slate-500 max-w-4xl">
+            <p className="mt-1 text-[12px] text-slate-400 max-w-4xl">
               Part of the 2 core skills track: coding now, backend depth next in Projects.
             </p>
           </div>
 
-          <div className="mt-6 relative pl-8 space-y-6">
+          <div className="mt-5 relative pl-8 space-y-6">
             <div className="absolute left-2.5 top-2 bottom-2 w-px bg-indigo-200" />
 
             <article className="relative">
               <span className="absolute -left-[29px] top-1.5 h-5 w-5 rounded-full bg-indigo-600 ring-4 ring-indigo-100" />
-              <h2 className="text-xl font-semibold text-indigo-900">1. Programming Language (Python Recommended)</h2>
-              <div className="mt-1.5 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">
-                <Clock3 size={16} />
+              <h2 className="text-[19px] font-bold text-indigo-900">1. Programming Language (Python Recommended)</h2>
+              <div className="mt-1 inline-flex items-center gap-2 text-[13px] font-semibold text-indigo-700">
+                <Clock3 size={15} />
                 ~2 Months
               </div>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-[13px] leading-[1.65] text-slate-600">
                 Your main tool for coding interviews, scripts, and logic. We recommend Python to start faster, but
                 you can choose any language and follow the exact same learning process.
               </p>
-              <p className="mt-1 text-sm font-semibold text-indigo-700">
+              <p className="mt-1 text-[13px] font-semibold text-indigo-700">
                 This module uses Python examples, but the strategy works for any language.
               </p>
             </article>
 
             <article className="relative opacity-65">
               <span className="absolute -left-[29px] top-1.5 h-5 w-5 rounded-full bg-slate-300" />
-              <h2 className="text-xl font-semibold text-slate-600">2. Backend Development</h2>
-              <div className="mt-1.5 inline-flex items-center gap-2 text-sm font-semibold text-slate-500">
-                <Clock3 size={16} />
+              <h2 className="text-[19px] font-bold text-slate-600">2. Backend Development</h2>
+              <div className="mt-1 inline-flex items-center gap-2 text-[13px] font-semibold text-slate-500">
+                <Clock3 size={15} />
                 ~4 Months
               </div>
-              <p className="mt-2 text-sm text-slate-500">APIs, Databases, Frameworks. This is how you build real software.</p>
-              <p className="mt-1 text-sm italic text-slate-400">Covered in the &quot;Projects&quot; module.</p>
+              <p className="mt-2 text-[13px] leading-[1.65] text-slate-500">APIs, Databases, Frameworks. This is how you build real software.</p>
+              <p className="mt-1 text-[13px] italic text-slate-400">Covered in the &quot;Projects&quot; module.</p>
             </article>
           </div>
         </div>
 
-        <details className="rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 group">
-          <summary className="list-none cursor-pointer text-sm leading-relaxed text-amber-900">
+        <details className="group rounded-[9px] border border-amber-200 bg-amber-50/80 px-4 py-3">
+          <summary className="list-none cursor-pointer text-[12px] leading-[1.65] text-amber-900">
             <span className="font-semibold">Before you start:</span>{" "}
             Don&apos;t use AI for these. Coding ability is the bare minimum - you need to genuinely own it.
             Solve inside the function, run tests, debug, submit when stable.
             <span className="ml-1 font-medium text-amber-800 underline group-open:hidden">See full rules</span>
-            <span className="ml-1 font-medium text-amber-800 underline hidden group-open:inline">Hide rules</span>
+            <span className="ml-1 hidden font-medium text-amber-800 underline group-open:inline">Hide rules</span>
           </summary>
-          <ul className="mt-3 space-y-2 text-sm text-amber-900/90 list-disc pl-5">
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-[12px] leading-[1.6] text-amber-900/90">
             <li>Implement your code inside the pre-defined function signature and return the required value.</li>
             <li>Use your IDE actively: write code, click Run Code, read errors/output, and iterate.</li>
             <li>If your code is not working, check the error message, debug, and keep trying.</li>
@@ -928,10 +928,10 @@ export default function SkillsPage() {
           </ul>
         </details>
 
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="overflow-hidden rounded-[13px] border border-slate-200 bg-white">
           <div className="grid grid-cols-1 lg:grid-cols-[250px_minmax(0,1fr)] min-h-[680px]">
             <aside className="border-r border-slate-200 bg-slate-50">
-              <div className="px-4 py-3 border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <div className="border-b border-slate-200 px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500">
                 Problem list
               </div>
               <div>
@@ -943,14 +943,14 @@ export default function SkillsPage() {
                       key={challenge.id}
                       type="button"
                       onClick={() => setActiveChallengeId(challenge.id)}
-                      className={`w-full text-left px-4 py-3 border-b border-slate-200 transition-colors ${
+                      className={`w-full border-b border-slate-200 px-4 py-3 text-left transition-colors ${
                         active ? "bg-white border-l-4 border-l-indigo-600" : "hover:bg-white"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="text-xs font-semibold text-slate-400">#{challenge.order}</p>
-                          <p className={`text-sm font-semibold leading-tight ${active ? "text-indigo-700" : "text-slate-800"}`}>{challenge.title}</p>
+                          <p className="text-[11px] font-semibold text-slate-400">#{challenge.order}</p>
+                          <p className={`text-[13px] font-semibold leading-[1.35] ${active ? "text-indigo-700" : "text-slate-800"}`}>{challenge.title}</p>
                         </div>
                         {completed ? <CheckCircle2 size={16} className="text-emerald-600 mt-0.5" /> : null}
                       </div>
@@ -961,23 +961,23 @@ export default function SkillsPage() {
             </aside>
 
             <div className="flex flex-col min-w-0">
-              <div className="border-b border-slate-200 bg-white p-4 md:p-5 space-y-4">
+              <div className="space-y-4 border-b border-slate-200 bg-white p-4 md:p-5">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700">
                         Checkpoint
                       </span>
-                      <span className="text-xs font-semibold text-slate-500">Problem {activeChallenge.order}</span>
+                      <span className="text-[11px] font-semibold text-slate-400">Problem {activeChallenge.order}</span>
                     </div>
-                    <h2 className="mt-2 text-2xl font-semibold text-slate-900">{activeChallenge.title}</h2>
-                    <p className="mt-1 text-sm text-slate-600 max-w-3xl">{activeChallenge.description}</p>
+                    <h2 className="mt-2 text-[22px] font-bold leading-tight text-slate-950">{activeChallenge.title}</h2>
+                    <p className="mt-1 max-w-3xl text-[13px] leading-[1.6] text-slate-600">{activeChallenge.description}</p>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Language</label>
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">Language</label>
                     <select
-                      className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700"
+                      className="rounded-[7px] border border-slate-300 bg-white px-3 py-2 text-[12px] font-medium text-slate-700"
                       disabled={loadingLanguages || !availableLanguages.length}
                       value={selectedLanguageId ?? ""}
                       onChange={(event) => setSelectedLanguageId(Number(event.target.value))}
@@ -992,20 +992,20 @@ export default function SkillsPage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <p className="text-[11px] uppercase tracking-wide font-semibold text-slate-500">Function signature</p>
+                <div className="rounded-[9px] border border-slate-200 bg-white p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">Function signature</p>
                   <pre className="mt-1 text-xs font-mono whitespace-pre-wrap break-words text-indigo-700">{activeSignature}</pre>
                 </div>
 
-                <div className="rounded-lg border border-indigo-200 bg-indigo-50/60 p-3 text-sm text-indigo-900">
+                <div className="rounded-[9px] border border-indigo-200 bg-indigo-50/60 p-3 text-[12px] text-indigo-900">
                   <p className="font-semibold">What to return</p>
-                  <p className="mt-1">{activeChallenge.whatToReturn}</p>
+                  <p className="mt-1 leading-[1.6]">{activeChallenge.whatToReturn}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {activeChallenge.examples.slice(0, 2).map((example, index) => (
-                    <div key={`${activeChallenge.id}-example-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{index === 0 ? "Input" : "Expected output"}</p>
+                    <div key={`${activeChallenge.id}-example-${index}`} className="rounded-[9px] border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">{index === 0 ? "Input" : "Expected output"}</p>
                       <pre className="mt-1 text-xs font-mono whitespace-pre-wrap break-words text-slate-700">
                         {index === 0 ? example.input : example.output}
                       </pre>
@@ -1038,15 +1038,15 @@ export default function SkillsPage() {
                 )}
               </div>
 
-              <div className="border-t border-slate-200 bg-white px-5 py-4 space-y-3">
+              <div className="space-y-3 border-t border-slate-200 bg-white px-5 py-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-sm text-slate-500 font-mono">// Ready to run</p>
+                  <p className="font-mono text-[12px] text-slate-400">// Ready to run</p>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={handleRun}
                       disabled={running || submitting || loadingLanguages || !selectedLanguageId}
-                      className="inline-flex items-center gap-2 rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2 text-indigo-700 text-sm font-semibold hover:bg-indigo-100 transition-colors disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-[7px] border border-indigo-300 bg-indigo-50 px-4 py-2 text-[12px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:opacity-60"
                     >
                       {running ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
                       Run Code
@@ -1055,7 +1055,7 @@ export default function SkillsPage() {
                       type="button"
                       onClick={handleSubmit}
                       disabled={running || submitting || loadingLanguages || !selectedLanguageId}
-                      className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-[7px] bg-indigo-600 px-4 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
                     >
                       {submitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                       Submit
@@ -1064,16 +1064,16 @@ export default function SkillsPage() {
                 </div>
 
                 {apiError ? (
-                  <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{apiError}</p>
+                  <p className="rounded-[7px] border border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-700">{apiError}</p>
                 ) : null}
 
                 {runResult ? (
-                  <div className="rounded-md border border-slate-200 p-3 space-y-3">
+                  <div className="space-y-3 rounded-[9px] border border-slate-200 p-3">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <p className="text-sm font-semibold text-slate-700">
+                      <p className="text-[13px] font-semibold text-slate-700">
                         Run status: <span className="uppercase">{runResult.status}</span>
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-[11px] text-slate-500">
                         {runResult.time_ms ? `${runResult.time_ms} ms` : "--"} | {runResult.memory_kb ? `${runResult.memory_kb} kb` : "--"}
                       </p>
                     </div>
@@ -1081,7 +1081,7 @@ export default function SkillsPage() {
                       {runResult.sample_results.map((result, index) => (
                         <div
                           key={`${index}-${result.input_preview}`}
-                          className={`rounded-md border px-3 py-2 text-sm ${
+                          className={`rounded-[7px] border px-3 py-2 text-[12px] ${
                             result.passed ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
                           }`}
                         >
@@ -1104,7 +1104,7 @@ export default function SkillsPage() {
 
                 {submitResult ? (
                   <div
-                    className={`rounded-md border px-3 py-2 text-sm ${
+                    className={`rounded-[7px] border px-3 py-2 text-[12px] ${
                       submitResult.passed_all_hidden ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
                     }`}
                   >
@@ -1124,8 +1124,8 @@ export default function SkillsPage() {
 
             </div>
           </div>
-          <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 overflow-x-auto">
-            <p className="text-sm text-slate-700 whitespace-nowrap">
+          <div className="overflow-x-auto border-t border-slate-200 bg-slate-50 px-5 py-3">
+            <p className="whitespace-nowrap text-[12px] text-slate-600">
               <strong>You&apos;re practicing the real interview format.</strong> Problem list on the left, specs above, code in a function below, exactly how OAs and live coding screens work.
             </p>
           </div>

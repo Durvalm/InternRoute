@@ -9,9 +9,8 @@ import {
   BookMarked,
   CheckCircle2,
   ChartColumn,
+  Clock3,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ChevronUp,
   CircleDot,
   FileText,
@@ -53,15 +52,15 @@ const portfolioCardBlueprint = [
   {
     key: "core_1",
     title: "Core Project 1",
-    subtitle: "Course Outcome",
-    description: "First complete project from your learning path. Submit when your backend is solid.",
+    subtitle: "First Pass",
+    description: "Your first verified backend project. Submit once the backend is solid and working end to end.",
     cta: "Submit with the form above"
   },
   {
     key: "core_2",
     title: "Core Project 2",
-    subtitle: "Independent Build",
-    description: "Your own idea, built end-to-end without tutorial hand-holding.",
+    subtitle: "Second Pass",
+    description: "Your second verified backend project. Stronger scope, clearer backend depth, and better proof of consistency.",
     cta: "Locked until Core Project 1 passes"
   },
   {
@@ -404,253 +403,271 @@ export default function ProjectsPage() {
 
   return (
     <div className="max-w-7xl mx-auto pb-16 space-y-6">
-      <section id="portfolio-board" className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div className="p-5 md:p-6 space-y-5">
+      <section id="portfolio-board" className="space-y-4">
+        <div className="rounded-[13px] border border-slate-200 bg-white p-5 md:p-5">
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em]">
+            <span className="rounded-full bg-indigo-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-700">
               Module 03
             </span>
-            <span className="text-sm font-semibold text-slate-500">Projects</span>
+            <span className="text-[13px] font-semibold text-slate-500">Phase 2</span>
           </div>
 
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">Project Submission Lab</h1>
-              <p className="mt-1 text-sm text-slate-600">
-                Submit your GitHub repos. AI evaluates backend quality and marks pass or not yet.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
-                <CircleDot size={14} />
-                Goal: 2 Verified Projects
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
-                {statusSummary.pass} pass • {statusSummary.pending} pending • {statusSummary.fail} not yet
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_1.25fr] gap-4">
-            <article className="rounded-xl border border-slate-200 bg-white p-5">
-            <div className="h-9 w-9 rounded-full border flex items-center justify-center mb-4 bg-white">
-              <Plus size={18} className="text-indigo-600" />
-            </div>
-            <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Primary Action</p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">Add GitHub Repository</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Submit your project link. Add deployed URL if available.
+          <div className="mt-4">
+            <h1 className="text-[22px] font-bold leading-tight text-slate-950 md:text-[24px]">Backend Mastery</h1>
+            <p className="mt-1.5 max-w-4xl text-[13px] leading-[1.6] text-slate-600">
+              This is where you move from coding exercises to software engineering. You will learn to build complete
+              backend systems and prove it with projects.
             </p>
+          </div>
 
-            <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
-              <div>
-                <label htmlFor="repo-url" className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  GitHub URL
-                </label>
-                <input
-                  id="repo-url"
-                  type="url"
-                  value={repoUrl}
-                  onChange={(event) => setRepoUrl(event.target.value)}
-                  placeholder="https://github.com/owner/repo"
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                  required
-                />
+          <div className="mt-5 relative pl-8 space-y-6">
+            <div className="absolute left-2.5 top-2 bottom-2 w-px bg-indigo-200" />
+
+            <article className="relative opacity-75">
+              <span className="absolute -left-[29px] top-1.5 h-5 w-5 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
+              <h2 className="text-[19px] font-bold text-slate-600">Phase 1: Programming Language (Python)</h2>
+              <div className="mt-1 inline-flex items-center gap-2 text-[13px] font-semibold text-emerald-700">
+                <Clock3 size={15} />
+                2 Months
               </div>
+              <p className="mt-2 text-[13px] leading-[1.65] text-slate-500">
+                Syntax + logic foundation. This phase is complete and now you apply it to real software.
+              </p>
+            </article>
 
-              <div>
-                <label htmlFor="deployed-url" className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Deployed URL (Optional)
-                </label>
-                <input
-                  id="deployed-url"
-                  type="url"
-                  value={deployedUrl}
-                  onChange={(event) => setDeployedUrl(event.target.value)}
-                  placeholder="https://your-app.com"
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
+            <article className="relative">
+              <span className="absolute -left-[29px] top-1.5 h-5 w-5 rounded-full bg-indigo-600 ring-4 ring-indigo-100" />
+              <h2 className="text-[19px] font-bold text-indigo-900">Phase 2: Backend Development</h2>
+              <div className="mt-1 inline-flex items-center gap-2 text-[13px] font-semibold text-indigo-700">
+                <Clock3 size={15} />
+                4 Months
               </div>
+              <p className="mt-2 text-[13px] leading-[1.65] text-slate-600">
+                Build APIs, connect databases, and ship projects that can go on your resume.
+              </p>
+            </article>
+          </div>
+        </div>
 
-              {formError ? (
-                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>
-              ) : null}
-              {successMessage ? (
-                <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                  {successMessage}
+        <div className="overflow-hidden rounded-[13px] border border-slate-200 bg-white">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-[14px] font-semibold text-slate-950">Project Submission Lab</p>
+                <p className="mt-1 text-[12px] text-slate-400">
+                  Submit your GitHub repos. AI reviews the backend work and marks pass or not yet.
                 </p>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
+                  <CircleDot size={13} />
+                  Goal: 2 Verified Projects
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600">
+                  {statusSummary.pass} pass • {statusSummary.pending} pending • {statusSummary.fail} not yet
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 border-b border-slate-200 xl:grid-cols-[1fr_1.12fr]">
+            <article className="border-r border-slate-200 px-5 py-[18px]">
+              <p className="mb-[10px] text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Submit Project</p>
+              <h2 className="text-[14px] font-bold text-slate-800">Add GitHub Repository</h2>
+              <p className="mt-1 text-[12px] leading-[1.55] text-slate-500">
+                Submit your own project idea. Add a deployed URL if you have one, but GitHub is enough to start.
+              </p>
+
+              <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+                <div>
+                  <label htmlFor="repo-url" className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    GitHub URL
+                  </label>
+                  <input
+                    id="repo-url"
+                    type="url"
+                    value={repoUrl}
+                    onChange={(event) => setRepoUrl(event.target.value)}
+                    placeholder="https://github.com/owner/repo"
+                    className="w-full rounded-[7px] border border-slate-300 bg-slate-50 px-3 py-2.5 text-[12px] text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="deployed-url" className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    Deployed URL <span className="normal-case tracking-normal text-slate-400">(optional)</span>
+                  </label>
+                  <input
+                    id="deployed-url"
+                    type="url"
+                    value={deployedUrl}
+                    onChange={(event) => setDeployedUrl(event.target.value)}
+                    placeholder="https://your-app.com"
+                    className="w-full rounded-[7px] border border-slate-300 bg-slate-50 px-3 py-2.5 text-[12px] text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  />
+                </div>
+
+                {formError ? (
+                  <p className="rounded-[7px] border border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-700">{formError}</p>
+                ) : null}
+                {successMessage ? (
+                  <p className="rounded-[7px] border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] text-emerald-700">
+                    {successMessage}
+                  </p>
+                ) : null}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[7px] bg-indigo-600 px-4 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
+                >
+                  {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <GitBranch size={15} />}
+                  {isSubmitting ? "Submitting..." : "Submit Project"}
+                </button>
+              </form>
+            </article>
+
+            <article className="px-5 py-[18px]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="mb-[10px] text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Submission History</p>
+                  <h2 className="text-[14px] font-bold text-slate-800">Evaluation Status</h2>
+                  <p className="mt-1 text-[12px] leading-[1.55] text-slate-500">
+                    Newest submissions appear here. If you submit many projects, scroll through the list.
+                  </p>
+                </div>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-500">
+                  <FileText size={15} />
+                </div>
+              </div>
+
+              {listError ? (
+                <div className="mt-4 rounded-[7px] border border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-700">
+                  {listError}
+                </div>
               ) : null}
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
-              >
-                {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <GitBranch size={15} />}
-                {isSubmitting ? "Submitting..." : "Submit Project"}
-              </button>
-            </form>
-          </article>
+              {isLoading ? (
+                <div className="mt-4 inline-flex items-center gap-2 rounded-[9px] border border-slate-200 bg-slate-50 px-3 py-4 text-[12px] text-slate-600">
+                  <Loader2 size={15} className="animate-spin" />
+                  Loading submissions...
+                </div>
+              ) : null}
 
-          <article className="rounded-xl border border-slate-200 bg-white p-5">
-            <div className="h-9 w-9 rounded-full border flex items-center justify-center mb-4 bg-white">
-              <FileText size={16} className="text-slate-600" />
-            </div>
-            <p className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Submission History</p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">Evaluation Status</h2>
-            <p className="mt-2 text-sm text-slate-600">Statuses update to pass or not yet after AI evaluation.</p>
+              {!isLoading && !listError && submissions.length === 0 ? (
+                <div className="mt-4 rounded-[9px] border border-slate-200 bg-slate-50 px-3 py-4 text-[12px] text-slate-600">
+                  No submissions yet. Submit your first project to start evaluation.
+                </div>
+              ) : null}
 
-            {listError ? (
-              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {listError}
-              </div>
-            ) : null}
-
-            {isLoading ? (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-600 inline-flex items-center gap-2">
-                <Loader2 size={15} className="animate-spin" />
-                Loading submissions...
-              </div>
-            ) : null}
-
-            {!isLoading && !listError && submissions.length === 0 ? (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-600">
-                No submissions yet. Submit your first project to start evaluation.
-              </div>
-            ) : null}
-
-            {!isLoading && !listError && submissions.length > 0 ? (
-              <div className="mt-4 space-y-3">
-                {submissions.map((submission) => {
-                  const createdAt = submission.created_at
-                    ? new Date(submission.created_at).toLocaleString()
-                    : "Unknown time";
-                  const showRepoLink = submission.source_type !== "upload";
-                  const repoLabel = submission.source_type === "upload"
-                    ? (submission.source_label || "Uploaded project")
-                    : submission.repo_url;
-                  return (
-                    <div key={submission.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        {showRepoLink ? (
+              {!isLoading && !listError && submissions.length > 0 ? (
+                <div className="mt-4 max-h-[360px] space-y-3 overflow-y-auto pr-1">
+                  {submissions.map((submission) => {
+                    const createdAt = submission.created_at
+                      ? new Date(submission.created_at).toLocaleString()
+                      : "Unknown time";
+                    const showRepoLink = submission.source_type !== "upload";
+                    const repoLabel = submission.source_type === "upload"
+                      ? (submission.source_label || "Uploaded project")
+                      : submission.repo_url;
+                    return (
+                      <div key={submission.id} className="rounded-[9px] border border-slate-200 bg-slate-50 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          {showRepoLink ? (
+                            <a
+                              href={submission.repo_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="break-all text-[12px] font-semibold text-indigo-700 hover:underline"
+                            >
+                              {repoLabel}
+                            </a>
+                          ) : (
+                            <p className="break-all text-[12px] font-semibold text-slate-700">{repoLabel}</p>
+                          )}
+                          <span className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold ${statusPillClasses[submission.status]}`}>
+                            {submission.status === "pass" ? <CheckCircle2 size={12} className="mr-1" /> : null}
+                            {submission.status === "fail" ? <XCircle size={12} className="mr-1" /> : null}
+                            {submission.status === "pending" ? <AlertTriangle size={12} className="mr-1" /> : null}
+                            {statusLabel[submission.status]}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-[11px] text-slate-500">Submitted: {createdAt}</p>
+                        {submission.deployed_url ? (
                           <a
-                            href={submission.repo_url}
+                            href={submission.deployed_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-sm font-semibold text-indigo-700 hover:underline break-all"
+                            className="mt-1 inline-flex text-[11px] font-semibold text-slate-600 hover:text-slate-800 hover:underline"
                           >
-                            {repoLabel}
+                            Deployed URL
                           </a>
+                        ) : null}
+                        {submission.review_notes ? (
+                          <p className="mt-2 rounded-[7px] border border-slate-200 bg-white px-2.5 py-2 text-[11px] leading-[1.55] text-slate-600">
+                            Evaluator note: {submission.review_notes}
+                          </p>
                         ) : (
-                          <p className="text-sm font-semibold text-slate-700 break-all">{repoLabel}</p>
+                          <p className="mt-2 text-[11px] text-slate-400">No evaluator note yet.</p>
                         )}
-                        <span className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold ${statusPillClasses[submission.status]}`}>
-                          {submission.status === "pass" ? <CheckCircle2 size={12} className="mr-1" /> : null}
-                          {submission.status === "fail" ? <XCircle size={12} className="mr-1" /> : null}
-                          {submission.status === "pending" ? <AlertTriangle size={12} className="mr-1" /> : null}
-                          {statusLabel[submission.status]}
-                        </span>
                       </div>
-                      <p className="mt-2 text-xs text-slate-500">Submitted: {createdAt}</p>
-                      {submission.deployed_url ? (
-                        <a
-                          href={submission.deployed_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-1 inline-flex text-xs font-semibold text-slate-600 hover:text-slate-800 hover:underline"
-                        >
-                          Deployed URL
-                        </a>
-                      ) : null}
-                      {submission.review_notes ? (
-                        <p className="mt-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-600">
-                          Evaluator note: {submission.review_notes}
-                        </p>
-                      ) : (
-                        <p className="mt-2 text-xs text-slate-400">No evaluator note yet.</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : null}
-          </article>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {portfolioCards.map((card) => {
-            const isLocked = card.state === "locked";
-            const isComplete = card.state === "complete";
-            return (
-              <article
-                key={card.title}
-                className={`rounded-xl border p-5 transition-colors ${
-                  isComplete
-                    ? "border-emerald-200 bg-emerald-50/60"
-                    : isLocked
-                      ? "border-slate-200 bg-slate-50/70 text-slate-400"
-                      : "border-slate-200 bg-white shadow-sm"
-                }`}
-              >
-                <div className="h-9 w-9 rounded-full border flex items-center justify-center mb-4 bg-white">
-                  {isComplete ? (
-                    <CheckCircle2 size={18} className="text-emerald-600" />
-                  ) : isLocked ? (
-                    <Lock size={16} />
-                  ) : (
-                    <Plus size={18} className="text-indigo-600" />
-                  )}
+                    );
+                  })}
                 </div>
-                <p
-                  className={`text-[11px] uppercase tracking-wider font-bold ${
-                    isComplete ? "text-emerald-700" : isLocked ? "text-slate-400" : "text-slate-500"
-                  }`}
-                >
-                  {card.subtitle}
-                </p>
-                <h3
-                  className={`mt-1 text-lg font-bold ${
-                    isComplete ? "text-emerald-900" : isLocked ? "text-slate-500" : "text-slate-900"
-                  }`}
-                >
-                  {card.title}
-                </h3>
-                <p
-                  className={`mt-3 text-sm leading-relaxed ${
-                    isComplete ? "text-emerald-800/80" : isLocked ? "text-slate-400" : "text-slate-600"
-                  }`}
-                >
-                  {card.description}
-                </p>
-                <p
-                  className={`mt-5 pt-4 border-t text-sm font-semibold ${
-                    isComplete
-                      ? "border-emerald-200 text-emerald-700"
-                      : isLocked
-                        ? "border-slate-200 text-slate-400"
-                        : "border-slate-200 text-indigo-600"
-                  }`}
-                >
-                  {card.cta}
-                </p>
-              </article>
-            );
-          })}
-        </div>
-
-        <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-4">
-          <div className="flex items-center gap-2">
-            <BadgeCheck size={17} className="text-amber-700" />
-            <p className="text-sm font-semibold text-amber-900">Pass/Fail rule (no grades)</p>
+              ) : null}
+            </article>
           </div>
-          <p className="mt-2 text-sm text-amber-900/90">
-            A project is either pass or not yet. Review focuses on backend quality: request handling, data persistence,
-            and clear system ownership.
-          </p>
-          <p className="mt-1 text-sm text-amber-900/90">
-            Build backend yourself. Deployment is bonus signal, not mandatory.
-          </p>
-        </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3">
+            {portfolioCards.map((card) => {
+              const isLocked = card.state === "locked";
+              const isComplete = card.state === "complete";
+              return (
+                <article
+                  key={card.title}
+                  className={`relative border-r border-slate-200 px-[18px] py-[15px] last:border-r-0 ${
+                    isComplete
+                      ? "bg-emerald-50/60"
+                      : isLocked
+                        ? "bg-slate-50/70 text-slate-400"
+                        : "bg-white"
+                  }`}
+                >
+                  {isLocked ? <span className="absolute right-4 top-4 text-sm">🔒</span> : null}
+                  <p className={`text-[10px] font-bold uppercase tracking-[0.09em] ${isComplete ? "text-emerald-700" : isLocked ? "text-slate-400" : "text-slate-500"}`}>
+                    {card.subtitle}
+                  </p>
+                  <h3 className={`mt-1 text-[13px] font-bold ${isComplete ? "text-emerald-900" : isLocked ? "text-slate-500" : "text-slate-800"}`}>
+                    {card.title}
+                  </h3>
+                  <p className={`mt-1 text-[12px] leading-[1.55] ${isComplete ? "text-emerald-800/80" : isLocked ? "text-slate-400" : "text-slate-500"}`}>
+                    {card.description}
+                  </p>
+                  <p className={`mt-[10px] text-[12px] font-semibold ${isComplete ? "text-emerald-700" : isLocked ? "text-slate-400" : "text-indigo-600"}`}>
+                    {card.cta}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="flex items-start gap-[11px] border-t border-slate-200 bg-slate-50 px-[18px] py-[13px]">
+            <BadgeCheck size={16} className="mt-0.5 shrink-0 text-amber-700" />
+            <div className="space-y-2">
+              <p className="text-[12px] font-semibold text-amber-900">How passing works</p>
+              <p className="text-[12px] leading-[1.6] text-amber-900/90">
+                A project is either <strong>pass</strong> or <strong>not yet</strong>. We are not grading polish. We are checking whether
+                your app has a real backend you built yourself.
+              </p>
+              <p className="text-[12px] leading-[1.6] text-amber-900/90">
+                In practice, a strong pass usually shows three things clearly: <strong>backend code</strong>, <strong>real data storage</strong>, and <strong>app rules</strong> beyond static pages.
+              </p>
+              <p className="text-[12px] leading-[1.6] text-amber-900/90">
+                Build the backend yourself. Deployment is a bonus signal, not required.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
