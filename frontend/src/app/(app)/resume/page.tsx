@@ -84,12 +84,21 @@ type FeedbackItem = {
 };
 
 type ExampleTab = "first" | "after";
-type ExpandKey = "atsHow" | "stuck" | "plateau" | "tailoring" | "badExample";
+type ExpandKey =
+  | "atsHow"
+  | "fillEducation"
+  | "fillExperience"
+  | "fillProjects"
+  | "fillSkills"
+  | "stuck"
+  | "plateau"
+  | "tailoring"
+  | "badExample";
 
 const guideSteps = [
   "ATS + Template",
-  "The Philosophy",
-  "Writing Content",
+  "Build Your Resume",
+  "Make It Stronger",
   "Real Examples"
 ] as const;
 
@@ -195,6 +204,10 @@ export default function ResumePage() {
   const [visitedGuideSteps, setVisitedGuideSteps] = useState<boolean[]>([false, false, false, false]);
   const [expandedSections, setExpandedSections] = useState<Record<ExpandKey, boolean>>({
     atsHow: false,
+    fillEducation: false,
+    fillExperience: false,
+    fillProjects: false,
+    fillSkills: false,
     stuck: false,
     plateau: false,
     tailoring: false,
@@ -589,7 +602,7 @@ export default function ResumePage() {
             </div>
             <div>
               <p className="text-[14px] font-semibold text-slate-950">Learning Guide</p>
-              <p className="mt-0.5 text-[12px] text-slate-400">ATS + template, philosophy, writing content, real examples - 4 reads</p>
+              <p className="mt-0.5 text-[12px] text-slate-400">ATS + template, build your resume, make it stronger, real examples - 4 reads</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -738,45 +751,289 @@ export default function ResumePage() {
                       ))}
                     </div>
                   </div>
+
+                  <div className="mt-5">
+                    <p className="mb-3 text-[12px] font-semibold text-slate-700">Section order</p>
+                    <p className="mb-3 text-[12px] leading-5 text-slate-500">
+                      This is the recommended order. You can adjust it, but put your strongest sections near the top.
+                    </p>
+                    <div className="overflow-hidden rounded-[9px] border border-slate-200">
+                      {[
+                        ["1", "Education", "Degree, university, graduation date"],
+                        ["2", "Experience", "Internships, or projects labeled as experience"],
+                        ["3", "Projects", "Your strongest technical work"],
+                        ["4", "Skills", "Languages, frameworks, tools"],
+                        ["5", "Other", "Awards, leadership, courses (optional)"]
+                      ].map(([num, name, tip], index, arr) => (
+                        <div key={name} className={`flex items-center gap-3 bg-white px-4 py-3 ${index < arr.length - 1 ? "border-b border-slate-200" : ""}`}>
+                          <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-indigo-50 text-[10px] font-bold text-indigo-600">
+                            {num}
+                          </span>
+                          <span className="text-[13px] font-semibold text-slate-800">{name}</span>
+                          <span className="ml-auto text-[11px] text-slate-400">{tip}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-[12px] italic text-slate-400">
+                      Education was my weakest section when I was starting, so I put it lower and moved stronger sections up.
+                    </p>
+                  </div>
                 </div>
               ) : null}
 
               {activeGuideStep === 1 ? (
                 <div className="border-b border-slate-200 px-7 py-8">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">Mindset</p>
-                  <h2 className="text-[19px] font-bold tracking-[-0.02em] text-slate-950">The Resume Philosophy</h2>
-                  <p className="mt-1 text-[13px] leading-6 text-slate-500">What you need to understand about resumes</p>
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">The Craft</p>
+                  <h2 className="text-[19px] font-bold tracking-[-0.02em] text-slate-950">Build Your Resume</h2>
+                  <p className="mt-1 text-[13px] leading-6 text-slate-500">You have the template and you know what sections to include. Now let&apos;s fill each one. The goal here is a complete first draft, not a perfect one.</p>
 
-                  <div className="mt-6 border-l-[3px] border-violet-500 bg-violet-50 px-4 py-4">
-                    <p className="text-[13px] font-bold text-slate-900">The Truth About Resumes</p>
-                    <p className="mt-4 text-[13px] leading-7 text-slate-600">
-                      Remember, your resume is where you can show off everything you have been working hard for. <strong>Don&apos;t be humble.</strong>
-                    </p>
-                    <p className="mt-4 text-[13px] leading-7 text-slate-600">
-                      The best thing you can do is to <strong>embellish your experiences so they look more impressive than what they actually are.</strong>{" "}
-                      At the end of the day, it doesn&apos;t matter your skill level - someone is checking a piece of paper (your resume). I&apos;ve seen many friends
-                      who were not that good technically getting top tier internships, and when I checked their resume, I was like &quot;wow&quot;.
+                  <div className="mt-6 rounded-[9px] border border-indigo-200 bg-indigo-50 px-4 py-3 text-[12px] leading-6 text-indigo-700">
+                    Start with a complete resume, even a rough one. You can&apos;t improve something that doesn&apos;t exist yet. Step 3 is where you polish it.
+                  </div>
+
+                  <div className="mt-5">
+                    <p className="text-[14px] font-bold text-slate-900">The Bullet Point Formula</p>
+                    <p className="mt-2 text-[13px] leading-6 text-slate-500">
+                      Every item in your Experience and Projects sections is made of bullet points. Every bullet should follow the same structure:
                     </p>
                   </div>
 
-                  <div className="mt-4 rounded-[9px] bg-indigo-950 px-4 py-4 text-white">
+                  <div className="mt-4 rounded-[9px] border-2 border-violet-200 bg-violet-50 px-4 py-5 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-violet-500">The Formula</p>
+                    <p className="mt-3 text-[15px] font-bold text-slate-900">Action Verb + What You Did + Result / Impact</p>
+                    <p className="mt-1 text-[12px] text-slate-500">(with a number if possible)</p>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    <div className="rounded-[9px] border border-emerald-200 bg-emerald-50 px-4 py-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-500">✓ Strong bullet</p>
+                      <p className="mt-3 text-[13px] font-semibold text-slate-800">Optimized ETL pipeline using Python and SQL, reducing data processing time by 35%</p>
+                      <div className="mt-3 rounded-[7px] bg-white/80 px-3 py-2 text-[11px] text-slate-500">
+                        Action verb + specific tech + quantified result. Reads like an engineer who knows what they did.
+                      </div>
+                    </div>
+
+                    <div className="rounded-[9px] border border-rose-200 bg-rose-50 px-4 py-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-rose-500">✕ Weak bullet</p>
+                      <p className="mt-3 text-[13px] font-semibold text-slate-800">Worked on improving the data pipeline</p>
+                      <div className="mt-3 rounded-[7px] bg-white/80 px-3 py-2 text-[11px] text-slate-500">
+                        No verb strength, no tech depth, no impact. Could describe anyone who touched anything.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-[13px] font-semibold text-slate-800">Use Strong Action Verbs</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {["Built", "Developed", "Designed", "Implemented", "Optimized", "Engineered", "Architected", "Deployed", "Integrated", "Automated"].map((verb) => (
+                        <span key={verb} className="rounded-[7px] border border-indigo-200 bg-indigo-50 px-3 py-2 text-[12px] font-semibold text-indigo-600">
+                          {verb}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-3 rounded-[9px] border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] text-rose-600">
+                      <strong>Avoid weak verbs:</strong> Helped with, Worked on, Responsible for, Assisted with, Participated in.
+                    </div>
+                  </div>
+
+                  <div className="my-6 h-px bg-slate-200" />
+
+                  <div>
+                    <p className="text-[14px] font-bold text-slate-900">How to fill each section</p>
+                    <p className="mt-1 text-[13px] leading-6 text-slate-500">Open only the section you need. The structure stays visible without taking over the screen.</p>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    <div className="overflow-hidden rounded-[9px] border border-slate-200 bg-white">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand("fillEducation")}
+                        className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left ${expandedSections.fillEducation ? "border-b border-slate-200 bg-slate-50" : "bg-white"}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-blue-700">Education</span>
+                          <p className="text-[13px] font-bold text-slate-900">Always include, even if it&apos;s not your strongest section</p>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${expandedSections.fillEducation ? "rotate-180 text-indigo-600" : ""}`} />
+                      </button>
+                      {expandedSections.fillEducation ? (
+                        <div className="px-4 py-4">
+                          <p className="text-[13px] leading-6 text-slate-500">
+                            List your degree, university, and expected graduation date. GPA is optional, include it if it&apos;s 3.5 or above. Relevant coursework is useful when you&apos;re early and don&apos;t have much else.
+                          </p>
+                          <div className="mt-4 rounded-[9px] border border-slate-200 bg-slate-100 px-4 py-4 text-[12px]">
+                            <div className="flex items-start justify-between gap-4">
+                              <span className="font-bold text-slate-800">Florida Atlantic University</span>
+                              <span className="text-right text-[11px] text-slate-500">Boca Raton, FL<br />Dec 2026</span>
+                            </div>
+                            <p className="mt-1 text-[11px] font-semibold text-indigo-600">Bachelor&apos;s of Science in Computer Science</p>
+                            <p className="mt-1 text-[11px] text-slate-500">GPA: 3.7/4.0 · Achievements: Dean&apos;s list</p>
+                            <p className="mt-2 text-[11px] italic text-slate-400">Coursework: (optional) Build a Backend REST API with Python, The Art of Doing</p>
+                          </div>
+                          <div className="mt-4 space-y-2 text-[12px] text-slate-600">
+                            <p>✓ Put graduation date, not just year.</p>
+                            <p>✓ Move this section lower if your GPA is weak or you have stronger sections.</p>
+                            <p>→ Udemy/YouTube courses in Coursework is fine when starting out. I did this too.</p>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="overflow-hidden rounded-[9px] border border-slate-200 bg-white">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand("fillExperience")}
+                        className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left ${expandedSections.fillExperience ? "border-b border-slate-200 bg-slate-50" : "bg-white"}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-700">Experience</span>
+                          <p className="text-[13px] font-bold text-slate-900">Internships, or your projects labeled as experience</p>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${expandedSections.fillExperience ? "rotate-180 text-indigo-600" : ""}`} />
+                      </button>
+                      {expandedSections.fillExperience ? (
+                        <div className="px-4 py-4">
+                          <p className="text-[13px] leading-6 text-slate-500">
+                            List internships and jobs here. <strong>If you don&apos;t have internships yet, move your strongest projects here and call them Software Development Experience or list them under a professional title.</strong> This is what most beginners do.
+                          </p>
+                          <div className="mt-4 rounded-[9px] border border-slate-200 bg-slate-100 px-4 py-4 text-[12px]">
+                            <div className="flex items-start justify-between gap-4">
+                              <span className="font-bold text-slate-800">Fidelity Investments</span>
+                              <span className="text-right text-[11px] text-slate-500">Durham, NC</span>
+                            </div>
+                            <div className="mt-1 flex items-start justify-between gap-4">
+                              <span className="text-[11px] font-semibold text-indigo-600">Data Engineering Intern</span>
+                              <span className="text-right text-[11px] text-slate-400">Jun 2024 – Aug 2024</span>
+                            </div>
+                            <div className="mt-3 space-y-1 text-[11px] leading-5 text-slate-600">
+                              <p>• Spearheaded migration of ETL framework to Python, automating 1000+ Informatica workflows.</p>
+                              <p>• Eliminated 100% of licensing costs by transitioning from Informatica to open-source technologies.</p>
+                              <p>• Optimized ETL workflows, resulting in a 120% increase in insert operation speed.</p>
+                            </div>
+                          </div>
+                          <div className="mt-4 space-y-2 text-[12px] text-slate-600">
+                            <p>✓ 2 to 4 bullets per role.</p>
+                            <p>✓ Keep each bullet to 1 to 2 lines max.</p>
+                            <p>→ No internships yet? This is still the right section, just use your project work here.</p>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="overflow-hidden rounded-[9px] border border-slate-200 bg-white">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand("fillProjects")}
+                        className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left ${expandedSections.fillProjects ? "border-b border-slate-200 bg-slate-50" : "bg-white"}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="rounded-full bg-pink-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-pink-700">Projects</span>
+                          <p className="text-[13px] font-bold text-slate-900">Your technical proof, usually the most important section early on</p>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${expandedSections.fillProjects ? "rotate-180 text-indigo-600" : ""}`} />
+                      </button>
+                      {expandedSections.fillProjects ? (
+                        <div className="px-4 py-4">
+                          <p className="text-[13px] leading-6 text-slate-500">
+                            List your strongest projects. Each one needs a name, the tech stack, and 2 to 3 bullets describing what you built and what it did. Projects are your primary evidence of skill when you don&apos;t have work experience yet.
+                          </p>
+                          <div className="mt-4 rounded-[9px] border border-slate-200 bg-slate-100 px-4 py-4 text-[12px]">
+                            <p className="font-bold text-slate-800">Real-Time Chat Application</p>
+                            <p className="mt-1 text-[11px] text-slate-500">Python · FastAPI · PostgreSQL · WebSockets · Deployed on AWS</p>
+                            <div className="mt-3 space-y-1 text-[11px] leading-5 text-slate-600">
+                              <p>• Engineered real-time messaging with WebSockets, supporting 50+ concurrent users with low-latency delivery.</p>
+                              <p>• Designed PostgreSQL schema for message history and user sessions with indexed queries for fast retrieval.</p>
+                              <p>• Implemented JWT-based authentication and role-based access across 8 protected API endpoints.</p>
+                            </div>
+                          </div>
+                          <div className="mt-4 space-y-2 text-[12px] text-slate-600">
+                            <p>✓ Project name + tech stack first, then bullets.</p>
+                            <p>✓ One bullet for architecture, one for a technical decision, one for scale or outcome.</p>
+                            <p>→ Put your strongest project first. Recruiters read top to bottom.</p>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="overflow-hidden rounded-[9px] border border-slate-200 bg-white">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand("fillSkills")}
+                        className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left ${expandedSections.fillSkills ? "border-b border-slate-200 bg-slate-50" : "bg-white"}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">Skills</span>
+                          <p className="text-[13px] font-bold text-slate-900">Keep it organized and honest. ATS scans this section heavily.</p>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${expandedSections.fillSkills ? "rotate-180 text-indigo-600" : ""}`} />
+                      </button>
+                      {expandedSections.fillSkills ? (
+                        <div className="px-4 py-4">
+                          <p className="text-[13px] leading-6 text-slate-500">
+                            Group your skills into categories. This section helps recruiters and ATS quickly see the tools you actually know how to use.
+                          </p>
+                          <div className="mt-4 rounded-[9px] border border-slate-200 bg-slate-100 px-4 py-4 text-[11px] leading-6 text-slate-600">
+                            <strong>Programming Languages:</strong> Python, Javascript, Typescript, C, HTML, CSS, SQL<br />
+                            <strong>Technologies:</strong> React JS, Django, Flask, FastAPI, Git, AWS, Docker<br />
+                            <strong>Databases:</strong> PostgreSQL, MySQL, MongoDB
+                          </div>
+                          <div className="mt-4 space-y-2 text-[12px] text-slate-600">
+                            <p>✓ Split into categories: Languages, Technologies/Frameworks, Databases, Tools.</p>
+                            <p>✓ Only list things you&apos;ve actually used and can talk about in an interview.</p>
+                            <p>→ Don&apos;t list Microsoft Office, Google Docs, Zoom.</p>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 border-l-[3px] border-indigo-600 bg-slate-50 px-4 py-4">
+                    <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-indigo-600">
+                      <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-indigo-600 text-[8px] text-white">D</span>
+                      Founder&apos;s Note
+                    </div>
+                    <p className="text-[12px] leading-6 text-slate-600">
+                      When I built my first resume I had no internships. I put my two projects under Experience with a professional title, used coursework from Udemy to fill the coursework section, and made sure the whole thing looked impressive at a glance even if the underlying experience was limited.
+                    </p>
+                    <p className="mt-3 text-[12px] leading-6 text-slate-600">
+                      <strong>The goal of this step isn&apos;t a perfect resume, it&apos;s a complete one.</strong> Something you can submit and score. Once you have a full draft, Step 3 is where you make it genuinely impressive.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              {activeGuideStep === 2 ? (
+                <div className="border-b border-slate-200 px-7 py-8">
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">Elevate</p>
+                  <h2 className="text-[19px] font-bold tracking-[-0.02em] text-slate-950">Make It Stronger</h2>
+                  <p className="mt-1 text-[13px] leading-6 text-slate-500">You have a complete draft. Now you&apos;re going to make it look significantly more impressive, without changing what you actually did.</p>
+
+                  <div className="mt-6 rounded-[9px] bg-indigo-950 px-4 py-4 text-white">
                     <div className="flex items-center gap-2">
                       <Clock3 className="h-4 w-4 text-white/80" />
                       <p className="text-[14px] font-bold">The 7-Second Rule</p>
                     </div>
                     <p className="mt-4 text-[13px] leading-7 text-white/80">
-                      <strong className="text-white">A recruiter checks your resume for only 7 seconds on average.</strong> Yes, just 7 seconds. Make sure it looks
-                      impressive at first sight - when they glance at it, they should immediately think you&apos;re an exceptional programmer.
+                      <strong className="text-white">A recruiter checks your resume for only 7 seconds on average.</strong> Yes, just 7 seconds. When they glance at it, they should immediately think you&apos;re an exceptional programmer before reading a single bullet.
                     </p>
                     <div className="mt-4 rounded-[9px] border border-white/15 bg-white/10 px-4 py-4 text-center">
                       <p className="text-[12px] text-white/55">Your resume will only be ready when this happens:</p>
                       <p className="mt-2 text-[16px] font-bold text-amber-300">&quot;Wow, this person is really technical!&quot;</p>
                       <p className="mt-2 text-[12px] leading-6 text-white/65">
-                        When you glance at your resume for 5 seconds, that&apos;s what you should think. <strong className="text-white/85">If you don&apos;t get that feeling, it&apos;s not ready yet.</strong>{" "}
-                        Keep iterating.
+                        When you glance at your resume for 5 seconds, that&apos;s what you should think. <strong className="text-white/85">If you don&apos;t get that feeling, it&apos;s not ready yet.</strong> Keep iterating.
                       </p>
                     </div>
                     <p className="mt-4 text-[12px] leading-6 text-white/50">Check it every week and improve continuously. Every time you iterate, ask: does this look really technical at first glance?</p>
+                  </div>
+
+                  <div className="mt-4 border-l-[3px] border-violet-500 bg-violet-50 px-4 py-4">
+                    <p className="text-[13px] font-bold text-slate-900">The Truth About Resumes</p>
+                    <p className="mt-4 text-[13px] leading-7 text-slate-600">
+                      Remember, your resume is where you can show off everything you have been working hard for. <strong>Don&apos;t be humble.</strong>
+                    </p>
+                    <p className="mt-4 text-[13px] leading-7 text-slate-600">
+                      The best thing you can do is to <strong>embellish your experiences so they look more impressive than what they actually are.</strong> At the end of the day, it doesn&apos;t matter your skill level, someone is checking a piece of paper. I&apos;ve seen many friends who were not that good technically getting top tier internships, and when I checked their resume, I was like &quot;wow&quot;.
+                    </p>
                   </div>
 
                   <div className="mt-4">
@@ -796,7 +1053,7 @@ export default function ResumePage() {
                         <p className="text-[13px] leading-6 text-slate-500">Don&apos;t call your project a &quot;WhatsApp Clone&quot; or &quot;Twitter Clone&quot;. That sounds like you just followed a tutorial.</p>
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
                           <div className="rounded-[9px] border border-rose-200 bg-rose-50 px-4 py-4">
-                            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-rose-500">✕ Bad (sounds like tutorial)</p>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-rose-500">✕ Sounds like tutorial</p>
                             <div className="mt-3 space-y-2 text-[13px] text-rose-400 line-through">
                               <p>WhatsApp Clone</p>
                               <p>Twitter Clone</p>
@@ -804,15 +1061,15 @@ export default function ResumePage() {
                             </div>
                           </div>
                           <div className="rounded-[9px] border border-emerald-200 bg-emerald-50 px-4 py-4">
-                            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-500">✓ Good (sounds professional)</p>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-500">✓ Sounds professional</p>
                             <div className="mt-3 space-y-2 text-[13px] text-emerald-700">
                               <p>Real-time Chat Application</p>
                               <p>Social Media Platform with Feed Algorithm</p>
-                              <p>Task Management System with Authentication</p>
+                              <p>Task Management System with Auth</p>
                             </div>
                           </div>
                         </div>
-                        <p className="mt-3 text-[11px] italic text-slate-400">Same project, but one sounds way more professional and technical.</p>
+                        <p className="mt-3 text-[11px] italic text-slate-400">Same project, one sounds way more professional and technical.</p>
                       </div>
                     </div>
 
@@ -841,8 +1098,7 @@ export default function ResumePage() {
                         <p className="text-[13px] font-bold text-slate-900">Label Projects as Experiences</p>
                       </div>
                       <p className="mt-4 text-[13px] leading-6 text-slate-500">
-                        When you&apos;re starting out and don&apos;t have internships yet, you can call them Experience or Software Development Experience. It sounds more professional and makes your resume look fuller.{" "}
-                        <strong>This is what I did on my first resume.</strong>
+                        When you&apos;re starting out and don&apos;t have internships yet, you can call them Experience or Software Development Experience. It sounds more professional and makes your resume look fuller. <strong>This is what I did on my first resume.</strong>
                       </p>
                     </div>
 
@@ -882,69 +1138,7 @@ export default function ResumePage() {
                         </div>
                       </div>
                     </div>
-                    <p className="mt-3 text-[11px] text-slate-400">Same underlying project, better wording, clearer technical depth, and measurable impact.</p>
-                  </div>
-                </div>
-              ) : null}
-
-              {activeGuideStep === 2 ? (
-                <div className="border-b border-slate-200 px-7 py-8">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">The Craft</p>
-                  <h2 className="text-[19px] font-bold tracking-[-0.02em] text-slate-950">Writing Great Resume Content</h2>
-                  <p className="mt-1 text-[13px] leading-6 text-slate-500">How to write bullet points that actually impress people</p>
-
-                  <div className="mt-6 rounded-[9px] border-2 border-violet-200 bg-violet-50 px-4 py-5 text-center">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-violet-500">The Bullet Point Formula</p>
-                    <p className="mt-3 text-[15px] font-bold text-slate-900">Action Verb + What You Did + Result/Impact</p>
-                    <p className="mt-1 text-[12px] text-slate-500">(with a number if possible)</p>
-                  </div>
-
-                  <div className="mt-4 space-y-3">
-                    <div className="rounded-[9px] border border-emerald-200 bg-emerald-50 px-4 py-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-500">✓ Great example</p>
-                      <p className="mt-3 text-[13px] font-semibold text-slate-800">Optimized ETL pipeline using Python and SQL, reducing data processing time by 35%</p>
-                      <div className="mt-3 rounded-[7px] bg-white/80 px-3 py-2 text-[11px] text-slate-500">Action Verb + Specific Tech + Quantified Result.</div>
-                    </div>
-
-                    <div className="rounded-[9px] border border-rose-200 bg-rose-50 px-4 py-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-rose-500">✕ Weak example</p>
-                      <p className="mt-3 text-[13px] font-semibold text-slate-800">Worked on improving the data pipeline</p>
-                      <div className="mt-3 rounded-[7px] bg-white/80 px-3 py-2 text-[11px] text-slate-500">Too vague, no tech depth, no measurable impact.</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <p className="text-[13px] font-semibold text-slate-800">Use Strong Action Verbs</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {["Built", "Developed", "Designed", "Implemented", "Optimized", "Engineered", "Architected", "Deployed"].map((verb) => (
-                        <span key={verb} className="rounded-[7px] border border-indigo-200 bg-indigo-50 px-3 py-2 text-[12px] font-semibold text-indigo-600">
-                          {verb}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="mt-3 rounded-[9px] border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] text-rose-600">
-                      <strong>Avoid weak verbs like:</strong> Helped with, Worked on, Responsible for, Assisted with.
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded-[9px] border border-slate-200 bg-white px-4 py-4">
-                    <p className="text-[13px] font-bold text-slate-900">Resume Structure</p>
-                    <p className="mt-3 text-[13px] leading-6 text-slate-500">
-                      Before writing bullets, decide section order. For internship resumes, this is a common order:
-                    </p>
-                    <div className="mt-4 rounded-[9px] border border-slate-200 bg-slate-50 px-4 py-4">
-                      <div className="space-y-2 text-[13px] text-slate-600">
-                        <p>1. Education</p>
-                        <p>2. Experience (you can include project work here as an embellishment strategy)</p>
-                        <p>3. Projects</p>
-                        <p>4. Skills</p>
-                        <p>5. Other Sections</p>
-                      </div>
-                    </div>
-                    <p className="mt-4 text-[12px] leading-6 text-slate-500">
-                      Use your own judgment. Education was my weakest section when I was beginning, I placed it at the bottom and moved stronger sections up.
-                    </p>
-                    <p className="mt-2 text-[12px] italic text-slate-400">You&apos;ll see concrete structure examples in the Real Examples tab.</p>
+                    <p className="mt-3 text-[11px] text-slate-400">Same underlying project, better wording, clearer technical depth, measurable impact.</p>
                   </div>
 
                   <div className="mt-6 space-y-2">
@@ -1082,7 +1276,7 @@ export default function ResumePage() {
 
               {activeGuideStep === 3 ? (
                 <div className="border-b border-slate-200 px-7 py-8">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">Proof It Works</p>
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">Real Examples</p>
                   <h2 className="text-[19px] font-bold tracking-[-0.02em] text-slate-950">My Resume Journey</h2>
                   <p className="mt-1 text-[13px] leading-6 text-slate-500">Real examples from my first resume to FAANG interviews</p>
 
@@ -1167,10 +1361,12 @@ export default function ResumePage() {
                       </a>
 
                       <div className="mt-4 rounded-[9px] border border-slate-200 bg-slate-50 px-4 py-4">
-                        <p className="text-[13px] font-bold text-slate-900">The Story Behind This Resume:</p>
-                        <p className="mt-3 text-[12px] leading-6 text-slate-600">I focused heavily on the 7-second rule. With only 2 projects, I made sure a recruiter would be immediately impressed.</p>
+                        <p className="text-[13px] font-bold text-slate-900">Main takeaway from this resume:</p>
+                        <p className="mt-3 text-[12px] leading-6 text-slate-600">
+                          Even though the formatting was not ideal, the first impression was strong. When you glanced at it, it looked like a very technical resume right away.
+                        </p>
                         <p className="mt-4 text-[12px] leading-6 text-slate-600">
-                          When you look at this resume for 5 seconds, it looks like I&apos;m a genius programmer. I also used coursework from Udemy because I didn&apos;t have CS classes yet.
+                          That is the main lesson I want you to take from it: the 5-second impression matters a lot. I also used coursework from Udemy because I didn&apos;t have CS classes yet, and I framed my limited experience in the strongest truthful way possible.
                         </p>
                       </div>
 
@@ -1240,13 +1436,13 @@ export default function ResumePage() {
                       </a>
 
                       <div className="mt-4">
-                        <p className="text-[13px] font-semibold text-slate-900">↗ Major Improvements Made</p>
+                        <p className="text-[13px] font-semibold text-slate-900">Main takeaways from this version</p>
                         <div className="mt-4 space-y-3">
                           {[
-                            ["Switched to Better Template", "Now ATS-optimized. No more two-column issues."],
-                            ["Better Bullet Point Length", "Each bullet 1-2 lines max. More scannable."],
-                            ["Way More Metrics", "Added quantifiable results to most bullets."],
-                            ["Still Prioritized Experiences and Projects", "These remain top sections because they matter most."]
+                            ["Better structure", "This version used a cleaner ATS-safe structure, which helped it pass more automated screening."],
+                            ["New experience added correctly", "I included my internship as a new experience and still kept one of my freelance projects as experience too."],
+                            ["Kept adding stronger signal", "I kept improving the resume over time by adding HackHarvard, a professional certificate, more projects, and more skills."],
+                            ["Same principle, stronger version", "The resume still prioritized experiences and projects, but now the structure and accumulated signal were much stronger."]
                           ].map(([title, body]) => (
                             <div key={title} className="rounded-[9px] border border-slate-200 bg-white px-4 py-3">
                               <p className="text-[12px] font-semibold text-slate-800">✓ {title}</p>
