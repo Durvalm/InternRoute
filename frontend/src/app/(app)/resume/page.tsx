@@ -170,6 +170,13 @@ function getHistoryBadge(item: ResumeSubmissionHistoryItem) {
   };
 }
 
+function getAttemptNumber(submissions: ResumeSubmissionHistoryItem[], submissionId: number | null): number | null {
+  if (submissionId == null) return null;
+  const index = submissions.findIndex((item) => item.id === submissionId);
+  if (index === -1) return null;
+  return submissions.length - index;
+}
+
 export default function ResumePage() {
   const hasLoadedHistory = useRef(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -326,10 +333,16 @@ export default function ResumePage() {
     setSubmissionId(null);
   };
 
-  const latestSucceededScore = submissionHistory.find((item) => item.status === "succeeded" && item.overall_score != null)?.overall_score ?? 0;
-  const progressScore = analysisComplete && score ? score.overall : latestSucceededScore;
+  const bestSucceededScore = submissionHistory.reduce((best, item) => {
+    if (item.status !== "succeeded" || item.overall_score == null) {
+      return best;
+    }
+    return Math.max(best, item.overall_score);
+  }, 0);
+  const progressScore = analysisComplete && score ? Math.max(score.overall, bestSucceededScore) : bestSucceededScore;
   const progressPercent = Math.max(0, Math.min(100, Math.round((progressScore / 80) * 100)));
   const passThreshold = progression?.pass_threshold ?? 80;
+  const latestAttemptNumber = getAttemptNumber(submissionHistory, submissionId);
   const progressBadge =
     progressScore >= passThreshold
       ? "Passed"
@@ -459,13 +472,14 @@ export default function ResumePage() {
               </div>
             ) : (
               <div className="max-h-[292px] space-y-3 overflow-y-auto pr-1">
-                {submissionHistory.map((item) => {
+                {submissionHistory.map((item, index) => {
                   const badge = getHistoryBadge(item);
+                  const attemptNumber = submissionHistory.length - index;
                   return (
                     <div key={item.id} className="rounded-[9px] border border-slate-200 p-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <p className="truncate text-[13px] font-semibold text-slate-800">{`Submission #${item.id}`}</p>
+                          <p className="truncate text-[13px] font-semibold text-slate-800">{`Submission #${attemptNumber}`}</p>
                           <p className="mt-1 text-[12px] text-slate-500">{getDateLabel(item.created_at)}</p>
                         </div>
                         <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badge.shell}`}>
@@ -496,7 +510,7 @@ export default function ResumePage() {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Latest Analysis</p>
                 <p className="mt-1 text-[14px] font-bold text-slate-950">Resume analysis complete</p>
-                {submissionId ? <p className="mt-1 text-[12px] text-slate-500">{`Submission #${submissionId}`}</p> : null}
+                {latestAttemptNumber ? <p className="mt-1 text-[12px] text-slate-500">{`Submission #${latestAttemptNumber}`}</p> : null}
               </div>
               <div className={`rounded-[9px] border px-4 py-3 text-center ${getScoreBg(score.overall)}`}>
                 <div className={`text-[28px] font-bold leading-none ${getScoreColor(score.overall)}`}>{score.overall}</div>
@@ -559,7 +573,7 @@ export default function ResumePage() {
 
         <div className="bg-indigo-50 px-5 py-3 text-[11px] leading-5 text-indigo-700">
           This scorer relies on LLM guidance, not a perfect or final recruiter decision. Use it as a strong baseline, not absolute truth. Scores may vary between attempts.{" "}
-          <strong>Target at least 80%. If you already have internship experience, target 85%+.</strong>
+          <strong>Target at least 80%.</strong>
         </div>
       </section>
 
@@ -1147,7 +1161,7 @@ export default function ResumePage() {
                             alt="My first resume"
                             width={1200}
                             height={1600}
-                            className="h-auto w-full rounded-[7px]"
+                            className="mx-auto h-auto w-full max-w-[760px] rounded-[7px]"
                           />
                         </div>
                       </a>
@@ -1220,7 +1234,7 @@ export default function ResumePage() {
                             alt="Resume after first internship"
                             width={1200}
                             height={1600}
-                            className="h-auto w-full rounded-[7px]"
+                            className="mx-auto h-auto w-full max-w-[760px] rounded-[7px]"
                           />
                         </div>
                       </a>
