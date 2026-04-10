@@ -1119,21 +1119,6 @@ const [activeGuideStep, setActiveGuideStep] = useState(0);
                       ) : null}
                     </div>
                   </div>
-
-                  <div className="mt-6 rounded-r-[9px] border border-slate-200 border-l-[3px] border-l-indigo-600 bg-slate-50 px-4 py-4">
-                    <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.09em] text-indigo-600">
-                      <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-indigo-600 text-[8px] text-white">D</span>
-                      Where This Comes From
-                    </div>
-                    <p className="text-[12px] leading-7 text-slate-700">
-                      I&apos;ve lived this process from the inside and helped many others do the same. I know the tools
-                      strong CS candidates use to get hired, and the skills companies actually screen for.
-                    </p>
-                    <p className="mt-3 text-[12px] leading-7 text-slate-700">
-                      I landed internships at Fidelity, Tesla, and Amazon while in community college. I learned what
-                      actually matters, cut the noise, and built this guide around that exact process.
-                    </p>
-                  </div>
                 </div>
               ) : null}
             </div>
