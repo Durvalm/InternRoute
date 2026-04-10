@@ -34,6 +34,26 @@ export type JourneyPayload = {
   modules: JourneyModule[];
 };
 
+export type TimelinePlan = {
+  estimated_ready_date: string;
+  estimated_duration_weeks: number;
+  season_at_ready: "peak" | "lower" | "off";
+  peak_cycle_open: string;
+  peak_reference_is_current_cycle: boolean;
+  next_peak_open: string;
+  next_lower_open: string;
+  recommended_start_date: string;
+  recommended_season: "peak" | "lower" | "off";
+  recommendation_key: string;
+  recommendation_title: string;
+  recommendation_summary: string;
+  peak_hiring_note: string;
+  season_explainer: string;
+  ready_after_graduation: boolean;
+  graduates_before_next_peak: boolean;
+  graduation_date: string | null;
+};
+
 export type RecruitingScenario = {
   id: string;
   name: string;
@@ -77,6 +97,7 @@ export type DashboardSummary = {
   graduation_date: string | null;
   recruiting: RecruitingSummary;
   journey: JourneyPayload;
+  timeline_plan: TimelinePlan;
 };
 
 export type RebaselineResponse = {

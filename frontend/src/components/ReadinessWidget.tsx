@@ -29,16 +29,16 @@ export default function ReadinessWidget({ progress, readinessThreshold = 62, cat
   const leetcode = categories?.leetcode ?? 0;
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6">
+    <section className="rounded-xl border border-slate-200 bg-white p-5">
       <div className="mb-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <TrendingUp size={20} className="text-slate-700" />
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Overall Readiness</h2>
-            <p className="text-sm text-slate-500">Your preparedness for the recruiting season</p>
+            <h2 className="text-[14px] font-semibold text-slate-950">Overall Readiness</h2>
+            <p className="text-[13px] text-slate-500">Your preparedness for the recruiting season</p>
           </div>
         </div>
-        <span className="text-3xl font-semibold text-indigo-600">{progress}%</span>
+        <span className="text-[22px] font-bold text-indigo-600">{progress}%</span>
       </div>
 
       <div className="relative mb-8 pb-3">
@@ -64,7 +64,7 @@ export default function ReadinessWidget({ progress, readinessThreshold = 62, cat
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <CategoryProgress
           icon={Code2}
           label="Coding Skills"
@@ -121,10 +121,10 @@ function CategoryProgress({
         <div className={`rounded-md bg-white p-1.5 shadow-sm ${color}`}>
           <Icon size={16} />
         </div>
-        <span className={`text-lg font-bold ${color}`}>{percentage}%</span>
+        <span className={`text-[14px] font-bold ${color}`}>{percentage}%</span>
       </div>
-      <h3 className="mb-1 font-medium text-slate-900">{label}</h3>
-      <p className="mb-3 text-xs text-slate-500">{details}</p>
+      <h3 className="mb-1 text-[14px] font-semibold text-slate-900">{label}</h3>
+      <p className="mb-3 text-[12px] text-slate-500">{details}</p>
       <div className="h-2 w-full overflow-hidden rounded-full bg-white">
         <div className={`h-2 rounded-full ${bgColor}`} style={{ width: `${percentage}%` }}></div>
       </div>

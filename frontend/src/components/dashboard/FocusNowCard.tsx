@@ -137,20 +137,20 @@ export default function FocusNowCard({ moduleProgress, journeyModules, nextActio
       <div className="bg-indigo-700 px-5 py-3.5 text-white">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-200">
+            <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-200">
               <CircleDot size={14} />
               Focus Right Now
             </p>
-            <h3 className="mt-1.5 text-xl font-semibold leading-tight">{currentModule.module_name}</h3>
-            <p className="mt-1 text-sm text-indigo-100">{progressLine}</p>
+            <h3 className="mt-1.5 text-[19px] font-bold leading-tight">{currentModule.module_name}</h3>
+            <p className="mt-1 text-[13px] text-indigo-100">{progressLine}</p>
           </div>
           <div className="w-full rounded-lg border border-indigo-400/60 bg-white/10 px-4 py-2 text-left sm:w-auto sm:shrink-0 sm:text-right">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-200">Deadline</p>
-            <p className="mt-1 text-xl font-semibold leading-none">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-200">Deadline</p>
+            <p className="mt-1 text-[19px] font-bold leading-none">
               {formatDateLabel(currentJourneyModule?.target_date ?? null)}
             </p>
             <p
-              className={`mt-1 text-xs font-medium ${
+              className={`mt-1 text-[12px] font-medium ${
                 (currentJourneyModule?.days_to_target ?? 0) < 0 ? "text-rose-200" : "text-indigo-100"
               }`}
             >
@@ -163,10 +163,10 @@ export default function FocusNowCard({ moduleProgress, journeyModules, nextActio
       <div className="space-y-4 px-5 py-4">
         <div>
           <div className="mb-2 flex items-end justify-between">
-            <p className="text-base font-medium text-slate-600">
+            <p className="text-[14px] font-semibold text-slate-600">
               Progress toward {displayGoal}% milestone
             </p>
-            <p className="text-lg font-semibold text-indigo-700">
+            <p className="text-[14px] font-bold text-indigo-700">
               {clampedScore}% <span className="font-medium text-slate-300">/ {displayGoal}%</span>
             </p>
           </div>
@@ -182,8 +182,8 @@ export default function FocusNowCard({ moduleProgress, journeyModules, nextActio
 
         <div className="border-t border-slate-200 pt-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-lg font-semibold text-slate-800">Next actions</p>
-            <p className="text-base text-slate-400">
+            <p className="text-[14px] font-semibold text-slate-800">Next actions</p>
+            <p className="text-[13px] text-slate-400">
               {tasks.length > 0 ? `${completedTasksCount}/${tasks.length} done` : "0/0 done"}
             </p>
           </div>

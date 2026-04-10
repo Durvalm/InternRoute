@@ -91,10 +91,10 @@ export default function Dashboard() {
     <>
       <div className="mx-auto max-w-7xl space-y-6 pb-10">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-[22px] font-bold tracking-[-0.02em] text-slate-950 md:text-[24px]">
             Good afternoon{summary?.user_name ? `, ${summary.user_name}` : ""}!
           </h1>
-          <p className="text-slate-500">You're making progress toward your internship goal.</p>
+          <p className="text-[14px] text-slate-500">You're making progress toward your internship goal.</p>
         </div>
 
         <div className="border-b border-slate-200">
@@ -102,7 +102,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setActiveTab("today")}
-              className={`border-b-2 px-1 py-2 text-sm font-medium ${
+              className={`border-b-2 px-1 py-2 text-[13px] font-medium ${
                 activeTab === "today"
                   ? "border-indigo-600 text-indigo-700"
                   : "border-transparent text-slate-600 hover:text-slate-900"
@@ -113,7 +113,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setActiveTab("journey")}
-              className={`border-b-2 px-1 py-2 text-sm font-medium ${
+              className={`border-b-2 px-1 py-2 text-[13px] font-medium ${
                 activeTab === "journey"
                   ? "border-indigo-600 text-indigo-700"
                   : "border-transparent text-slate-600 hover:text-slate-900"
@@ -155,6 +155,7 @@ export default function Dashboard() {
                 graduationDate={summary?.graduation_date}
                 readiness={summary?.progress}
                 recruiting={summary?.recruiting}
+                timelinePlan={summary?.timeline_plan}
               />
               <QuickResourcesWidget />
             </div>
@@ -162,6 +163,10 @@ export default function Dashboard() {
         ) : (
           <JourneyTimeline
             journey={summary?.journey ?? null}
+            timelinePlan={summary?.timeline_plan ?? null}
+            graduationDate={summary?.graduation_date ?? null}
+            summersLeft={summary?.recruiting?.summers_left ?? null}
+            nextPeakDate={summary?.recruiting?.next_peak_date ?? summary?.recruiting_date ?? null}
             onRebaseline={rebaselineTimeline}
             rebasing={isRebaselining}
           />

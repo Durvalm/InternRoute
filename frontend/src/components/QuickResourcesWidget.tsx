@@ -1,135 +1,111 @@
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
-import {
-  ArrowRight,
-  Code2,
-  DollarSign,
-  ExternalLink,
-  FileText,
-  Search,
-  Users
-} from "lucide-react";
+import { ArrowRight, ExternalLink } from "lucide-react";
 
 type Resource = {
   name: string;
   description: string;
   href: string;
-  icon: LucideIcon;
-  color: string;
-  bg: string;
+  emoji: string;
   external?: boolean;
 };
 
 const resources: Resource[] = [
   {
-    name: "Resume Evaluator",
-    description: "Go to Resume and use the Score It tab.",
-    href: "/resume?tab=scorer",
-    icon: FileText,
-    color: "text-blue-700",
-    bg: "bg-blue-50"
-  },
-  {
-    name: "GitHub Internship List",
-    description: "Simplify tracker for new internship openings.",
-    href: "https://github.com/SimplifyJobs/Summer2026-Internships",
-    icon: Search,
-    color: "text-slate-700",
-    bg: "bg-slate-100",
-    external: true
-  },
-  {
-    name: "Underclassmen Internships",
-    description: "Actively maintained list focused on freshmen and sophomores.",
-    href: "https://github.com/zapplyjobs/underclassmen-internships",
-    icon: Search,
-    color: "text-emerald-700",
-    bg: "bg-emerald-50",
-    external: true
-  },
-  {
     name: "Simplify",
-    description: "Apply faster and track internship applications.",
+    description: "Apply faster and track applications in one place.",
     href: "https://simplify.jobs/",
-    icon: Search,
-    color: "text-indigo-700",
-    bg: "bg-indigo-50",
-    external: true
+    emoji: "⚡",
+    external: true,
   },
   {
     name: "levels.fyi Compensation",
-    description: "Compensation benchmarking for offer quality.",
+    description: "Benchmark internship pay and compare offer quality.",
     href: "https://www.levels.fyi/internships/",
-    icon: DollarSign,
-    color: "text-green-700",
-    bg: "bg-green-50",
-    external: true
+    emoji: "💰",
+    external: true,
   },
   {
     name: "Jake's Resume Template",
-    description: "Recommended ATS-friendly resume template.",
+    description: "Recommended ATS-friendly template for the resume module.",
     href: "https://www.overleaf.com/latex/templates/jakes-resume/syzfjbzwjncs",
-    icon: FileText,
-    color: "text-sky-700",
-    bg: "bg-sky-50",
-    external: true
+    emoji: "📋",
+    external: true,
   },
   {
     name: "NeetCode 150",
-    description: "Core problem set for interview prep.",
+    description: "Core interview set once your fundamentals are strong.",
     href: "https://neetcode.io/practice",
-    icon: Code2,
-    color: "text-emerald-700",
-    bg: "bg-emerald-50",
-    external: true
+    emoji: "💻",
+    external: true,
   },
   {
     name: "CSCareers Discord",
     description: "Community signal on OAs, interviews, and openings.",
     href: "https://discord.com/invite/cscareers",
-    icon: Users,
-    color: "text-violet-700",
-    bg: "bg-violet-50",
-    external: true
-  }
+    emoji: "💬",
+    external: true,
+  },
+  {
+    name: "Resume Evaluator",
+    description: "Use the Resume scorer to check structure and signal.",
+    href: "/resume?tab=scorer",
+    emoji: "🧾",
+  },
+  {
+    name: "GitHub Internship List",
+    description: "Simplify's maintained internship openings tracker.",
+    href: "https://github.com/SimplifyJobs/Summer2026-Internships",
+    emoji: "🔎",
+    external: true,
+  },
+  {
+    name: "Underclassmen Internships",
+    description: "Freshman and sophomore internship list.",
+    href: "https://github.com/zapplyjobs/underclassmen-internships",
+    emoji: "🌱",
+    external: true,
+  },
 ];
 
 export default function QuickResourcesWidget() {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-      <h3 className="font-bold text-slate-900 mb-4">Quick Resources</h3>
-      <p className="text-xs text-slate-500 mb-4">Top links pulled from your modules.</p>
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 px-5 py-4">
+        <h3 className="text-base font-semibold text-slate-900">Quick Resources</h3>
+        <p className="mt-1 text-sm text-slate-500">Top links pulled from your modules.</p>
+      </div>
 
-      <div className="space-y-2">
+      <div className="max-h-[420px] space-y-1 overflow-y-auto px-2 py-2">
         {resources.map((resource) => (
           <LinkRow key={resource.name} resource={resource} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
 function LinkRow({ resource }: { resource: Resource }) {
   const content = (
     <>
-      <div className={`mt-0.5 p-2 rounded-md ${resource.bg} ${resource.color}`}>
-        <resource.icon size={16} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-slate-800 group-hover:text-indigo-700 transition-colors">
+      <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg">
+        {resource.emoji}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium text-slate-900 transition-colors group-hover:text-indigo-700">
           {resource.name}
-        </p>
-        <p className="text-xs text-slate-500 truncate">{resource.description}</p>
-      </div>
+        </span>
+        <span className="block truncate text-sm text-slate-500">{resource.description}</span>
+      </span>
       {resource.external ? (
-        <ExternalLink size={14} className="shrink-0 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+        <ExternalLink size={14} className="mt-1 shrink-0 text-slate-300 transition-colors group-hover:text-indigo-500" />
       ) : (
-        <ArrowRight size={14} className="shrink-0 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+        <ArrowRight size={14} className="mt-1 shrink-0 text-slate-300 transition-colors group-hover:text-indigo-500" />
       )}
     </>
   );
 
-  const shellClassName = "group flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-2.5 transition-colors hover:bg-slate-50 hover:border-indigo-200";
+  const shellClassName =
+    "group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-50";
 
   if (resource.external) {
     return (

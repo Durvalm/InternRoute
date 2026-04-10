@@ -19,7 +19,7 @@ from ..services.progression import (
   sync_projects_submission_progress,
 )
 from ..services.recruiting import READY_THRESHOLD, build_recruiting_view
-from ..services.onboarding_timeline import TRACK_DURATION_WEEKS
+from ..services.onboarding_timeline import TRACK_DURATION_WEEKS, build_onboarding_timeline_plan
 
 bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -332,6 +332,11 @@ def _build_summary_payload(user: User) -> dict[str, Any]:
   days_until_next_window = days_until(next_window_start)
   days_until_window_close = days_until(current_window_end) if current_window_end else None
   journey = _build_journey_payload(user=user, computed=computed, today=today)
+  timeline_plan = build_onboarding_timeline_plan(
+    today=today,
+    graduation_date=user.graduation_date,
+    track_key=journey["track_key"],
+  )
 
   return {
     "user_name": user.name,
@@ -348,6 +353,7 @@ def _build_summary_payload(user: User) -> dict[str, Any]:
     "graduation_date": user.graduation_date.isoformat() if user.graduation_date else None,
     "recruiting": recruiting,
     "journey": journey,
+    "timeline_plan": timeline_plan,
   }
 
 
