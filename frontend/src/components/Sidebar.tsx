@@ -15,7 +15,8 @@ import {
   LogOut,
   GraduationCap,
   Sparkles,
-  BarChart3
+  BarChart3,
+  type LucideIcon
 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 import { trackLogoutClicked } from "@/lib/analytics";
@@ -25,40 +26,43 @@ type SidebarProps = {
   onClose?: () => void;
 };
 
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Calendar, label: "Intro", href: "/intro" },
-  { icon: Code2, label: "Coding Skills", href: "/skills" },
-  { icon: Briefcase, label: "Projects", href: "/projects" },
-  { icon: FileText, label: "Resume", href: "/resume" },
-  { icon: CheckSquare, label: "Applications", href: "/applications" },
-  { icon: Users, label: "Interview Prep", href: "/interview-prep" },
-  { icon: Code2, label: "Leetcode", href: "/leetcode" },
-  { icon: Sparkles, label: "Opportunities", href: "/opportunities" }
+type NavItem = {
+  icon: LucideIcon;
+  label: string;
+  href: string;
+};
+
+type NavSection = {
+  label: string;
+  items: NavItem[];
+};
+
+const navSections: NavSection[] = [
+  {
+    label: "Preparation",
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+      { icon: Calendar, label: "Intro", href: "/intro" },
+      { icon: Code2, label: "Coding Skills", href: "/skills" },
+      { icon: Briefcase, label: "Projects", href: "/projects" },
+      { icon: FileText, label: "Resume", href: "/resume" },
+      { icon: CheckSquare, label: "Applications", href: "/applications" }
+    ]
+  },
+  {
+    label: "Support",
+    items: [
+      { icon: Users, label: "Interview Prep", href: "/interview-prep" },
+      { icon: Sparkles, label: "Opportunities", href: "/opportunities" }
+    ]
+  },
+  {
+    label: "Beyond the Basics",
+    items: [{ icon: Code2, label: "LeetCode", href: "/leetcode" }]
+  }
 ];
 
-const adminNavItems = [{ icon: BarChart3, label: "Admin", href: "/admin" }];
-
-type SidebarModuleProgress = {
-  module_key: string;
-  score: number;
-  unlock_threshold: number;
-  has_tasks: boolean;
-};
-
-type SidebarSummaryPayload = {
-  module_progress: SidebarModuleProgress[];
-};
-
-const moduleKeyByHref: Record<string, string> = {
-  "/intro": "timeline",
-  "/skills": "coding",
-  "/projects": "projects",
-  "/resume": "resume",
-  "/applications": "applications",
-  "/interview-prep": "interview_prep",
-  "/leetcode": "leetcode",
-};
+const adminNavItems: NavItem[] = [{ icon: BarChart3, label: "Admin", href: "/admin" }];
 
 function getInitials(name: string): string {
   const parts = name
@@ -74,7 +78,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setCurrentUser] = useState<StoredUser | null>(null);
-  const [moduleProgress, setModuleProgress] = useState<SidebarModuleProgress[]>([]);
 
   const handleLogout = async () => {
     onClose?.();
@@ -100,88 +103,69 @@ export default function Sidebar({ onClose }: SidebarProps) {
     };
   }, []);
 
-  useEffect(() => {
-    let active = true;
-    apiRequest<SidebarSummaryPayload>("/dashboard/summary")
-      .then((payload) => {
-        if (!active) return;
-        setModuleProgress(payload.module_progress ?? []);
-      })
-      .catch(() => {
-        if (!active) return;
-        setModuleProgress([]);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [pathname]);
-
-  const currentModuleKey = moduleProgress.find(
-    (module) => module.has_tasks && module.score < module.unlock_threshold,
-  )?.module_key;
-  const normalizedCurrentModuleKey = currentModuleKey === "intro" ? "timeline" : currentModuleKey;
-  const completedModuleKeys = new Set(
-    moduleProgress
-      .filter((module) => module.has_tasks && module.score >= module.unlock_threshold)
-      .map((module) => (module.module_key === "intro" ? "timeline" : module.module_key)),
-  );
-
   const userName = user?.name?.trim() || "Student";
   const initials = getInitials(userName);
-  const visibleNavItems = user?.is_superuser ? [...navItems, ...adminNavItems] : navItems;
+  const visibleSections: NavSection[] = user?.is_superuser
+    ? [...navSections, { label: "Admin", items: adminNavItems }]
+    : navSections;
 
   return (
-    <div className="flex flex-col h-full bg-white text-slate-600">
-      <div className="p-6 border-b border-slate-100">
+    <div className="flex h-full flex-col bg-white text-slate-600">
+      <div className="border-b border-slate-100 p-5">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 p-2 rounded-lg text-white">
-            <GraduationCap size={24} />
+          <div className="rounded-lg bg-indigo-600 p-2 text-white">
+            <GraduationCap size={22} />
           </div>
           <div>
-            <h1 className="font-bold text-slate-900 leading-tight">InternRoute</h1>
+            <h1 className="leading-tight text-[15px] font-bold text-slate-900">InternRoute</h1>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-        <div className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          Preparation
-        </div>
-        {visibleNavItems.map((item) => {
-          const active = pathname === item.href;
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                active
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "hover:bg-slate-50 hover:text-slate-900"
-              }`}
-              onClick={onClose}
-            >
-              <item.icon size={18} className={active ? "text-indigo-600" : "text-slate-400"} />
-              <span className="flex-1">{item.label}</span>
-            </Link>
-          );
-        })}
+      <div className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
+        {visibleSections.map((section) => (
+          <div key={section.label}>
+            <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              {section.label}
+            </p>
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-[14px] font-medium transition-colors ${
+                      active
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
+                    onClick={onClose}
+                  >
+                    <item.icon size={16} className={active ? "text-indigo-600" : "text-slate-400"} />
+                    <span className="flex-1">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="p-4 border-t border-slate-100">
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-2 space-y-2">
+      <div className="border-t border-slate-100 p-4">
+        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2">
           <div className="flex items-center gap-3 p-2">
-            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 flex items-center justify-center text-sm font-semibold">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-100 text-sm font-semibold text-indigo-700">
               {initials}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">{userName}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-slate-900">{userName}</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <Link
               href="/settings"
-              className="inline-flex items-center justify-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-white border border-slate-200 transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-2.5 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-white"
               onClick={onClose}
             >
               <Settings size={14} className="text-slate-500" />
@@ -190,7 +174,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center justify-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-red-600 hover:bg-red-50 border border-red-200 transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 px-2.5 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
             >
               <LogOut size={14} className="text-red-500" />
               Log out
