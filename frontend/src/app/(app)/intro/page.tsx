@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRight,
   Banknote,
   BookOpen,
   Briefcase,
@@ -64,7 +63,13 @@ type GuideStep = {
   label: string;
 };
 
-type DisclosureKey = "oneSummer" | "graduation" | "pay";
+type DisclosureKey =
+  | "oneSummer"
+  | "returnOffer"
+  | "noExperience"
+  | "opportunities"
+  | "graduation"
+  | "pay";
 
 type WindowTone = "peak" | "lower" | "offseason";
 
@@ -201,16 +206,28 @@ const SUPPORT_MODULES: Array<{
 
 const FAQ_ITEMS = [
   {
+    key: "returnOffer" as const,
     question: "What is a Return Offer (RO)?",
-    answer: "A full-time job offer given at the end of an internship. It is the safest path to securing a post-grad job early."
+    hint: "The safest path to a post-grad job",
+    icon: Briefcase,
+    answer:
+      "A return offer is a full-time job offer you get at the end of an internship. That is why even a smaller internship matters so much: it can turn into a job before senior year recruiting chaos even starts."
   },
   {
+    key: "noExperience" as const,
     question: "What if I have no experience at all?",
-    answer: "That is why projects matter so much. When you are starting out, projects are your main form of proof."
+    hint: "That is exactly why projects exist",
+    icon: Sparkles,
+    answer:
+      "That is normal. Projects are how you create experience when you do not have any yet. By the time you finish the Projects module, you should have real repositories that act as proof of work on your resume."
   },
   {
+    key: "opportunities" as const,
     question: "What are Other Opportunities?",
-    answer: "Hackathons, fellowships, and open source programs can strengthen your resume during recruiting season."
+    hint: "Parallel ways to strengthen your profile",
+    icon: Lightbulb,
+    answer:
+      "Hackathons, fellowships, open source programs, and similar experiences can strengthen your resume while you are applying. They also tend to be less competitive than top internships because fewer students know how to use them well."
   }
 ];
 
@@ -331,12 +348,15 @@ export default function IntroPage() {
   const [tasksLoading, setTasksLoading] = useState(true);
   const [tasksError, setTasksError] = useState<string | null>(null);
   const [syncingTaskId, setSyncingTaskId] = useState<number | null>(null);
-  const [learningGuideOpen, setLearningGuideOpen] = useState(false);
-  const [activeGuideStep, setActiveGuideStep] = useState(0);
+  const [learningGuideOpen, setLearningGuideOpen] = useState(true);
+const [activeGuideStep, setActiveGuideStep] = useState(0);
   const [seenGuideSteps, setSeenGuideSteps] = useState<boolean[]>([false, false, false]);
   const [visitedGuideSteps, setVisitedGuideSteps] = useState<boolean[]>([false, false, false]);
   const [openDisclosures, setOpenDisclosures] = useState<Record<DisclosureKey, boolean>>({
     oneSummer: false,
+    returnOffer: false,
+    noExperience: false,
+    opportunities: false,
     graduation: false,
     pay: false
   });
@@ -408,43 +428,8 @@ export default function IntroPage() {
     if (!timelineTask?.is_completed) return;
     setSeenGuideSteps([true, true, true]);
     setVisitedGuideSteps([true, true, true]);
+    setActiveGuideStep(GUIDE_STEPS.length - 1);
   }, [timelineTask?.is_completed]);
-
-  useEffect(() => {
-    if (!timelineTask) return;
-    if (timelineTask.is_completed) return;
-    if (!seenGuideSteps.every(Boolean)) return;
-    if (syncingTaskId === timelineTask.id) return;
-
-    setTasksError(null);
-    setSyncingTaskId(timelineTask.id);
-
-    void apiRequest<TaskCompletionResponse>(`/dashboard/tasks/${timelineTask.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ completed: true })
-    })
-      .then((data) => {
-        setTimelineTasks((prev) =>
-          prev.map((item) => (item.id === timelineTask.id ? { ...item, is_completed: true } : item))
-        );
-        setSummary((prev) =>
-          prev
-            ? { ...prev, module_progress: data.module_progress }
-            : {
-                graduation_date: null,
-                recruiting: { summers_left: null, next_peak_date: "" },
-                module_progress: data.module_progress
-              }
-        );
-      })
-      .catch((err) => {
-        const message = err instanceof Error ? err.message : "Unable to save intro progress right now.";
-        setTasksError(message);
-      })
-      .finally(() => {
-        setSyncingTaskId(null);
-      });
-  }, [seenGuideSteps, syncingTaskId, timelineTask]);
 
   const toggleLearningGuide = () => {
     setLearningGuideOpen((prev) => {
@@ -480,8 +465,40 @@ export default function IntroPage() {
     }));
   };
 
-  const handleContinue = () => {
-    router.push("/skills");
+  const handleGuideCompletion = () => {
+    setVisitedGuideSteps([true, true, true]);
+    setSeenGuideSteps([true, true, true]);
+
+    if (!timelineTask || timelineTask.is_completed || syncingTaskId === timelineTask.id) return;
+
+    setTasksError(null);
+    setSyncingTaskId(timelineTask.id);
+
+    void apiRequest<TaskCompletionResponse>(`/dashboard/tasks/${timelineTask.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ completed: true })
+    })
+      .then((data) => {
+        setTimelineTasks((prev) =>
+          prev.map((item) => (item.id === timelineTask.id ? { ...item, is_completed: true } : item))
+        );
+        setSummary((prev) =>
+          prev
+            ? { ...prev, module_progress: data.module_progress }
+            : {
+                graduation_date: null,
+                recruiting: { summers_left: null, next_peak_date: "" },
+                module_progress: data.module_progress
+              }
+        );
+      })
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : "Unable to save intro progress right now.";
+        setTasksError(message);
+      })
+      .finally(() => {
+        setSyncingTaskId(null);
+      });
   };
 
   const progressBadge =
@@ -617,15 +634,6 @@ export default function IntroPage() {
             </div>
           </div>
 
-          <div className="mx-5 mb-4 rounded-[9px] border border-indigo-200 bg-indigo-50 px-4 py-4">
-            <p className="text-[12px] leading-6 text-indigo-700">
-              <strong>The most important thing to understand:</strong> Applications for summer internships open in{" "}
-              <strong>August of the previous year</strong>. The peak window above is when you apply for a{" "}
-              <strong>Summer {targetInternshipYear}</strong> internship. If you wait until spring, many of the best
-              roles are already gone.
-            </p>
-          </div>
-
           <div className="grid border-y border-slate-200 md:grid-cols-3">
             <div className="border-b border-slate-200 px-5 py-4 md:border-b-0 md:border-r">
               <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Your summers left</p>
@@ -754,6 +762,76 @@ export default function IntroPage() {
                     biggest advantage a student can have.
                   </p>
 
+                  <div className="mt-6 overflow-hidden rounded-[9px] border border-slate-200 bg-white">
+                    <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Why this calendar exists</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-[1fr_auto_1fr]">
+                      <div className="px-4 py-4">
+                        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">The internship</p>
+                        <p className="text-[14px] font-bold text-slate-900">Runs in summer</p>
+                        <p className="mt-2 text-[12px] leading-6 text-slate-600">
+                        Most CS internships are 10–14 week programs running June through August. Full-time work, real pay, real experience.
+                        </p>
+
+                        <div className="mt-3 grid grid-cols-8 gap-[3px]">
+                          {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"].map((label, index) => (
+                            <div
+                              key={label}
+                              className={`flex h-[22px] items-center justify-center rounded-[4px] border text-[9px] font-bold uppercase ${
+                                index >= 5
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                  : "border-slate-200 bg-slate-100 text-slate-500"
+                              }`}
+                            >
+                              {label}
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-1.5 text-[10px] font-semibold text-emerald-700">Internship months</p>
+                      </div>
+
+                      <div className="flex items-center justify-center border-y border-slate-200 bg-slate-50 px-3 py-4 text-slate-400 md:border-x md:border-y-0">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-[18px]">→</span>
+                          <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-400">so</span>
+                        </div>
+                      </div>
+
+                      <div className="px-4 py-4">
+                        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-indigo-600">The recruiting</p>
+                        <p className="text-[14px] font-bold text-slate-900">Happens the year before</p>
+                        <p className="mt-2 text-[12px] leading-6 text-slate-600">
+                        Companies open applications in August of the previous year. That's a full 10–12 months before the internship starts.
+                        </p>
+
+                        <div className="mt-3 grid grid-cols-8 gap-[3px]">
+                          {["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"].map((label, index) => (
+                            <div
+                              key={label}
+                              className={`flex h-[22px] items-center justify-center rounded-[4px] border text-[9px] font-bold uppercase ${
+                                index <= 4
+                                  ? "border-indigo-200 bg-indigo-50 text-indigo-600"
+                                  : "border-amber-200 bg-amber-50 text-amber-700"
+                              }`}
+                            >
+                              {label}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-1.5 flex gap-3 text-[10px] font-semibold">
+                          <span className="text-indigo-600">Peak window</span>
+                          <span className="text-amber-700">Lower window</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-indigo-200 bg-indigo-50 px-4 py-3 text-[12px] leading-6 text-indigo-700">
+                      <strong>The result:</strong> The result: Each summer you have is one recruiting cycle. To compete in Summer 2027, you apply in Fall 2026. That's why summers left is the clock that matters.
+                    </div>
+                  </div>
+
                   <div className="mt-6 space-y-3">
                     {RECRUITING_WINDOWS.map((window) => {
                       const style = windowShellClasses(window.tone);
@@ -771,35 +849,6 @@ export default function IntroPage() {
                         </div>
                       );
                     })}
-                  </div>
-
-                  <div className="my-6 h-px bg-slate-200" />
-
-                  <p className="text-[12px] font-semibold text-slate-800">Using Your Runway Strategically</p>
-                  <p className="mt-2 text-[13px] leading-6 text-slate-600">
-                    You have <strong>{summersLeft == null ? "a limited number of" : summersLeft}</strong>{" "}
-                    {summersLeft === 1 ? "summer" : "summers"} left. Do not think of them as equal shots. Think of
-                    them as a ladder: the earlier one creates leverage for the next one.
-                  </p>
-
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <div className="rounded-[9px] border border-slate-200 bg-white px-4 py-4">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-amber-700">First target</p>
-                      <h3 className="mt-2 text-[16px] font-bold text-slate-900">Land something. Anything with code.</h3>
-                      <p className="mt-2 text-[12px] leading-6 text-slate-600">
-                        A small firm, startup, or local company is a real win. One internship on your resume changes
-                        the next cycle dramatically.
-                      </p>
-                    </div>
-
-                    <div className="rounded-[9px] border border-slate-200 bg-white px-4 py-4">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">Level up</p>
-                      <h3 className="mt-2 text-[16px] font-bold text-slate-900">Use the first win to aim higher.</h3>
-                      <p className="mt-2 text-[12px] leading-6 text-slate-600">
-                        Once you have proof of work, bigger targets become realistic. That is when stronger brands and
-                        more competitive roles start opening up.
-                      </p>
-                    </div>
                   </div>
 
                   <button
@@ -948,86 +997,128 @@ export default function IntroPage() {
                   <div className="my-6 h-px bg-slate-200" />
 
                   <p className="text-[12px] font-semibold text-slate-800">FAQ</p>
-                  <div className="mt-4 space-y-2">
-                    {FAQ_ITEMS.map((item) => (
-                      <div key={item.question} className="rounded-[9px] border border-slate-200 bg-white px-4 py-4">
-                        <p className="text-[12px] font-semibold text-slate-900">{item.question}</p>
-                        <p className="mt-1.5 text-[12px] leading-6 text-slate-600">{item.answer}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => toggleDisclosure("graduation")}
-                    className={`mt-4 flex w-full items-center justify-between rounded-[9px] border px-4 py-3 text-left transition ${
-                      openDisclosures.graduation
-                        ? "rounded-b-none border-indigo-200 bg-indigo-50"
-                        : "border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <GraduationCap className="h-4 w-4 text-slate-400" />
-                      <div>
-                        <p className="text-[12px] font-semibold text-slate-800">Approaching graduation without internships?</p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">Common paths people actually take</p>
-                      </div>
-                    </div>
-                    <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${openDisclosures.graduation ? "rotate-180 text-indigo-600" : ""}`} />
-                  </button>
-
-                  {openDisclosures.graduation ? (
-                    <div className="rounded-b-[9px] border border-t-0 border-indigo-200 bg-indigo-50 px-4 py-4">
-                      <p className="text-[12px] leading-6 text-indigo-700">
-                        If you are close to graduating without internships, common paths include delaying graduation,
-                        applying to master&apos;s programs, working in startups or local firms, or entering adjacent roles
-                        and building up from there.
-                      </p>
-                    </div>
-                  ) : null}
-
-                  <button
-                    type="button"
-                    onClick={() => toggleDisclosure("pay")}
-                    className={`mt-3 flex w-full items-center justify-between rounded-[9px] border px-4 py-3 text-left transition ${
-                      openDisclosures.pay
-                        ? "rounded-b-none border-indigo-200 bg-indigo-50"
-                        : "border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Banknote className="h-4 w-4 text-slate-400" />
-                      <div>
-                        <p className="text-[12px] font-semibold text-slate-800">What do internships actually pay in the US?</p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">Hourly ranges by company tier</p>
-                      </div>
-                    </div>
-                    <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${openDisclosures.pay ? "rotate-180 text-indigo-600" : ""}`} />
-                  </button>
-
-                  {openDisclosures.pay ? (
-                    <div className="rounded-b-[9px] border border-t-0 border-indigo-200 bg-indigo-50 px-4 py-4">
-                      <div className="overflow-hidden rounded-[9px] border border-slate-200 bg-white">
-                        {COMPENSATION_BANDS.map((item, index) => (
-                          <div
-                            key={item.label}
-                            className={`flex items-start justify-between gap-3 px-4 py-3 ${
-                              index < COMPENSATION_BANDS.length - 1 ? "border-b border-slate-200" : ""
+                  <div className="mt-4 space-y-3">
+                    {FAQ_ITEMS.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <div key={item.key}>
+                          <button
+                            type="button"
+                            onClick={() => toggleDisclosure(item.key)}
+                            className={`flex w-full items-center justify-between rounded-[9px] border px-4 py-3 text-left transition ${
+                              openDisclosures[item.key]
+                                ? "rounded-b-none border-indigo-200 bg-indigo-50"
+                                : "border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50"
                             }`}
                           >
-                            <div>
-                              <p className="text-[12px] font-semibold text-slate-800">{item.label}</p>
-                              <p className="mt-0.5 text-[11px] text-slate-500">{item.note}</p>
+                            <div className="flex items-center gap-3">
+                              <Icon className="h-4 w-4 text-slate-400" />
+                              <div>
+                                <p className="text-[12px] font-semibold text-slate-800">{item.question}</p>
+                                <p className="mt-0.5 text-[11px] text-slate-400">{item.hint}</p>
+                              </div>
                             </div>
-                            <p className={`text-[13px] font-bold ${item.valueClassName}`}>{item.value}</p>
+                            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${openDisclosures[item.key] ? "rotate-180 text-indigo-600" : ""}`} />
+                          </button>
+
+                          {openDisclosures[item.key] ? (
+                            <div className="rounded-b-[9px] border border-t-0 border-indigo-200 bg-indigo-50 px-4 py-4 text-[12px] leading-6 text-indigo-700">
+                              {item.answer}
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => toggleDisclosure("graduation")}
+                        className={`flex w-full items-center justify-between rounded-[9px] border px-4 py-3 text-left transition ${
+                          openDisclosures.graduation
+                            ? "rounded-b-none border-indigo-200 bg-indigo-50"
+                            : "border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <GraduationCap className="h-4 w-4 text-slate-400" />
+                          <div>
+                            <p className="text-[12px] font-semibold text-slate-800">Approaching graduation without internships?</p>
+                            <p className="mt-0.5 text-[11px] text-slate-400">Common paths people actually take</p>
                           </div>
-                        ))}
-                      </div>
-                      <p className="mt-3 text-[11px] italic text-indigo-700">
-                        Strategy: land the first role you can, then use that proof to target bigger companies next cycle.
-                      </p>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${openDisclosures.graduation ? "rotate-180 text-indigo-600" : ""}`} />
+                      </button>
+
+                      {openDisclosures.graduation ? (
+                        <div className="rounded-b-[9px] border border-t-0 border-indigo-200 bg-indigo-50 px-4 py-4">
+                          <p className="text-[12px] leading-6 text-indigo-700">
+                            If you are close to graduating without internships, common paths people actually take include delaying graduation for one more cycle, applying to master&apos;s programs, targeting startups and local firms, or starting in adjacent roles and building up from there.
+                          </p>
+                          <div className="mt-3 space-y-2">
+                            {[
+                              "Delay graduation to buy time for one more summer internship window.",
+                              "Apply to master&apos;s programs to buy time and keep leveling up.",
+                              "Work in startups or local companies that care less about pedigree.",
+                              "Take a lower-tier engineering or adjacent role and build upward from there."
+                            ].map((item) => (
+                              <div key={item} className="rounded-[7px] border border-indigo-200 bg-white px-3 py-2 text-[12px] leading-6 text-indigo-700">
+                                {item}
+                              </div>
+                            ))}
+                          </div>
+                          <p className="mt-3 text-[11px] italic text-indigo-700">
+                            A CS degree still matters. It just takes more work to start without internships.
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
+
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => toggleDisclosure("pay")}
+                        className={`flex w-full items-center justify-between rounded-[9px] border px-4 py-3 text-left transition ${
+                          openDisclosures.pay
+                            ? "rounded-b-none border-indigo-200 bg-indigo-50"
+                            : "border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Banknote className="h-4 w-4 text-slate-400" />
+                          <div>
+                            <p className="text-[12px] font-semibold text-slate-800">What do internships actually pay in the US?</p>
+                            <p className="mt-0.5 text-[11px] text-slate-400">Hourly ranges by company tier</p>
+                          </div>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${openDisclosures.pay ? "rotate-180 text-indigo-600" : ""}`} />
+                      </button>
+
+                      {openDisclosures.pay ? (
+                        <div className="rounded-b-[9px] border border-t-0 border-indigo-200 bg-indigo-50 px-4 py-4">
+                          <div className="overflow-hidden rounded-[9px] border border-slate-200 bg-white">
+                            {COMPENSATION_BANDS.map((item, index) => (
+                              <div
+                                key={item.label}
+                                className={`flex items-start justify-between gap-3 px-4 py-3 ${
+                                  index < COMPENSATION_BANDS.length - 1 ? "border-b border-slate-200" : ""
+                                }`}
+                              >
+                                <div>
+                                  <p className="text-[12px] font-semibold text-slate-800">{item.label}</p>
+                                  <p className="mt-0.5 text-[11px] text-slate-500">{item.note}</p>
+                                </div>
+                                <p className={`text-[13px] font-bold ${item.valueClassName}`}>{item.value}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="mt-3 text-[11px] italic text-indigo-700">
+                            Strategy: land the first role you can, then use that proof to target bigger companies next cycle.
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
 
                   <div className="mt-6 rounded-r-[9px] border border-slate-200 border-l-[3px] border-l-indigo-600 bg-slate-50 px-4 py-4">
                     <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.09em] text-indigo-600">
@@ -1062,8 +1153,8 @@ export default function IntroPage() {
                 {activeGuideStep === GUIDE_STEPS.length - 1 ? (
                   <button
                     type="button"
-                    disabled
-                    className="inline-flex items-center gap-1 rounded-[7px] border border-emerald-200 bg-emerald-50 px-4 py-2 text-[12px] font-semibold text-emerald-700"
+                    onClick={handleGuideCompletion}
+                    className="inline-flex items-center gap-1 rounded-[7px] border border-emerald-200 bg-emerald-50 px-4 py-2 text-[12px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
                   >
                     Done
                     <CheckCircle2 className="h-4 w-4" />
@@ -1102,20 +1193,6 @@ export default function IntroPage() {
         </div>
       ) : null}
 
-      <section className="flex flex-col items-start justify-between gap-5 rounded-[13px] bg-indigo-600 px-5 py-5 text-white md:flex-row md:items-center">
-        <div>
-          <p className="text-[18px] font-bold">Step 1: Coding Skills</p>
-          <p className="mt-1 text-[13px] text-indigo-100">The first step is building your technical leverage.</p>
-        </div>
-        <button
-          type="button"
-          onClick={handleContinue}
-          className="inline-flex items-center justify-center gap-2 rounded-[7px] bg-white px-5 py-2.5 text-[13px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-50"
-        >
-          Continue to Coding Skills
-          <ArrowRight className="h-4 w-4" />
-        </button>
-      </section>
     </div>
   );
 }
