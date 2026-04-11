@@ -104,20 +104,20 @@ const MODULE_DETAILS: Record<
 
 const POST_READINESS_MODULES: PostReadinessModule[] = [
   {
-    key: "interview_prep",
-    title: "Interview Prep",
-    href: "/interview-prep",
-    description: "Convert interviews into offers with behavioral and technical prep.",
-    badge: "After readiness",
-    icon: Mic,
-  },
-  {
     key: "opportunities",
     title: "Opportunities",
     href: "/opportunities",
     description: "Fellowships, hackathons, and extra programs that support your pipeline while applying.",
     badge: "After readiness",
     icon: Search,
+  },
+  {
+    key: "interview_prep",
+    title: "Interview Prep",
+    href: "/interview-prep",
+    description: "Convert interviews into offers with behavioral and technical prep.",
+    badge: "After readiness",
+    icon: Mic,
   },
 ];
 

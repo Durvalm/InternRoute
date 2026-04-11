@@ -1,307 +1,291 @@
-import Link from "next/link";
-import {
-  Calendar,
-  ChevronDown,
-  Code2,
-  Construction,
-  ExternalLink,
-  Github,
-  GraduationCap,
-  Lightbulb,
-  Sparkles
-} from "lucide-react";
+"use client";
+
+import { ExternalLink, Github, Sparkles, Users, Zap } from "lucide-react";
 
 const opportunityTypes = [
   {
+    tag: "Freshmen / Sophomore focused",
     title: "Underclassmen Internships",
-    subtitle: "Freshmen / Sophomore focused",
-    description:
-      "Internships specifically designed for early-year students. Top companies (including Google and Meta) run early-talent tracks like these, so you can compete earlier instead of waiting until junior year."
+    body: "Internships specifically for first and second year students. Top companies run early-talent tracks so you can compete before junior year.",
+    tagColor: "text-blue-600"
   },
   {
+    tag: "Career access + community",
     title: "Diversity Programs",
-    subtitle: "Career access + community",
-    description:
-      "Programs that support underrepresented students with mentorship, coaching, networking, and recruiting support. These programs can open doors to opportunities that are hard to access alone."
+    body: "Programs supporting underrepresented students with mentorship, coaching, and direct company connections.",
+    tagColor: "text-purple-600"
   },
   {
+    tag: "Usually 6-12 weeks",
     title: "Fellowships",
-    subtitle: "Usually 6-12 weeks",
-    description:
-      "Fellowships can include internships, mentorship, training, or open-source contribution tracks. Many are 6-12 weeks and can provide high-signal experience that stands out to recruiters at companies like Google and Meta."
+    body: "Structured programs combining skill-building, community, and sometimes direct internship placement.",
+    tagColor: "text-rose-600"
   },
   {
+    tag: "Hosted by NPOs / VCs",
     title: "Internship-Matching Fellowships",
-    subtitle: "Hosted by NPOs / VCs",
-    description:
-      "A type of fellowship run by nonprofits or VC ecosystems to match students with startup internships. Usually not exclusive to underclassmen, but a strong way to get a fair shot at quality startup roles."
+    body: "Fellowships that directly place you at a company. You get both the credential and internship experience.",
+    tagColor: "text-emerald-600"
   },
   {
+    tag: "Usually 1-5 days",
     title: "Externships",
-    subtitle: "Usually 1-5 days",
-    description:
-      "Short programs to get to know and get noticed by a company. They can include webinars, training, networking events, and hackathons. Many big-tech and bank companies run these."
+    body: "Short company shadowing or project experiences with lower time commitment but solid resume signal.",
+    tagColor: "text-amber-600"
   },
   {
-    title: "Other Special Programs & Resources",
-    subtitle: "Hidden edge",
-    description:
-      "There are many more program types and categories beyond internships. Communities are especially valuable because they give you networking, referrals, and a support system throughout recruiting."
+    tag: "Hidden edge",
+    title: "Other Special Programs",
+    body: "Paid open source, research placements, and other programs that do not fit standard categories.",
+    tagColor: "text-indigo-600"
+  }
+];
+
+const additionalLists = [
+  {
+    label: "Open Source Internship Programs",
+    href: "https://github.com/deepanshu1422/List-Of-Open-Source-Internships-Programs"
+  },
+  {
+    label: "Research Internships for Undergraduates",
+    href: "https://github.com/zapplyjobs/Research-Internships-for-Undergraduates"
+  },
+  {
+    label: "CS Everything But Internships",
+    href: "https://github.com/Julian048/CS-Everything-but-Internships"
+  },
+  {
+    label: "CS Tech Resource Hub (Fellowships)",
+    href: "https://github.com/cslegasse/CS-Tech-Resource-Hub#Fellowships"
+  }
+];
+
+const diversityProgramExamples = [
+  {
+    name: "Rewriting the Code",
+    note: "Community for women and non-binary students in tech with mentorship and recruiting support."
+  },
+  {
+    name: "Code2040",
+    note: "Early-career network and programs focused on career access for Black and Latinx technologists."
+  },
+  {
+    name: "NSBE / SHPE Campus Chapters",
+    note: "Student communities that often share opportunities, referrals, and alumni mentoring."
+  }
+];
+
+const hackathonPlatforms = [
+  {
+    name: "Devpost Hackathons",
+    href: "https://devpost.com/hackathons"
+  },
+  {
+    name: "MLH Season Events",
+    href: "https://mlh.io/seasons"
   }
 ];
 
 export default function OpportunitiesPage() {
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-12">
-      <header className="text-center">
-        <h1 className="text-3xl font-bold text-slate-900">Opportunities</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-lg text-slate-600">
-          Discover programs, internships, and resources designed to help you succeed
-        </p>
-        <p className="mx-auto mt-3 max-w-3xl text-sm text-slate-600">
-          Best used during fall recruiting: when internship applications open up, apply to jobs and
-          these opportunities in parallel. Hackathons, fellowships, and communities like ColorStack
-          can add major value to your resume and network.
-        </p>
-      </header>
-
-      <section className="rounded-xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 via-sky-50 to-blue-50 p-6">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white">
-            <Sparkles className="h-6 w-6" />
+    <div className="mx-auto max-w-6xl space-y-6 pb-16">
+      <section className="space-y-4">
+        <div>
+          <div className="mb-1 flex items-center gap-2">
+            <span className="rounded-full bg-indigo-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-indigo-600">
+              Module 06
+            </span>
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700">
+              Run in Parallel
+            </span>
           </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-slate-900">Why This Matters</h2>
-            <p className="mt-2 text-slate-700">
-              Recruiting is more than submitting applications. There are{" "}
-              <strong>underclassmen internships, diversity programs, fellowships, externships, and communities</strong>{" "}
-              that can accelerate your path with mentorship, real project experience, and stronger
-              access to opportunities.
+          <h1 className="text-[22px] font-bold tracking-[-0.02em] text-slate-950">Opportunities</h1>
+          <p className="mt-1 max-w-[860px] text-[13px] leading-6 text-slate-500">
+            Recruiting is more than submitting applications. Use this page as a simple hub for programs,
+            communities, and hackathons that run in parallel with your internship cycle.
+          </p>
+        </div>
+
+        <div className="rounded-[9px] border border-indigo-200 bg-indigo-50 px-4 py-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-indigo-700">
+            Best used during recruiting season
+          </p>
+          <p className="mt-1.5 text-[12px] leading-6 text-indigo-900">
+            Apply to internships and these opportunities in parallel. Fellowships, communities, and hackathons can
+            strengthen your resume and network.
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded-[13px] border border-slate-200 bg-white">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h2 className="text-[18px] font-bold text-slate-950">What These Opportunities Mean</h2>
+            <p className="mt-0.5 text-[12px] text-slate-500">
+              Six categories to run in parallel with your internship applications
             </p>
-            <p className="mt-3 text-sm text-slate-600">
-              This page is your starting map: learn the opportunity types, use the curated links,
-              and then build your own pipeline by filtering for the programs that fit your goals.
+          </div>
+
+          <div className="grid gap-px bg-slate-200 md:grid-cols-2 lg:grid-cols-3">
+            {opportunityTypes.map((type) => (
+              <div key={type.title} className="bg-white px-5 py-4">
+                <p className={`text-[10px] font-bold uppercase tracking-[0.08em] ${type.tagColor}`}>{type.tag}</p>
+                <p className="mt-1 text-[13px] font-semibold text-slate-900">{type.title}</p>
+                <p className="mt-1 text-[12px] leading-5 text-slate-500">{type.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-slate-200 bg-slate-50 px-5 py-3">
+            <p className="text-[11px] text-slate-500">
+              <strong className="text-slate-700">Keep searching beyond these lists.</strong>{" "}
+              New programs open, some close, and timelines shift each season.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="rounded-lg border-2 border-amber-300 bg-amber-50 p-4">
-        <div className="flex items-start gap-3">
-          <Construction className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
-          <p className="text-sm text-slate-700">
-            <strong>This page is still a work in progress.</strong> I&apos;m continuously adding
-            more opportunities, programs, and resources. Check back soon for updates.
+      <section className="overflow-hidden rounded-[13px] border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <h2 className="text-[18px] font-bold text-slate-950">Starter Resources</h2>
+          <p className="mt-0.5 text-[12px] text-slate-500">
+            One clear section per category: underclassmen lists, diversity communities, and hackathons.
           </p>
         </div>
-      </section>
 
-      <section className="rounded-lg border-2 border-indigo-300 bg-indigo-50 p-4">
-        <div className="flex items-start gap-3">
-          <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-indigo-600" />
-          <p className="text-sm text-slate-700">
-            <strong>If you don&apos;t have an internship yet, focus on this during the fall too.</strong>{" "}
-            Open these links, get familiar with the programs, and filter for the ones that fit you.
-            You might find communities you stay in for years, mentorship programs that help you get
-            internships, and opportunities that become the start of your journey. There&apos;s a lot
-            in these resources, so your job is to explore and choose what matches you best.
-          </p>
-        </div>
-      </section>
+        <div className="grid gap-4 p-5 md:grid-cols-2">
+          <article className="rounded-[10px] border border-slate-200 bg-white p-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-slate-900 text-white">
+                <Github className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-[14px] font-bold text-slate-900">Underclassmen Internships</p>
+                <p className="text-[11px] text-slate-500">Main repo for freshman/sophomore tracks</p>
+              </div>
+            </div>
+            <p className="mt-3 text-[12px] leading-6 text-slate-600">
+              Start here if you are targeting your first internship. This list is actively maintained and usually the
+              fastest way to find early-talent openings.
+            </p>
+            <a
+              href="https://github.com/zapplyjobs/underclassmen-internships"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-[7px] bg-slate-900 px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              View Repository <ExternalLink className="h-3 w-3" />
+            </a>
+          </article>
 
-      <section className="rounded-lg border-2 border-cyan-300 bg-cyan-50 p-4">
-        <div className="flex items-start gap-3">
-          <Github className="mt-0.5 h-5 w-5 flex-shrink-0 text-cyan-700" />
-          <p className="text-sm text-slate-700">
-            <strong>Search for more opportunities beyond these lists.</strong> Especially for
-            company programs and fellowships, these repositories will never include everything.
-            New programs open, some programs close, and timelines change each season. Keep searching
-            for more opportunities on your own, you might find untouched opportunities.
-          </p>
-        </div>
-      </section>
+          <article className="rounded-[10px] border border-slate-200 bg-white p-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-indigo-100 text-indigo-700">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-[14px] font-bold text-slate-900">Other Opportunity Lists</p>
+                <p className="text-[11px] text-slate-500">Extra repositories for discovery</p>
+              </div>
+            </div>
+            <div className="mt-3 space-y-2">
+              {additionalLists.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-[7px] border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  {link.label}
+                  <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                </a>
+              ))}
+            </div>
+            <p className="mt-3 text-[11px] text-slate-500">
+              Some entries can overlap or be outdated, so cross-check dates and eligibility.
+            </p>
+          </article>
 
-      <section className="rounded-xl border-2 border-sky-200 bg-sky-50/70 p-5 md:p-6">
-        <h2 className="text-xl font-bold text-slate-900">What These Opportunities Mean</h2>
-        <p className="mt-2 text-sm text-slate-700">
-          Expand each item for a quick definition.
-        </p>
-
-        <div className="mt-4 divide-y divide-sky-200 rounded-xl border border-sky-200 bg-white">
-          {opportunityTypes.map((type) => (
-            <details key={type.title} className="group px-4 py-2">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-2">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">{type.title}</p>
-                  <p className="text-xs font-medium uppercase tracking-wide text-sky-700">
-                    {type.subtitle}
-                  </p>
+          <article className="rounded-[10px] border border-slate-200 bg-white p-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-indigo-600 text-white">
+                <Users className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-[14px] font-bold text-slate-900">Diversity Programs & Communities</p>
+                <p className="text-[11px] text-slate-500">Network + mentorship + company access</p>
+              </div>
+            </div>
+            <p className="mt-3 text-[12px] leading-6 text-slate-600">
+              Join at least one community early. These networks repost opportunities fast and can lead to direct
+              recruiter access.
+            </p>
+            <a
+              href="https://www.colorstack.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-[7px] bg-indigo-600 px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-indigo-700"
+            >
+              Visit ColorStack <ExternalLink className="h-3 w-3" />
+            </a>
+            <div className="mt-3 space-y-2 rounded-[8px] border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                Community examples to explore
+              </p>
+              {diversityProgramExamples.map((program) => (
+                <div key={program.name}>
+                  <p className="text-[12px] font-semibold text-slate-900">{program.name}</p>
+                  <p className="text-[11px] text-slate-500">{program.note}</p>
                 </div>
-                <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" />
-              </summary>
-              <p className="pb-2 text-sm leading-relaxed text-slate-700">{type.description}</p>
-            </details>
-          ))}
+              ))}
+            </div>
+          </article>
+
+          <article className="rounded-[10px] border border-slate-200 bg-white p-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-amber-100 text-amber-700">
+                <Zap className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-[14px] font-bold text-slate-900">Hackathons</p>
+                <p className="text-[11px] text-slate-500">Fast project experience + portfolio signal</p>
+              </div>
+            </div>
+            <p className="mt-3 text-[12px] leading-6 text-slate-600">
+              Hackathons can become strong resume bullets quickly. Document your build with a Devpost submission and a
+              clear GitHub README.
+            </p>
+            <div className="mt-3 space-y-2">
+              {hackathonPlatforms.map((platform) => (
+                <a
+                  key={platform.href}
+                  href={platform.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-[7px] border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  {platform.name}
+                  <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                </a>
+              ))}
+            </div>
+          </article>
         </div>
       </section>
 
-      <section className="grid gap-5 md:grid-cols-2">
-        <article className="rounded-xl border-2 border-emerald-200 bg-white p-5 transition-colors hover:border-emerald-400">
-          <div className="mb-3 flex items-start gap-3">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white">
-              <Github className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-slate-900">Underclassmen Internships</h3>
-              <p className="text-xs font-medium text-emerald-600">GitHub Repository</p>
-            </div>
-          </div>
-          <p className="mb-4 text-sm text-slate-700">
-            A curated GitHub repository listing tech internships specifically open to
-            underclassmen (freshmen and sophomores). It&apos;s actively maintained by the community
-            and regularly updated with new opportunities.
+      <div className="flex items-center justify-between gap-4 rounded-[9px] bg-indigo-600 px-5 py-4 text-white">
+        <div>
+          <p className="text-[14px] font-bold">Up next: Interview Prep</p>
+          <p className="mt-1 text-[12px] text-indigo-100">
+            Once interviews start landing, switch to focused behavioral and technical prep.
           </p>
-          <Link
-            href="https://github.com/zapplyjobs/underclassmen-internships"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-          >
-            <Github className="h-4 w-4" />
-            View Repository
-            <ExternalLink className="h-3 w-3" />
-          </Link>
-        </article>
-
-        <article className="rounded-xl border-2 border-cyan-200 bg-white p-5 transition-colors hover:border-cyan-400">
-          <div className="mb-3 flex items-start gap-3">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700">
-              <Github className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-slate-900">Other Opportunity Lists</h3>
-              <p className="text-xs font-medium text-cyan-700">Extra repositories to explore</p>
-            </div>
-          </div>
-          <p className="mb-4 text-sm text-slate-700">
-            These lists can still be useful for discovery, but some entries may be outdated or
-            overlap with the Underclassmen Internships GitHub list above.
-          </p>
-          <ul className="space-y-2">
-            <li>
-              <Link
-                href="https://github.com/deepanshu1422/List-Of-Open-Source-Internships-Programs"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-cyan-700 hover:text-cyan-800 hover:underline"
-              >
-                Open Source Internships Programs
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://github.com/zapplyjobs/Research-Internships-for-Undergraduates"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-cyan-700 hover:text-cyan-800 hover:underline"
-              >
-                Research Internships for Undergraduates
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://github.com/Julian048/CS-Everything-but-Internships"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-cyan-700 hover:text-cyan-800 hover:underline"
-              >
-                CS Everything But Internships
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://github.com/cslegasse/CS-Tech-Resource-Hub#Fellowships"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-cyan-700 hover:text-cyan-800 hover:underline"
-              >
-                CS Tech Resource Hub (Fellowships)
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-            </li>
-          </ul>
-        </article>
-
-        <article className="rounded-xl border-2 border-indigo-200 bg-white p-5 transition-colors hover:border-indigo-400">
-          <div className="mb-3 flex items-start gap-3">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
-              <Code2 className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-slate-900">ColorStack</h3>
-              <p className="text-xs font-medium text-indigo-600">Community Program</p>
-            </div>
-          </div>
-          <p className="mb-4 text-sm text-slate-700">
-            A diversity-focused community program with mentorship, career resources, exclusive
-            internship opportunities, and strong peer support.
-          </p>
-          <Link
-            href="https://www.colorstack.org/"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-          >
-            Visit ColorStack
-            <ExternalLink className="h-3 w-3" />
-          </Link>
-        </article>
-
-
-
-        <article className="rounded-xl border-2 border-orange-200 bg-white p-5">
-          <div className="mb-3 flex items-start gap-3">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
-              <Calendar className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-slate-900">Hackathons</h3>
-              <p className="text-xs font-medium text-orange-600">Platforms + personal note</p>
-            </div>
-          </div>
-          <p className="text-sm text-slate-700">
-            I went to hackathons at Harvard and Princeton, and college hackathons have been very
-            fun in my experience. There&apos;s probably one at your college, or at least in your
-            state.
-          </p>
-          <div className="mt-3 space-y-1">
-            <Link
-              href="https://devpost.com/hackathons"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium text-orange-700 hover:text-orange-800 hover:underline"
-            >
-              Devpost Hackathons
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-            <br />
-            <Link
-              href="https://www.mlh.com/seasons/2025/events"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium text-orange-700 hover:text-orange-800 hover:underline"
-            >
-              MLH Season Events
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-          </div>
-        </article>
-      </section>
-
-     
+        </div>
+        <a
+          href="/interview-prep"
+          className="rounded-[7px] bg-white px-4 py-2.5 text-[13px] font-bold text-indigo-600"
+        >
+          Continue to Interview Prep →
+        </a>
+      </div>
     </div>
   );
 }

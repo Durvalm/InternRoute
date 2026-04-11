@@ -1,30 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  AlertCircle,
-  ArrowRight,
-  Award,
-  BookOpen,
-  BrainCircuit,
-  Calendar,
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  Clock3,
-  Code2,
-  DollarSign,
-  ExternalLink,
-  Filter,
-  Layers,
-  Play,
-  RefreshCw,
-  Star,
-  Wrench,
-  Zap
-} from "lucide-react";
+import { ChevronDown, ExternalLink, RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/api";
+
+// ── LeetCode API types ────────────────────────────────────────────────────────
 
 type LeetcodeProgressStatus = {
   linked: boolean;
@@ -43,18 +23,14 @@ type LeetcodeProgressStatus = {
   sync_hint: string;
 };
 
-type ModuleProgressSnapshot = {
-  module_key: string;
-  score: number;
-  unlock_threshold: number;
-};
-
 type LeetcodeProgressResponse = {
   progress: LeetcodeProgressStatus;
-  module_progress: ModuleProgressSnapshot | null;
+  module_progress: { module_key: string; score: number; unlock_threshold: number } | null;
 };
 
-const stepTwoList = [
+// ── Static data ───────────────────────────────────────────────────────────────
+
+const grindSteps = [
   {
     title: "Go to NeetCode 150 list.",
     body: "Problems are separated by categories (arrays, two pointers, sliding window, stacks, etc.)."
@@ -84,7 +60,7 @@ const basicsFirst = [
   "Two Pointers / Sliding Window",
   "Binary Search",
   "Linked Lists",
-  "Trees (BFS/DFS)"
+  "Trees (BFS / DFS)"
 ];
 
 const addLater = [
@@ -95,34 +71,30 @@ const addLater = [
   "Tries"
 ];
 
-const keyTakeaways = [
-  "Start Leetcode after you have strong projects and resume fundamentals.",
-  "Take a practical DSA course and avoid purely theoretical detours.",
-  "Use NeetCode 150 as your structured roadmap.",
-  "A focused 3-month grind builds your long-term interview foundation.",
-  "After the foundation, one short review week is usually enough before interviews.",
-  "Prioritize basics first (80-20), then add advanced topics later."
-];
-
-function NumberPill({ value }: { value: number }) {
-  return (
-    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-green-600 text-sm font-bold text-white">
-      {value}
-    </div>
-  );
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(value: string | null): string {
-  if (!value) return "Not available";
+  if (!value) return "Not synced yet";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "Not available";
   return parsed.toLocaleString();
 }
 
+function stepLabel(index: number): string {
+  if (index === 0) return "When to Start";
+  if (index === 1) return "Learn DSA First";
+  return "The Grind Strategy";
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export default function LeetcodePage() {
-  const [isComplexityExpanded, setIsComplexityExpanded] = useState(false);
+  // Guide state
+  const [openGuide, setOpenGuide] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set());
+  // LeetCode progress API state
   const [progress, setProgress] = useState<LeetcodeProgressStatus | null>(null);
-  const [moduleScore, setModuleScore] = useState<number | null>(null);
   const [usernameInput, setUsernameInput] = useState("");
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [linking, setLinking] = useState(false);
@@ -132,23 +104,17 @@ export default function LeetcodePage() {
 
   const applyProgressResponse = (payload: LeetcodeProgressResponse) => {
     setProgress(payload.progress);
-    setModuleScore(payload.module_progress?.score ?? null);
     if (payload.progress.leetcode_username) {
-      setUsernameInput((previous) => previous || payload.progress.leetcode_username || "");
+      setUsernameInput((prev) => prev || payload.progress.leetcode_username || "");
     }
   };
 
   useEffect(() => {
     let active = true;
-
     apiRequest<LeetcodeProgressResponse>("/leetcode/progress")
       .then((payload) => {
         if (!active) return;
-        setProgress(payload.progress);
-        setModuleScore(payload.module_progress?.score ?? null);
-        if (payload.progress.leetcode_username) {
-          setUsernameInput((previous) => previous || payload.progress.leetcode_username || "");
-        }
+        applyProgressResponse(payload);
       })
       .catch((err) => {
         if (!active) return;
@@ -158,7 +124,6 @@ export default function LeetcodePage() {
       .finally(() => {
         if (active) setLoadingStatus(false);
       });
-
     return () => {
       active = false;
     };
@@ -170,7 +135,6 @@ export default function LeetcodePage() {
       setErrorMessage("Enter your LeetCode username.");
       return;
     }
-
     setErrorMessage(null);
     setSuccessMessage(null);
     setLinking(true);
@@ -209,608 +173,665 @@ export default function LeetcodePage() {
   };
 
   const totalProgress = progress ? progress.progress_percent_total : 0;
-  const mediumProgress = progress ? progress.progress_percent_medium : 0;
-  const overallProgress = progress ? progress.progress_percent_overall : 0;
-  const moduleProgressValue = moduleScore ?? overallProgress;
+
+  // Guide helpers
+  const handleToggleGuide = () => {
+    if (!openGuide) {
+      // mark current step as visited when guide first opens
+      setVisitedSteps((prev) => new Set(prev).add(currentStep));
+    }
+    setOpenGuide((v) => !v);
+  };
+
+  const goToStep = (index: number) => {
+    // mark the destination step as visited on arrival
+    setVisitedSteps((prev) => new Set(prev).add(index));
+    setCurrentStep(index);
+  };
+
+  // Progress row values
+  const stepsVisited = visitedSteps.size;
+  const guideProgressPct = Math.min((stepsVisited / 3) * 100, 100);
+  const guideBadge =
+    stepsVisited === 0
+      ? { label: "Not started", cls: "border-amber-200 bg-amber-50 text-amber-700" }
+      : stepsVisited < 3
+      ? { label: "In progress", cls: "border-amber-200 bg-amber-50 text-amber-700" }
+      : { label: "Complete", cls: "border-emerald-200 bg-emerald-50 text-emerald-700" };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-12">
-      <section className="text-center">
-        <h1 className="text-3xl font-bold text-slate-900">Leetcode Preparation</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-lg text-slate-600">
-          Master technical coding interviews with strategic practice.
+    <div className="mx-auto max-w-[900px] px-10 pt-7 pb-20 space-y-5">
+
+      {/* ── Module header ────────────────────────────────────────────────── */}
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Module 08</p>
+        <h1 className="mt-0.5 text-[22px] font-bold tracking-[-0.02em] text-slate-900">LeetCode</h1>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-slate-500">
+          LeetCode does not get you noticed — but it gets you past the technical screen once you do.
         </p>
-      </section>
+      </div>
 
-      <section className="rounded-xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
-            <Star className="h-6 w-6" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-slate-900">About NeetCode</h2>
-            <p className="mt-2 text-slate-700">
-              <strong>NeetCode is one of the most reliable resources in the industry</strong> for Leetcode interviews,
-              and even experienced engineers use it. It is a proven roadmap for pattern recognition: learn patterns,
-              then solve similar problem families.
-            </p>
-            <a
-              href="https://www.youtube.com/c/neetcode"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-            >
-              <Play className="h-4 w-4" />
-              NeetCode YouTube (1M+)
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
+      {/* ── Progress row ─────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3">
+        <p className="flex-shrink-0 text-[12px] font-semibold text-slate-700">LeetCode</p>
+        <div className="flex-1 h-1.5 rounded-full bg-slate-100">
+          <div
+            className="h-1.5 rounded-full bg-indigo-500 transition-all"
+            style={{ width: `${guideProgressPct}%` }}
+          />
         </div>
-      </section>
+        <p className="flex-shrink-0 text-[12px] text-slate-500">{stepsVisited}/3 steps</p>
+        <span
+          className={[
+            "flex-shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em]",
+            guideBadge.cls
+          ].join(" ")}
+        >
+          {guideBadge.label}
+        </span>
+      </div>
 
-      <section className="rounded-xl border-2 border-amber-400 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 p-6">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-            <AlertCircle className="h-6 w-6" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-slate-900">When Should You Start Leetcode?</h2>
-            <p className="mt-3 text-slate-800">
-              <strong>Leetcode does not get you noticed first.</strong> It mostly helps you pass OAs and technical
-              interviews after your profile is already strong enough to get callbacks.
+      {/* ── Progress tracker (lc-hero) ───────────────────────────────────── */}
+      <div className="overflow-hidden rounded-[13px] border border-slate-200 bg-white">
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+          <div>
+            <p className="text-[14px] font-bold text-slate-900">LeetCode Progress Tracker</p>
+            <p className="mt-1 text-[12px] leading-5 text-slate-500">
+              This module is completion-based. Link your LeetCode username, sync progress, then reach{" "}
+              <strong className="text-slate-700">50 solved total</strong> with at least{" "}
+              <strong className="text-slate-700">30 medium</strong>.
             </p>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <article className="rounded-lg border border-emerald-300 bg-white p-4">
-                <p className="text-sm font-semibold text-emerald-900">Start LC if:</p>
-                <p className="mt-1 text-sm text-slate-700">
-                  You have good projects, solid software skills, and you are getting OAs/interviews.
-                </p>
-              </article>
-              <article className="rounded-lg border border-rose-300 bg-white p-4">
-                <p className="text-sm font-semibold text-rose-900">Do not start yet if:</p>
-                <p className="mt-1 text-sm text-slate-700">
-                  You still struggle to build APIs, backend flows, or end-to-end project execution.
-                </p>
-              </article>
-            </div>
           </div>
+          <p className="flex-shrink-0 text-[11px] text-slate-400">
+            {progress ? `Last sync: ${formatDate(progress.last_synced_at)}` : "Last sync: —"}
+          </p>
         </div>
-      </section>
 
-      <section>
-        <h2 className="text-2xl font-bold text-slate-900">The Roadmap</h2>
-        <p className="mt-2 text-slate-600">You need 2 things to succeed at Leetcode interviews:</p>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <article className="relative rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
-            <span className="absolute right-3 top-3 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white">
-              STEP 1
-            </span>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600 text-white">
-                <BrainCircuit className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Learn DSA</h3>
-                <p className="text-xs font-semibold text-blue-600">Data Structures & Algorithms</p>
-              </div>
-            </div>
-            <p className="mt-3 text-sm text-slate-700">
-              Learn how data structures work, common patterns, and complexity tradeoffs.
-            </p>
-          </article>
-
-          <article className="relative rounded-xl border-2 border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 p-6">
-            <span className="absolute right-3 top-3 rounded-full bg-green-600 px-3 py-1 text-xs font-bold text-white">
-              STEP 2
-            </span>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-600 text-white">
-                <Code2 className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Grind Leetcode</h3>
-                <p className="text-xs font-semibold text-green-600">Practice, practice, practice</p>
-              </div>
-            </div>
-            <p className="mt-3 text-sm text-slate-700">
-              Apply DSA by solving many problems. Pattern recognition comes from repetition.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section className="rounded-xl border-2 border-blue-300 bg-white p-6">
-        <div className="mb-5 flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
-            <span className="font-bold">1</span>
+        {loadingStatus ? (
+          <div className="px-5 py-4">
+            <p className="text-[12px] text-slate-500">Loading LeetCode progress…</p>
           </div>
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-bold text-slate-900">STEP 1: Learn DSA</h2>
-              <span className="rounded bg-blue-100 px-2 py-1 text-xs font-bold text-blue-700">START HERE</span>
-            </div>
-            <p className="mt-2 text-slate-700">
-              A good DSA course should be <strong>practical</strong>: implementation, common patterns, and operation
-              complexity by data structure.
-            </p>
+        ) : null}
 
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={() => setIsComplexityExpanded((prev) => !prev)}
-                className="inline-flex items-center gap-2 text-sm font-medium text-blue-700 transition-colors hover:text-blue-800"
-              >
-                <ChevronDown className={`h-4 w-4 transition-transform ${isComplexityExpanded ? "rotate-180" : ""}`} />
-                {isComplexityExpanded ? "Hide" : "Show"} time complexity example
-              </button>
-              {isComplexityExpanded ? (
-                <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                  <p className="text-sm text-slate-700">
-                    <strong>Example:</strong> Removing from the start of an array is O(n), while removing from the end
-                    is usually O(1). Those operation costs drive data structure choice in interviews.
+        {!loadingStatus && progress ? (
+          progress.linked ? (
+            <>
+              {/* 4-col stats */}
+              <div className="grid grid-cols-4 divide-x divide-slate-100 border-b border-slate-100">
+                <div className="py-4 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-slate-400">Total Solved</p>
+                  <p className="mt-1.5 text-[26px] font-extrabold leading-none text-indigo-600">{progress.total_solved}</p>
+                  <p className="mt-1 text-[11px] text-slate-400">goal: 50</p>
+                </div>
+                <div className="py-4 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-slate-400">Easy</p>
+                  <p className="mt-1.5 text-[26px] font-extrabold leading-none text-emerald-600">{progress.easy_solved}</p>
+                  <p className="mt-1 text-[11px] text-slate-400">—</p>
+                </div>
+                <div className="py-4 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-slate-400">Medium</p>
+                  <p className="mt-1.5 text-[26px] font-extrabold leading-none text-amber-700">{progress.medium_solved}</p>
+                  <p className="mt-1 text-[11px] text-slate-400">goal: 30</p>
+                </div>
+                <div className="py-4 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-slate-400">Hard</p>
+                  <p className="mt-1.5 text-[26px] font-extrabold leading-none text-red-600">{progress.hard_solved}</p>
+                  <p className="mt-1 text-[11px] text-slate-400">—</p>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="border-b border-slate-100 px-5 py-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-[12px] font-semibold text-slate-700">Progress toward completion goal</p>
+                  <p className="text-[12px] font-bold text-indigo-600">
+                    {progress.total_solved} / {progress.total_target}
                   </p>
                 </div>
-              ) : null}
-            </div>
-
-            <p className="mt-3 text-sm italic text-slate-600">
-              I also spent time on long theory-heavy lectures before and ended up retaining less than expected for
-              interviews. Practical resources usually transfer better to Leetcode performance.
-            </p>
-          </div>
-        </div>
-
-        <h3 className="font-bold text-slate-900">Course Options</h3>
-        <div className="mt-3 grid gap-4 md:grid-cols-3">
-          <article className="rounded-lg border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50 p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Award className="h-6 w-6 text-emerald-600" />
-                <h4 className="font-bold text-slate-900">NeetCode Pro</h4>
-              </div>
-              <span className="rounded-full bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">BEST</span>
-            </div>
-            <p className="mt-3 text-sm text-slate-700">Practical and interview-focused.</p>
-            <div className="mt-3 flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-emerald-700" />
-              <p className="text-sm font-semibold text-slate-800">$119/year</p>
-            </div>
-            <a
-              href="https://neetcode.io/pro"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-            >
-              View NeetCode Pro
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </article>
-
-          <article className="rounded-lg border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50 p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Play className="h-6 w-6 text-purple-600" />
-                <h4 className="font-bold text-slate-900">freeCodeCamp</h4>
-              </div>
-              <span className="rounded-full bg-purple-600 px-2 py-1 text-xs font-semibold text-white">FREE</span>
-            </div>
-            <p className="mt-3 text-sm text-slate-700">Solid budget option.</p>
-            <div className="mt-3 flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-purple-700" />
-              <p className="text-sm font-semibold text-slate-800">$0</p>
-            </div>
-            <a
-              href="https://youtu.be/8hly31xKli0?si=QCOp_tNea5mJJpYV"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700"
-            >
-              Watch on YouTube
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </article>
-
-          <article className="rounded-lg border-2 border-blue-200 bg-blue-50 p-5">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-6 w-6 text-blue-600" />
-              <h4 className="font-bold text-slate-900">Udemy</h4>
-            </div>
-            <p className="mt-3 text-sm text-slate-700">Cheaper paid alternative.</p>
-            <div className="mt-3 flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-blue-700" />
-              <p className="text-sm font-semibold text-slate-800">$10-20 on sale</p>
-            </div>
-            <a
-              href="https://www.udemy.com/course/data-structures-algorithms-python/"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-            >
-              View on Udemy
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </article>
-        </div>
-
-        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm text-slate-700">
-            <strong>Note:</strong> Free and cheaper options can work, but if you can afford NeetCode Pro, it is
-            usually the most practical path.
-          </p>
-        </div>
-
-        <div className="mt-4 rounded-lg border-2 border-indigo-300 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white">
-              <Layers className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-slate-900">Important Topics to Learn</h3>
-              <p className="mt-2 text-sm text-slate-700">
-                Use the NeetCode DSA for Beginners outline as a topic checklist even if you do not buy the course.
-              </p>
-              <a
-                href="https://neetcode.io/courses/dsa-for-beginners"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
-              >
-                <BookOpen className="h-4 w-4" />
-                View Topics List
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-          <div className="flex items-center gap-2">
-            <Wrench className="h-5 w-5 text-indigo-600" />
-            <h3 className="font-bold text-slate-900">Additional Practice: Build Structures From Scratch</h3>
-          </div>
-          <p className="mt-2 text-sm text-slate-700">
-            Build linked lists, stacks, queues, and helper operations manually. This deepens understanding of tradeoffs
-            and operations.
-          </p>
-          <a
-            href="https://neetcode.io/practice/practice/coreSkills"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-          >
-            <Code2 className="h-4 w-4" />
-            NeetCode Core Skills Problems
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        </div>
-      </section>
-
-      <section className="rounded-xl border-2 border-green-300 bg-white p-6">
-        <div className="mb-5 flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-600 text-white">
-            <span className="font-bold">2</span>
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-slate-900">STEP 2: The Leetcode Grind Strategy</h2>
-            <p className="mt-2 text-slate-700">
-              This is how to improve systematically. Most of this happens on NeetCode. Solve your real practice on
-              LeetCode/NeetCode so this module can track your progress.
-            </p>
-            <a
-              href="https://neetcode.io/practice"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-            >
-              <Star className="h-4 w-4" />
-              Go to NeetCode 150
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {stepTwoList.map((item, index) => (
-            <div key={item.title} className="flex items-start gap-3">
-              <NumberPill value={index + 1} />
-              <div className="pt-0.5">
-                <p className="text-sm text-slate-800">
-                  <strong>{item.title}</strong> {item.body}
-                </p>
-                {index === 2 ? (
-                  <div className="mt-2 rounded border border-teal-200 bg-teal-50 px-3 py-2 text-xs text-teal-700">
-                    It is completely fine to watch many videos at first. Pattern recognition improves with repetition.
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-          <p className="text-sm text-slate-700">
-            <strong>Result:</strong> You will recognize patterns, pick appropriate data structures, and explain
-            complexity clearly in interviews.
-          </p>
-        </div>
-      </section>
-
-      <section className="rounded-xl border-2 border-cyan-300 bg-gradient-to-br from-cyan-50 to-blue-50 p-6">
-        <div className="mb-4 flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-cyan-600 text-white">
-            <Calendar className="h-6 w-6" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-slate-900">Timeline: My Experience</h2>
-            <p className="mt-2 text-slate-700">Here is the exact style of progression that worked in practice.</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <article className="rounded-xl border-2 border-cyan-200 bg-white p-5">
-            <div className="flex items-center gap-2">
-              <Clock3 className="h-6 w-6 text-cyan-600" />
-              <h3 className="font-bold text-slate-900">The Initial 3-Month Grind</h3>
-            </div>
-            <p className="mt-3 text-sm text-slate-700">
-              I spent around 3 focused months building pattern intuition and completed roughly 70-80 easy/medium
-              NeetCode 150 problems with deep understanding.
-            </p>
-            <p className="mt-3 text-sm text-slate-700">
-              I moved category by category through arrays, hashmaps, two pointers, sliding window, stacks, linked
-              lists, and trees, then stopped around graph-level material to avoid overload.
-            </p>
-            <p className="mt-3 text-sm text-slate-700">
-              The key was depth: understand why each approach works, recognize patterns, and explain time/space
-              complexity tradeoffs.
-            </p>
-          </article>
-
-          <article className="rounded-xl border-2 border-green-200 bg-white p-5">
-            <div className="flex items-center gap-2">
-              <Zap className="h-6 w-6 text-green-600" />
-              <h3 className="font-bold text-slate-900">Before the Amazon Interview</h3>
-            </div>
-            <p className="mt-3 text-sm text-slate-700">
-              I had about 1 week to prepare. Because the foundation already existed, prep was mostly review. In about
-              3-4 days before the interview, I reviewed 60+ previously solved problems to reactivate patterns and speed.
-            </p>
-            <p className="mt-3 text-sm text-slate-700">
-              I did not need to relearn from scratch, and that preparation was enough.
-            </p>
-          </article>
-
-          <article className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 p-5 text-white">
-            <div className="flex items-start gap-3">
-              <Award className="h-6 w-6 flex-shrink-0" />
-              <div>
-                <p className="text-lg font-bold">Key Insight</p>
-                <p className="mt-2 text-white/95">
-                  The initial 3-month grind is the hard part, but it creates a foundation that makes future interview
-                  prep dramatically faster.
+                <div className="h-2 rounded-full bg-slate-100">
+                  <div
+                    className="h-2 rounded-full bg-indigo-500 transition-all"
+                    style={{ width: `${totalProgress}%` }}
+                  />
+                </div>
+                <p className="mt-1.5 text-[11px] text-slate-500">
+                  {progress.completion_target_met
+                    ? "✓ Completion criteria met — 50 total and 30 medium solved."
+                    : `${progress.total_solved}/50 total · ${progress.medium_solved}/30 medium. Keep going!`}
                 </p>
               </div>
-            </div>
-          </article>
-        </div>
-      </section>
 
-      <section className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 p-6">
-        <div className="mb-4 flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-            <Filter className="h-6 w-6" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-slate-900">What to Prioritize (80-20 Rule)</h2>
-            <p className="mt-2 text-slate-700">
-              Do not try to master everything in one pass. Focus on high-frequency fundamentals first.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <article className="rounded-lg border-2 border-green-200 bg-white p-5">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-6 w-6 text-green-600" />
-              <h3 className="font-bold text-slate-900">Focus on Basics First</h3>
-            </div>
-            <div className="mt-3 space-y-1 text-sm text-slate-700">
-              {basicsFirst.map((item) => (
-                <div key={item} className="flex items-start gap-2">
-                  <ChevronRight className="mt-0.5 h-3 w-3 flex-shrink-0 text-green-600" />
-                  <span>{item}</span>
+              {/* Actions row */}
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 px-5 py-3">
+                <p className="text-[12px] text-slate-600">
+                  Linked as <span className="font-semibold text-slate-800">@{progress.leetcode_username}</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSyncProgress}
+                    disabled={syncingProgress}
+                    title={progress.sync_hint}
+                    className="inline-flex items-center gap-1.5 rounded-[6px] border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${syncingProgress ? "animate-spin" : ""}`} />
+                    {syncingProgress ? "Syncing…" : "Sync Now"}
+                  </button>
+                  <a
+                    href="https://neetcode.io/roadmap"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-[6px] border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                  >
+                    Go to NeetCode 150
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
                 </div>
-              ))}
-            </div>
-          </article>
+              </div>
 
-          <article className="rounded-lg border-2 border-amber-200 bg-white p-5">
-            <div className="flex items-center gap-2">
-              <Clock3 className="h-6 w-6 text-amber-600" />
-              <h3 className="font-bold text-slate-900">Add Later</h3>
-            </div>
-            <div className="mt-3 space-y-1 text-sm text-slate-700">
-              {addLater.map((item) => (
-                <div key={item} className="flex items-start gap-2">
-                  <ChevronRight className="mt-0.5 h-3 w-3 flex-shrink-0 text-amber-600" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-slate-600">Add these gradually once basics feel automatic.</p>
-          </article>
-        </div>
-
-        <div className="mt-4 rounded-lg border-2 border-orange-200 bg-white p-4">
-          <p className="text-sm text-slate-700">
-            <strong>Practical approach:</strong> Build confidence in fundamentals first, then add advanced topics one
-            at a time.
-          </p>
-        </div>
-      </section>
-
-      <section className="rounded-xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
-        <h2 className="text-center text-xl font-bold text-slate-900">Key Takeaways</h2>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {keyTakeaways.map((item) => (
-            <div key={item} className="flex items-start gap-2">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-indigo-600" />
-              <p className="text-sm text-slate-800">{item}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-5 border-t border-indigo-200 pt-4">
-          <p className="text-center text-lg font-semibold text-slate-800">
-            A focused 3-month grind builds a strong base. You do not need everything at once.
-          </p>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">LeetCode Progress Tracker</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            This module is completion-based. Link your LeetCode username, sync progress, then reach{" "}
-            <strong>50 solved total</strong> with at least <strong>30 medium</strong>.
-          </p>
-          <Link
-            href="/opportunities"
-            className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-100"
-          >
-            Go to Opportunities
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          {loadingStatus ? <p className="text-sm text-slate-600">Loading LeetCode progress...</p> : null}
-
-          {!loadingStatus && progress ? (
-            <div className="space-y-4">
-              <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-slate-900">
-                    {progress.linked
-                      ? `Linked username: @${progress.leetcode_username}`
-                      : "Step 1: Link your LeetCode username"}
-                  </p>
-                  <p className="text-xs text-slate-600">Last sync: {formatDate(progress.last_synced_at)}</p>
-                </div>
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              {/* Update username */}
+              <div className="border-t border-slate-100 px-5 py-3">
+                <p className="mb-2 text-[11px] text-slate-400">Update linked username</p>
+                <div className="flex gap-2">
                   <input
                     type="text"
                     value={usernameInput}
-                    onChange={(event) => setUsernameInput(event.target.value)}
+                    onChange={(e) => setUsernameInput(e.target.value)}
                     disabled={linking}
-                    placeholder="Enter LeetCode username"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400"
+                    placeholder="LeetCode username"
+                    className="w-full rounded-[7px] border border-slate-200 bg-white px-3 py-2 text-[12px] text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-400"
                   />
                   <button
                     type="button"
                     onClick={handleLinkUsername}
                     disabled={linking}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400"
+                    className="inline-flex items-center justify-center rounded-[7px] bg-slate-800 px-4 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400"
                   >
-                    {linking ? "Updating..." : progress.linked ? "Update Username" : "Link Username"}
+                    {linking ? "Saving…" : "Update"}
                   </button>
                 </div>
-                {progress.linked ? (
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-slate-500">{progress.sync_hint}</p>
-                    <button
-                      type="button"
-                      onClick={handleSyncProgress}
-                      disabled={syncingProgress}
-                      title={progress.sync_hint}
-                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
-                    >
-                      <RefreshCw className={`h-4 w-4 ${syncingProgress ? "animate-spin" : ""}`} />
-                      {syncingProgress ? "Syncing..." : "Sync Progress"}
-                    </button>
-                  </div>
-                ) : null}
               </div>
+            </>
+          ) : (
+            /* Disconnected state */
+            <div className="space-y-4 px-5 py-5">
+              <div>
+                <p className="text-[14px] font-semibold text-slate-800">Step 1: Link your LeetCode username</p>
+                <p className="mt-1 text-[12px] leading-5 text-slate-500">
+                  Enter your LeetCode username to sync progress. InternRoute will pull your solved count and
+                  check against the completion criteria automatically.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 rounded-[9px] border border-indigo-200 bg-indigo-50 px-4 py-3">
+                <span className="flex-shrink-0 text-[18px]">🎯</span>
+                <p className="text-[12px] leading-5 text-indigo-800">
+                  Completion target: <strong>50 total solved</strong> with at least{" "}
+                  <strong>30 medium</strong>. Focus on understanding patterns — not memorizing solutions.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  disabled={linking}
+                  placeholder="Enter LeetCode username"
+                  className="w-full rounded-[7px] border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-400"
+                />
+                <button
+                  type="button"
+                  onClick={handleLinkUsername}
+                  disabled={linking}
+                  className="inline-flex items-center justify-center rounded-[7px] bg-indigo-600 px-5 py-2 text-[13px] font-bold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300 whitespace-nowrap"
+                >
+                  {linking ? "Saving…" : "Link Username"}
+                </button>
+              </div>
+            </div>
+          )
+        ) : null}
 
-              {progress.linked ? (
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                  <div>
-                    <div className="mb-1 flex items-center justify-between text-sm font-medium text-slate-700">
-                      <span>Total Solved</span>
-                      <span>
-                        {progress.total_solved} / {progress.total_target}
-                      </span>
-                    </div>
-                    <div className="h-3 rounded-full bg-slate-200">
-                      <div className="h-3 rounded-full bg-emerald-500 transition-all" style={{ width: `${totalProgress}%` }} />
-                    </div>
-                  </div>
+        {successMessage ? <p className="px-5 pb-3 text-[12px] text-emerald-700">{successMessage}</p> : null}
+        {errorMessage ? <p className="px-5 pb-3 text-[12px] text-rose-600">{errorMessage}</p> : null}
+      </div>
 
-                  <div className="mt-4">
-                    <div className="mb-1 flex items-center justify-between text-sm font-medium text-slate-700">
-                      <span>Medium Solved</span>
-                      <span>
-                        {progress.medium_solved} / {progress.medium_target}
-                      </span>
-                    </div>
-                    <div className="h-3 rounded-full bg-slate-200">
-                      <div className="h-3 rounded-full bg-violet-500 transition-all" style={{ width: `${mediumProgress}%` }} />
-                    </div>
-                  </div>
+      {/* ── Learning guide ───────────────────────────────────────────────── */}
+      {!openGuide ? (
+        /* Closed state — full border, full radius */
+        <div className="rounded-[13px] border border-slate-200 bg-white">
+          <button
+            type="button"
+            onClick={handleToggleGuide}
+            className="flex w-full items-center justify-between px-5 py-4 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[7px] bg-indigo-50 text-[18px]">
+                📚
+              </div>
+              <div>
+                <p className="text-[13px] font-bold text-slate-900">Learning Guide</p>
+                <p className="text-[12px] text-slate-500">3 steps to LeetCode mastery</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {/* Step dots */}
+              <div className="flex items-center gap-1.5">
+                {[0, 1, 2].map((i) => {
+                  const isCurrent = currentStep === i;
+                  const isDone = visitedSteps.has(i) && !isCurrent;
+                  return (
+                    <div
+                      key={i}
+                      style={{ width: 22, height: 5, borderRadius: 3 }}
+                      className={
+                        isCurrent
+                          ? "bg-indigo-500"
+                          : isDone
+                          ? "bg-emerald-500"
+                          : "bg-slate-200"
+                      }
+                    />
+                  );
+                })}
+              </div>
+              <span className="text-[12px] text-slate-500">
+                Open <ChevronDown className="inline h-3.5 w-3.5" />
+              </span>
+            </div>
+          </button>
+        </div>
+      ) : (
+        /* Open state — header + nav + body + step-foot */
+        <>
+          {/* Guide header — top border + left + right, rounded top */}
+          <div className="flex items-center justify-between rounded-t-[13px] border border-b-0 border-slate-200 bg-white px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[7px] bg-indigo-50 text-[18px]">
+                📚
+              </div>
+              <div>
+                <p className="text-[13px] font-bold text-slate-900">Learning Guide</p>
+                <p className="text-[12px] text-slate-500">3 steps to LeetCode mastery</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {/* Step dots */}
+              <div className="flex items-center gap-1.5">
+                {[0, 1, 2].map((i) => {
+                  const isCurrent = currentStep === i;
+                  const isDone = visitedSteps.has(i) && !isCurrent;
+                  return (
+                    <div
+                      key={i}
+                      style={{ width: 22, height: 5, borderRadius: 3 }}
+                      className={
+                        isCurrent
+                          ? "bg-indigo-500"
+                          : isDone
+                          ? "bg-emerald-500"
+                          : "bg-slate-200"
+                      }
+                    />
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleGuide}
+                className="text-[12px] text-slate-500 hover:text-slate-700"
+              >
+                Close <ChevronDown className="inline h-3.5 w-3.5 rotate-180" />
+              </button>
+            </div>
+          </div>
 
-                  <div className="mt-4 border-t border-slate-200 pt-4">
-                    <div className="mb-1 flex items-center justify-between text-sm font-medium text-slate-700">
-                      <span>Module Progress</span>
-                      <span>{moduleProgressValue}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-200">
-                      <div className="h-2 rounded-full bg-indigo-500 transition-all" style={{ width: `${moduleProgressValue}%` }} />
-                    </div>
-                  </div>
+          {/* Guide nav tabs — underline style */}
+          <div className="flex border-x border-slate-200 bg-white">
+            {[0, 1, 2].map((i) => {
+              const isCurrent = currentStep === i;
+              const isDone = visitedSteps.has(i) && !isCurrent;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => goToStep(i)}
+                  className={[
+                    "flex flex-1 items-center gap-2 px-4 py-3 text-left text-[12px] font-semibold transition-colors border-b-2",
+                    isCurrent
+                      ? "border-indigo-600 text-indigo-600"
+                      : "border-slate-200 text-slate-500 hover:text-slate-700"
+                  ].join(" ")}
+                >
+                  <span
+                    className={[
+                      "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                      isCurrent
+                        ? "bg-indigo-600 text-white"
+                        : isDone
+                        ? "bg-emerald-500 text-white"
+                        : "bg-slate-200 text-slate-500"
+                    ].join(" ")}
+                  >
+                    {isDone ? "✓" : i + 1}
+                  </span>
+                  {stepLabel(i)}
+                </button>
+              );
+            })}
+          </div>
 
-                  <div className="mt-4 grid gap-3 md:grid-cols-3">
-                    <article className="rounded-xl border border-emerald-200 bg-white p-4 text-center">
-                      <p className="text-sm text-slate-600">Easy</p>
-                      <p className="mt-1 text-4xl font-bold text-emerald-600">{progress.easy_solved}</p>
-                    </article>
-                    <article className="rounded-xl border border-amber-200 bg-white p-4 text-center">
-                      <p className="text-sm text-slate-600">Medium</p>
-                      <p className="mt-1 text-4xl font-bold text-amber-500">{progress.medium_solved}</p>
-                    </article>
-                    <article className="rounded-xl border border-rose-200 bg-white p-4 text-center">
-                      <p className="text-sm text-slate-600">Hard</p>
-                      <p className="mt-1 text-4xl font-bold text-rose-600">{progress.hard_solved}</p>
-                    </article>
-                  </div>
+          {/* Guide body — left + right border only */}
+          <div className="border-x border-slate-200 bg-white">
 
-                  {progress.completion_target_met ? (
-                    <div className="mt-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 p-5 text-white">
-                      <p className="text-2xl font-bold">Module complete</p>
-                      <p className="mt-1 text-sm text-white/90">You reached 50 total solved and 30 medium solved.</p>
-                    </div>
-                  ) : (
-                    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                      Keep solving and sync again. Hover on the sync button for timing guidance.
-                    </div>
-                  )}
+            {/* ── Step 0: When to Start ──────────────────────────────────── */}
+            {currentStep === 0 ? (
+              <div className="px-9 pb-8 pt-8 space-y-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">Prerequisites</p>
+                  <p className="mt-1.5 text-[19px] font-bold leading-tight text-slate-900">When to Start LeetCode</p>
+                  <p className="mt-1 mb-5 text-[13px] leading-relaxed text-slate-600">
+                    LeetCode does not get you noticed first. It mostly helps you pass OAs and technical interviews{" "}
+                    <em>after</em> your profile is already strong enough to get callbacks.
+                  </p>
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-[9px] border border-emerald-200 bg-emerald-50 px-4 py-3">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-emerald-700">Start if</p>
+                    <p className="mt-1.5 text-[12px] leading-5 text-slate-700">
+                      You have good projects, solid software skills, and you are already getting OAs or interview
+                      invitations.
+                    </p>
+                  </div>
+                  <div className="rounded-[9px] border border-rose-200 bg-rose-50 px-4 py-3">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-rose-700">Hold off if</p>
+                    <p className="mt-1.5 text-[12px] leading-5 text-slate-700">
+                      You still struggle to build APIs, backend flows, or end-to-end project execution.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-[9px] border border-indigo-200 bg-indigo-50 px-4 py-3">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-indigo-700">About NeetCode</p>
+                  <p className="mt-1.5 text-[12px] leading-6 text-slate-700">
+                    NeetCode is one of the most reliable resources in the industry for LeetCode-style interviews — even
+                    experienced engineers use it. It is a proven roadmap built around pattern recognition: learn
+                    patterns, then solve entire problem families from the same template.
+                  </p>
+                  <a
+                    href="https://www.youtube.com/c/neetcode"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-[7px] bg-indigo-600 px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-indigo-700"
+                  >
+                    NeetCode YouTube (1M+)
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+
+                <div>
+                  <p className="text-[12px] font-semibold text-slate-700">The roadmap has two phases:</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="rounded-[9px] border border-slate-200 bg-white px-4 py-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-indigo-600">Phase 1</p>
+                      <p className="mt-1 text-[12px] font-semibold text-slate-800">Learn DSA</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">Data structures, patterns, and complexity</p>
+                    </div>
+                    <div className="rounded-[9px] border border-slate-200 bg-white px-4 py-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-emerald-600">Phase 2</p>
+                      <p className="mt-1 text-[12px] font-semibold text-slate-800">Grind NeetCode 150</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">Apply DSA through repetition</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* ── Step 1: Learn DSA First ────────────────────────────────── */}
+            {currentStep === 1 ? (
+              <div className="px-9 pb-8 pt-8 space-y-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">Step 1</p>
+                  <p className="mt-1.5 text-[19px] font-bold leading-tight text-slate-900">Learn DSA First</p>
+                  <p className="mt-1 mb-5 text-[13px] leading-relaxed text-slate-600">
+                    A good DSA course should be practical: implementation, common patterns, and operation complexity
+                    by data structure — not deep theory.
+                  </p>
+                </div>
+
+                {/* Course options — 3-col grid */}
+                <div>
+                  <p className="mb-2 text-[12px] font-semibold text-slate-700">Course options</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="rounded-[9px] border border-slate-200 bg-white p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.07em] text-emerald-600">Best</p>
+                      <p className="mt-1 text-[13px] font-bold text-slate-900">NeetCode Pro</p>
+                      <p className="mt-0.5 text-[12px] text-slate-500">Practical and interview-focused.</p>
+                      <p className="mt-0.5 text-[12px] text-slate-500">$119/year</p>
+                      <a
+                        href="https://neetcode.io/courses"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2.5 inline-flex items-center gap-1 rounded-[6px] border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                      >
+                        View NeetCode Pro <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    <div className="rounded-[9px] border border-slate-200 bg-white p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.07em] text-indigo-600">Free</p>
+                      <p className="mt-1 text-[13px] font-bold text-slate-900">freeCodeCamp</p>
+                      <p className="mt-0.5 text-[12px] text-slate-500">Solid budget option.</p>
+                      <p className="mt-0.5 text-[12px] text-slate-500">$0</p>
+                      <a
+                        href="https://youtu.be/8hly31xKli0?si=QCOp_tNea5mJJpYV"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2.5 inline-flex items-center gap-1 rounded-[6px] border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                      >
+                        Watch on YouTube <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    <div className="rounded-[9px] border border-slate-200 bg-white p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.07em] text-slate-400">Paid</p>
+                      <p className="mt-1 text-[13px] font-bold text-slate-900">Udemy</p>
+                      <p className="mt-0.5 text-[12px] text-slate-500">Cheaper paid alternative.</p>
+                      <p className="mt-0.5 text-[12px] text-slate-500">$10–20 on sale</p>
+                      <a
+                        href="https://www.udemy.com/course/data-structures-algorithms-python/"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2.5 inline-flex items-center gap-1 rounded-[6px] border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                      >
+                        View on Udemy <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[9px] border border-indigo-200 bg-indigo-50 px-4 py-3 text-[12px] leading-5 text-indigo-800">
+                  <strong>Note:</strong> Free and cheaper options can work, but if you can afford NeetCode Pro, it is
+                  usually the most practical path.
+                </div>
+
+                {/* 2-col: topics + build from scratch */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-[9px] border border-slate-200 bg-white p-3">
+                    <div className="text-[18px]">📋</div>
+                    <p className="mt-1.5 text-[12px] font-semibold text-slate-800">Important Topics to Learn</p>
+                    <p className="mt-1 text-[12px] text-slate-500 leading-5">
+                      Use the NeetCode DSA for Beginners outline as a topic checklist even if you do not buy the course.
+                    </p>
+                    <a
+                      href="https://neetcode.io/courses/dsa-for-beginners"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2.5 inline-flex items-center gap-1 rounded-[6px] border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                    >
+                      View Topics List <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <div className="rounded-[9px] border border-slate-200 bg-white p-3">
+                    <div className="text-[18px]">🔧</div>
+                    <p className="mt-1.5 text-[12px] font-semibold text-slate-800">Additional: Build Structures From Scratch</p>
+                    <p className="mt-1 text-[12px] text-slate-500 leading-5">
+                      Build linked lists, stacks, queues, and helper operations manually. Deepens understanding of
+                      tradeoffs and operations.
+                    </p>
+                    <a
+                      href="https://neetcode.io/practice"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2.5 inline-flex items-center gap-1 rounded-[6px] border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                    >
+                      NeetCode Core Skills <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* ── Step 2: The Grind Strategy ─────────────────────────────── */}
+            {currentStep === 2 ? (
+              <div className="px-9 pb-8 pt-8 space-y-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">Step 2</p>
+                  <p className="mt-1.5 text-[19px] font-bold leading-tight text-slate-900">The Grind Strategy</p>
+                  <p className="mt-1 mb-5 text-[13px] leading-relaxed text-slate-600">
+                    This is how to improve systematically. Most of this happens on NeetCode. Solve real practice
+                    problems on LeetCode or NeetCode so this module can track your progress automatically.
+                  </p>
+                  <a
+                    href="https://neetcode.io/roadmap"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-[6px] border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                  >
+                    Go to NeetCode 150
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+
+                {/* 5-step process */}
+                <div>
+                  <p className="mb-2 text-[12px] font-semibold text-slate-700">The Process</p>
+                  <div className="space-y-2">
+                    {grindSteps.map((item, index) => (
+                      <div key={item.title} className="flex items-start gap-2.5 rounded-[9px] border border-slate-200 bg-white px-3 py-2.5">
+                        <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
+                          {index + 1}
+                        </div>
+                        <p className="text-[12px] leading-5 text-slate-700">
+                          <strong className="text-slate-900">{item.title}</strong>{" "}
+                          {item.body}
+                          {index === 2 ? (
+                            <em className="text-slate-400"> It is completely fine to watch many video solutions at first. Pattern recognition improves with repetition.</em>
+                          ) : null}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 80-20 — always shown */}
+                <div className="rounded-[9px] border border-slate-200 bg-white p-4">
+                  <p className="text-[12px] font-bold text-slate-800 mb-2">What to Prioritize (80-20 Rule)</p>
+                  <p className="text-[12px] text-slate-500 mb-3">
+                    Do not try to master everything in one pass. Focus on high-frequency fundamentals first.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-[9px] border border-emerald-200 p-3">
+                      <p className="text-[11px] font-bold text-emerald-700 mb-2">Focus on Basics First</p>
+                      <div className="space-y-1">
+                        {basicsFirst.map((it) => (
+                          <p key={it} className="text-[12px] text-slate-600">{it}</p>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-[9px] border border-amber-200 p-3">
+                      <p className="text-[11px] font-bold text-amber-700 mb-2">Add Later</p>
+                      <div className="space-y-1">
+                        {addLater.map((it) => (
+                          <p key={it} className="text-[12px] text-slate-600">{it}</p>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-[11px] text-slate-400">Add gradually once basics feel automatic.</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 rounded-[7px] border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] text-slate-600">
+                    <strong className="text-slate-800">Practical approach:</strong> Build confidence in fundamentals
+                    first, then add advanced topics one at a time.
+                  </p>
+                </div>
+
+                {/* Founder's Note */}
+                <div className="border-l-[3px] border-l-indigo-400 pl-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-indigo-500">Founder's note</p>
+                  <div className="mt-3 space-y-4">
+                    <div>
+                      <p className="text-[12px] font-semibold text-slate-800">The 3-month grind</p>
+                      <p className="mt-1.5 text-[12px] leading-6 text-slate-700">
+                        I spent around 3 focused months building pattern intuition. I completed roughly 70–80 easy and
+                        medium NeetCode 150 problems with deep understanding — moving category by category through
+                        arrays, hashmaps, two pointers, sliding window, stacks, linked lists, and trees. I stopped
+                        around graph-level material to avoid overload. The key was depth: understand why each approach
+                        works, recognize the pattern, and explain time/space complexity.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[12px] font-semibold text-slate-800">Before the Amazon interview</p>
+                      <p className="mt-1.5 text-[12px] leading-6 text-slate-700">
+                        I had about 1 week to prepare. Because the foundation already existed, prep was mostly review.
+                        In 3–4 days I reviewed 60+ previously solved problems to reactivate patterns and speed. I did
+                        not need to relearn from scratch — and that preparation was enough.
+                      </p>
+                    </div>
+                    <p className="text-[12px] leading-6 text-slate-600">
+                      The initial 3-month grind is the hard part, but it creates a foundation that makes every future
+                      interview cycle dramatically faster.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Step footer */}
+          <div className="flex items-center justify-between rounded-b-[13px] border border-t-0 border-slate-200 bg-slate-50 px-5 py-[13px]">
+            <p className="text-[12px] text-slate-500">Step {currentStep + 1} of 3</p>
+            <div className="flex items-center gap-2">
+              {currentStep > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => goToStep(currentStep - 1)}
+                  className="inline-flex items-center gap-1.5 rounded-[7px] border border-slate-200 bg-white px-4 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  ← Previous
+                </button>
+              ) : null}
+              {currentStep < 2 ? (
+                <button
+                  type="button"
+                  onClick={() => goToStep(currentStep + 1)}
+                  className="inline-flex items-center gap-1.5 rounded-[7px] bg-indigo-600 px-4 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-indigo-700"
+                >
+                  Next →
+                </button>
               ) : (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                  Add your username first, then sync to load your LeetCode progress.
-                </div>
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex items-center gap-1.5 rounded-[7px] bg-emerald-100 px-4 py-1.5 text-[12px] font-semibold text-emerald-700 cursor-default"
+                >
+                  Done ✓
+                </button>
               )}
             </div>
-          ) : null}
+          </div>
+        </>
+      )}
 
-          {successMessage ? <p className="mt-3 text-sm text-emerald-700">{successMessage}</p> : null}
-          {errorMessage ? <p className="mt-3 text-sm text-rose-600">{errorMessage}</p> : null}
-
-          <p className="mt-3 text-xs text-slate-500">
-            {progress
-              ? `Leetcode module progress: ${moduleProgressValue}%.`
-              : "Leetcode module progress will appear once status loads."}
-          </p>
-        </div>
-      </section>
     </div>
   );
 }

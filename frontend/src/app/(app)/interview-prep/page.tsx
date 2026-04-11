@@ -2,56 +2,22 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
-  ArrowRight,
-  BrainCircuit,
-  Briefcase,
-  CheckCircle2,
+  BookOpen,
+  ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Code2,
   ExternalLink,
-  FileText,
-  Heart,
   Lightbulb,
   Mail,
   MessageSquare,
   Search,
-  Sparkles,
-  Target,
-  Users,
   Wrench
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 
-type StageCard = {
-  title: string;
-  subtitle: string;
-  description: string;
-  icon: LucideIcon;
-  shell: string;
-  iconShell: string;
-};
-
-type BehavioralStep = {
-  title: string;
-  description: string;
-  shell: string;
-  titleColor: string;
-  note?: string;
-};
-
-type ResourceLink = {
-  label: string;
-  href: string;
-  description: string;
-};
-
-type CodingStep = {
-  title: string;
-  description: string;
-};
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type InterviewPrepTask = {
   id: number;
@@ -67,207 +33,160 @@ type InterviewPrepTasksResponse = {
   tasks: InterviewPrepTask[];
 };
 
-type TaskCompletionModuleProgress = {
-  module_key: string;
-  score: number;
-};
-
 type TaskCompletionResponse = {
   task_id: number;
   completed: boolean;
-  module_progress: TaskCompletionModuleProgress[];
+  module_progress: Array<{ module_key: string; score: number }>;
 };
 
-const interviewStages: StageCard[] = [
+type GuideStep = {
+  id: "behavioral" | "technical" | "after";
+  label: string;
+};
+
+const GUIDE_STEPS: GuideStep[] = [
+  { id: "behavioral", label: "Behavioral & Recruiter Prep" },
+  { id: "technical", label: "Technical Interviews" },
+  { id: "after", label: "During & After" }
+];
+
+// ── Static data ───────────────────────────────────────────────────────────────
+
+const roundTypes = [
   {
-    title: "OA",
-    subtitle: "Online assessment",
-    description: "Some companies send this after you apply. Some skip it completely.",
-    icon: FileText,
-    shell: "border-cyan-200 bg-cyan-50/70",
-    iconShell: "bg-cyan-600 text-white"
+    tag: "Online Assessment",
+    tagColor: "text-blue-700",
+    name: "OA",
+    body: "Some companies send this after you apply. Some skip it completely. Usually timed coding on HackerRank or CodeSignal."
   },
   {
-    title: "Recruiter Screen",
-    subtitle: "15-30 min",
-    description: "Usually a light check on basics, timeline, and resume.",
-    icon: Briefcase,
-    shell: "border-blue-200 bg-blue-50/70",
-    iconShell: "bg-blue-600 text-white"
+    tag: "Recruiter Screen",
+    tagColor: "text-violet-700",
+    name: "15–30 min",
+    body: "Usually a light check on basics, timeline, and resume. They are confirming you are real and can communicate clearly."
   },
   {
-    title: "Behavioral",
-    subtitle: "\"Tell me about a time...\"",
-    description: "Questions about communication, teamwork, ownership, and failure.",
-    icon: Users,
-    shell: "border-violet-200 bg-violet-50/70",
-    iconShell: "bg-violet-600 text-white"
+    tag: "Behavioral",
+    tagColor: "text-pink-700",
+    name: '"Tell me about a time..."',
+    body: "Questions about communication, teamwork, ownership, and handling failure."
   },
   {
-    title: "Technical",
-    subtitle: "Coding or practical",
-    description: "Could be LeetCode, code reading, debugging, or project deep dives.",
-    icon: Code2,
-    shell: "border-emerald-200 bg-emerald-50/70",
-    iconShell: "bg-emerald-600 text-white"
+    tag: "Technical",
+    tagColor: "text-emerald-700",
+    name: "Coding or practical",
+    body: "Could be LeetCode-style, code reading, debugging, or a project deep dive. Format varies a lot by company."
   }
 ];
 
-const behavioralSteps: BehavioralStep[] = [
+const behavioralSteps = [
   {
-    title: "1. Research the company",
-    description:
-      "Research what matters: products, mission, values, leadership principles, culture, and what this company actually builds.",
-    shell: "border-violet-200 bg-violet-50/80",
-    titleColor: "text-violet-800"
+    num: "1",
+    title: "Research the company",
+    body: "Research what matters: products, mission, values, leadership principles, culture, and what this company actually builds."
   },
   {
-    title: "2. Turn your research into one prep document",
-    description:
-      "Write mission/values notes, \"why I want to work here\", \"why I am a great fit\", likely behavioral prompts, and rough answers. Example of this below.",
-    shell: "border-rose-200 bg-rose-50/80",
-    titleColor: "text-rose-800"
+    num: "2",
+    title: "Turn your research into one prep document",
+    body: 'Write mission/values notes, "why I want to work here", "why I am a great fit", likely behavioral prompts, and rough answers.'
   },
   {
-    title: "3. Adapt answers to their values",
-    description:
-      "Keep your stories true, but emphasize the traits this company rewards (ownership, collaboration, speed, quality, etc).",
-    shell: "border-pink-200 bg-pink-50/80",
-    titleColor: "text-pink-800",
-    note:
-      "Klaviyo example: they emphasized ambition and ownership, so when discussing my Fidelity work I intentionally used language like \"I led...\" to reflect those values."
+    num: "3",
+    title: "Adapt answers to their values",
+    body: "Keep your stories true, but emphasize the traits this company rewards (ownership, collaboration, speed, quality, etc.).",
+    note: 'In my Klaviyo interview, Klaviyo emphasized ambition and ownership. When discussing my Fidelity internship and other projects, I intentionally framed things with language like "I led..." and "I owned..." to match what they were looking for.'
   },
   {
-    title: "4. Draft common behavioral answers",
-    description:
-      "Prepare categories like teamwork, conflict, failure, leadership, adaptability, and initiative. Use STAR structure for each (explained below), and write drafts in your prep document. You can look up in Glassdoor if there's questions this company asks frequently.",
-    shell: "border-amber-200 bg-amber-50/80",
-    titleColor: "text-amber-800"
+    num: "4",
+    title: "Draft common behavioral answers",
+    body: "Prepare categories like teamwork, conflict, failure, leadership, adaptability, and initiative. Use STAR structure for each. Check Glassdoor for questions this company asks frequently."
   },
   {
-    title: "5. Build a story bank",
-    description:
-      "This is to avoid freezing in interviews: keep short notes from your experiences so you can quickly pull a relevant story and turn it into STAR on the spot.",
-    shell: "border-indigo-200 bg-indigo-50/80",
-    titleColor: "text-indigo-800"
+    num: "5",
+    title: "Build a story bank",
+    body: "This is to avoid freezing in interviews. Keep short notes from your experiences so you can quickly pull a relevant story and turn it into STAR on the spot. Categories: Teamwork · Communication · Conflict · Failure · Leadership · Initiative · Ambiguity · Resilience · Ownership · Motivation"
   },
   {
-    title: "6. Practice out loud (last step)",
-    description:
-      "Practice saying your answers, elevator pitch, company-fit points, and \"why I want to work here\" out loud so delivery is natural.",
-    shell: "border-emerald-200 bg-emerald-50/80",
-    titleColor: "text-emerald-800"
+    num: "6",
+    title: "Practice out loud (last step)",
+    body: 'Practice saying your answers, elevator pitch, company-fit points, and "why I want to work here" out loud so delivery is natural.'
   }
 ];
 
-const behavioralCategories = [
-  "Teamwork",
-  "Communication",
-  "Conflict",
-  "Failure",
+const storyBankRows = [
+  "Challenges",
+  "Mistakes / Failures",
+  "Experiences Enjoyed",
   "Leadership",
-  "Initiative",
-  "Ambiguity",
-  "Resilience",
-  "Ownership",
-  "Motivation"
+  "Conflicts",
+  "What You'd Do Differently"
 ];
 
-const technicalResearchLinks: ResourceLink[] = [
+const technicalResearchLinks = [
+  { label: "Glassdoor — recent interview reports", href: "https://www.glassdoor.com" },
+  { label: "Reddit — candidate experiences", href: "https://www.reddit.com" },
+  { label: "CSCareers Discord", href: "https://discord.com/invite/cscareers" },
+  { label: "LinkedIn — message past interns", href: "https://www.linkedin.com" }
+];
+
+const codingSteps = [
+  { title: "1. Read carefully first", body: "Do not rush to code. Restate the question and constraints in your own words." },
+  { title: "2. Ask clarifying questions", body: 'Do not assume. "Is money an integer or float?" "Can input be empty?"' },
+  { title: "3. Explain approaches", body: "Mention brute force first, then the improved approach and why you picked it." },
+  { title: "4. Talk while coding", body: "If you get stuck, say what you are checking and what you will try next." },
+  { title: "5. Analyze and test", body: "Walk through sample cases, then discuss time and space complexity." }
+];
+
+const nonLcFormats = [
   {
-    label: "Glassdoor",
-    href: "https://www.glassdoor.com",
-    description: "Search recent interview reports for your role and location."
+    id: "fmt-resume",
+    title: "1. Resume and project deep dive",
+    subtitle: "Very common — they start from your own work.",
+    prompts: 'Typical prompts: "Tell me about a project you built", "Walk me through the architecture", "Why did you choose this technology?", "What challenges did you face?"',
+    example: { label: "Example", text: "If you built an image-upload web app, be ready to explain data flow, framework choice, tradeoffs, and what would break at 10x traffic." },
+    evaluating: "They are evaluating technical depth, decision making, tradeoffs, and explanation clarity."
   },
   {
-    label: "Reddit",
-    href: "https://www.reddit.com",
-    description: "Find recent candidate experiences and specific company threads."
+    id: "fmt-code",
+    title: "2. Code reading interview",
+    subtitle: "Common for interns — analyze code instead of writing from scratch.",
+    prompts: '"What does this do?", "What bugs might exist?", "How can this be improved?"',
+    codeSnippet: `def get_average(nums):\n    total = 0\n    for i in range(len(nums)):\n        total += nums[i]\n    return total / len(nums)`,
+    followUp: "Follow-ups you may get: empty list behavior, clearer implementation, time complexity, and Pythonic alternatives.",
+    evaluating: "They are evaluating debugging ability, edge-case reasoning, and code quality awareness."
   },
   {
-    label: "CSCareers Discord",
-    href: "https://discord.com/invite/cscareers",
-    description:
-      "Use the search bar for the company name, read interview mentions in chats, then ask in channel or DM people who recently interviewed."
+    id: "fmt-debug",
+    title: "3. Debugging interview",
+    subtitle: "Real-engineering style — diagnose why something fails.",
+    prompts: '"Why does this crash?", "Why is output wrong?", "How would you debug this?"',
+    codeSnippet: `def divide(a, b):\n    return a / b`,
+    followUp: "Follow-ups you may get: zero division handling, preventive checks, and tests to avoid regressions.",
+    evaluating: "They are evaluating structured debugging process, root-cause analysis, and practical engineering mindset."
   },
   {
-    label: "LinkedIn",
-    href: "https://www.linkedin.com",
-    description: "Message students or interns who interviewed for similar roles."
+    id: "fmt-system",
+    title: "4. Small system design",
+    subtitle: "Simplified system design questions for intern roles.",
+    prompts: "Common prompts: URL shortener, notification system, rate limiter, caching layer.",
+    example: { label: "Example prompt", text: '"Design a URL shortener like bit.ly." Be ready for endpoints, data model, short-code generation, and scaling to millions of users.' },
+    evaluating: "They are evaluating how you break down systems, reason about architecture, and think about scaling."
   }
 ];
 
-const codingSteps: CodingStep[] = [
-  {
-    title: "1. Read carefully first",
-    description: "Do not rush to code. Restate the question and constraints in your own words."
-  },
-  {
-    title: "2. Ask clarifying questions",
-    description:
-      "Do not assume. Example: \"Is money an integer or float?\" \"Can input be empty?\" \"Are negatives allowed?\""
-  },
-  {
-    title: "3. Explain approaches",
-    description: "Mention brute force first, then the improved approach and why you picked it."
-  },
-  {
-    title: "4. Talk while coding",
-    description: "Keep communicating. If you get stuck, say what you are checking and what you will try next."
-  },
-  {
-    title: "5. Analyze and test",
-    description: "Walk through sample cases, then discuss time and space complexity."
-  }
-];
-
-const interviewPrepCompletionItems = [
-  "I understand the typical interview flow (OA, recruiter screen, behavioral, technical) and that formats vary by company.",
-  "I understand how company research (mission, values, product, role fit) improves behavioral preparation.",
-  "I understand how STAR and story-bank preparation prevent freezing and improve answer quality.",
-  "I understand the difference between LeetCode-style and non-LeetCode interviews, and how prep changes for each.",
-  "I understand why asking thoughtful end-of-interview questions and sending a thank-you follow-up matters."
-];
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function InterviewPrepPage() {
-  const [interviewPrepTasks, setInterviewPrepTasks] = useState<InterviewPrepTask[]>([]);
+  const [tasks, setTasks] = useState<InterviewPrepTask[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
   const [tasksError, setTasksError] = useState<string | null>(null);
-  const [completionChecks, setCompletionChecks] = useState<boolean[]>(() => interviewPrepCompletionItems.map(() => false));
-  const [checklistHydrated, setChecklistHydrated] = useState(false);
-  const [serverChecklistSynced, setServerChecklistSynced] = useState(false);
   const [syncingTaskId, setSyncingTaskId] = useState<number | null>(null);
-  const [moduleScore, setModuleScore] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      setChecklistHydrated(true);
-      return;
-    }
-
-    const saved = window.localStorage.getItem("interview_prep_completion_checks_v1");
-    if (!saved) {
-      setChecklistHydrated(true);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length === interviewPrepCompletionItems.length) {
-        setCompletionChecks(parsed.map(Boolean));
-      }
-    } catch {
-      // Ignore corrupted local storage.
-    }
-
-    setChecklistHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!checklistHydrated) return;
-    window.localStorage.setItem("interview_prep_completion_checks_v1", JSON.stringify(completionChecks));
-  }, [checklistHydrated, completionChecks]);
+  const [learningGuideOpen, setLearningGuideOpen] = useState(false);
+  const [activeGuideStep, setActiveGuideStep] = useState(0);
+  const [seenGuideSteps, setSeenGuideSteps] = useState<boolean[]>([false, false, false]);
+  const [visitedGuideSteps, setVisitedGuideSteps] = useState<boolean[]>([false, false, false]);
+  const [openDisclosures, setOpenDisclosures] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let active = true;
@@ -277,729 +196,762 @@ export default function InterviewPrepPage() {
     apiRequest<InterviewPrepTasksResponse>("/dashboard/tasks?module_key=interview_prep")
       .then((data) => {
         if (!active) return;
-        const tasks = data.tasks ?? [];
-        setInterviewPrepTasks(tasks);
-        const firstTask = tasks[0];
-        setModuleScore(firstTask?.is_completed ? 100 : 0);
+        const taskList = data.tasks ?? [];
+        setTasks(taskList);
+        if (taskList[0]?.is_completed) {
+          const all = [true, true, true];
+          setSeenGuideSteps(all);
+          setVisitedGuideSteps(all);
+          setActiveGuideStep(GUIDE_STEPS.length - 1);
+        }
       })
       .catch(() => {
         if (!active) return;
-        setInterviewPrepTasks([]);
-        setTasksError("Unable to load the interview prep checklist.");
+        setTasks([]);
+        setTasksError("Unable to load module progress.");
       })
       .finally(() => {
         if (active) setTasksLoading(false);
       });
 
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
-  const interviewPrepTask = interviewPrepTasks[0] ?? null;
-  const allChecksComplete = completionChecks.every(Boolean);
+  const interviewPrepTask = tasks[0] ?? null;
+  const guideProgressCount = seenGuideSteps.filter(Boolean).length;
+  const guideProgressPercent = Math.round((guideProgressCount / GUIDE_STEPS.length) * 100);
 
-  const updateInterviewPrepTaskCompletion = useCallback(
-    async (nextCompleted: boolean) => {
-      if (!interviewPrepTask) {
-        setTasksError("Interview prep completion task is not configured.");
-        return;
-      }
-      if (syncingTaskId === interviewPrepTask.id) return;
+  const progressBadge =
+    guideProgressCount === GUIDE_STEPS.length
+      ? { label: "Complete", className: "border-emerald-200 bg-emerald-50 text-emerald-700" }
+      : guideProgressCount > 0
+        ? { label: "In progress", className: "border-amber-200 bg-amber-50 text-amber-700" }
+        : { label: "Not started", className: "border-slate-200 bg-slate-50 text-slate-500" };
 
-      const previousCompleted = interviewPrepTask.is_completed;
-      setTasksError(null);
-      setSyncingTaskId(interviewPrepTask.id);
-      setInterviewPrepTasks((prev) =>
-        prev.map((item) => (item.id === interviewPrepTask.id ? { ...item, is_completed: nextCompleted } : item))
-      );
-
-      try {
-        const data = await apiRequest<TaskCompletionResponse>(`/dashboard/tasks/${interviewPrepTask.id}`, {
-          method: "PATCH",
-          body: JSON.stringify({ completed: nextCompleted })
-        });
-        const nextModuleState = data.module_progress.find((item) => item.module_key === "interview_prep");
-        setModuleScore(nextModuleState?.score ?? (nextCompleted ? 100 : 0));
-      } catch (err) {
-        setInterviewPrepTasks((prev) =>
-          prev.map((item) => (item.id === interviewPrepTask.id ? { ...item, is_completed: previousCompleted } : item))
-        );
-        const message = err instanceof Error ? err.message : "Unable to save your checklist progress. Please try again.";
-        setTasksError(message);
-      } finally {
-        setSyncingTaskId(null);
-      }
-    },
-    [interviewPrepTask, syncingTaskId]
-  );
-
-  useEffect(() => {
-    if (tasksLoading || !checklistHydrated || !interviewPrepTask || serverChecklistSynced) return;
-
-    if (interviewPrepTask.is_completed && !allChecksComplete) {
-      setCompletionChecks(interviewPrepCompletionItems.map(() => true));
-    }
-    if (!interviewPrepTask.is_completed && allChecksComplete) {
-      setCompletionChecks(interviewPrepCompletionItems.map(() => false));
-    }
-
-    setServerChecklistSynced(true);
-  }, [allChecksComplete, checklistHydrated, interviewPrepTask, serverChecklistSynced, tasksLoading]);
-
-  const toggleCompletionCheck = (index: number) => {
-    if (syncingTaskId !== null) return;
-
-    const nextChecks = completionChecks.map((value, itemIndex) => (itemIndex === index ? !value : value));
-    setCompletionChecks(nextChecks);
-
-    if (!interviewPrepTask) return;
-
-    const nextAllChecksComplete = nextChecks.every(Boolean);
-    if (nextAllChecksComplete !== interviewPrepTask.is_completed) {
-      void updateInterviewPrepTaskCompletion(nextAllChecksComplete);
-    }
+  const toggleDisclosure = (key: string) => {
+    setOpenDisclosures((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const toggleLearningGuide = () => {
+    setLearningGuideOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setSeenGuideSteps((current) =>
+          current.map((seen, index) => (index === activeGuideStep ? true : seen))
+        );
+      }
+      return next;
+    });
+  };
+
+  const goToGuideStep = (index: number) => {
+    if (index === activeGuideStep) return;
+    setVisitedGuideSteps((current) =>
+      current.map((visited, i) => (i === activeGuideStep ? true : visited))
+    );
+    setSeenGuideSteps((current) =>
+      current.map((seen, i) => (i === index ? true : seen))
+    );
+    setActiveGuideStep(index);
+  };
+
+  const navigateGuide = (direction: -1 | 1) => {
+    const nextIndex = activeGuideStep + direction;
+    if (nextIndex < 0 || nextIndex >= GUIDE_STEPS.length) return;
+    goToGuideStep(nextIndex);
+  };
+
+  const handleGuideCompletion = useCallback(() => {
+    const all = [true, true, true];
+    setVisitedGuideSteps(all);
+    setSeenGuideSteps(all);
+
+    if (!interviewPrepTask || interviewPrepTask.is_completed || syncingTaskId === interviewPrepTask.id) return;
+
+    setSyncingTaskId(interviewPrepTask.id);
+    setTasksError(null);
+
+    void apiRequest<TaskCompletionResponse>(`/dashboard/tasks/${interviewPrepTask.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ completed: true })
+    })
+      .then(() => {
+        setTasks((prev) =>
+          prev.map((item) =>
+            item.id === interviewPrepTask.id ? { ...item, is_completed: true } : item
+          )
+        );
+      })
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : "Unable to save progress right now.";
+        setTasksError(message);
+      })
+      .finally(() => setSyncingTaskId(null));
+  }, [interviewPrepTask, syncingTaskId]);
+
+  const isLastStep = activeGuideStep === GUIDE_STEPS.length - 1;
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-12 md:[&_.text-sm]:text-[15px]">
-      <section className="overflow-hidden rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 via-white to-cyan-50 p-4">
-        <div className="mx-auto max-w-4xl text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm shadow-emerald-200">
-            <Sparkles className="h-6 w-6" />
-          </div>
-          <h1 className="mt-3 text-xl font-bold tracking-tight text-slate-950">Interview Preparation</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            If you made it to interviews, you already did hard work: skills, projects, applications, and often OAs.
-            Now the goal is focused preparation so you can convert interviews into offers.
-          </p>
-        </div>
-      </section>
+    <div className="mx-auto max-w-4xl space-y-5 pb-16">
 
-      <section className="space-y-3">
+      {/* ── Module header ────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold tracking-tight text-slate-950">How Tech Interviews Usually Work</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-700">
-            Companies usually evaluate both behavioral and technical skills. Sometimes in separate rounds, sometimes in
-            one combined interview.
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Module 07</p>
+          <h1 className="mt-0.5 text-[22px] font-bold tracking-[-0.02em] text-slate-900">Interview Prep</h1>
+        </div>
+        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.06em] text-emerald-700">
+          After Readiness
+        </span>
+      </div>
+
+      <p className="text-[13px] leading-6 text-slate-500">
+        If you made it to interviews, you already did hard work — skills, projects, applications, and often OAs. Now
+        the goal is focused preparation so you can convert interviews into offers.
+      </p>
+
+      {/* Progress row */}
+      {!tasksLoading ? (
+        <div className="flex items-center gap-3 rounded-[9px] border border-slate-200 bg-white px-4 py-2.5">
+          <span className="whitespace-nowrap text-[12px] font-semibold text-slate-600">Interview Prep</span>
+          <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${guideProgressPercent}%` }} />
+          </div>
+          <span className="whitespace-nowrap text-[12px] font-semibold text-slate-500">
+            {guideProgressCount} / {GUIDE_STEPS.length} steps
+          </span>
+          <span className={`whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${progressBadge.className}`}>
+            {progressBadge.label}
+          </span>
+        </div>
+      ) : null}
+
+      {/* ── Hero: How Interviews Work ─────────────────────────────────────── */}
+      <div className="overflow-hidden rounded-[13px] border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <p className="text-[16px] font-bold text-slate-900">How Tech Interviews Usually Work</p>
+          <p className="mt-0.5 text-[12px] text-slate-500">
+            Companies usually evaluate both behavioral and technical skills. Sometimes in separate rounds, sometimes
+            combined.
           </p>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {interviewStages.map((stage) => {
-            const Icon = stage.icon;
-            return (
-              <article key={stage.title} className={`rounded-xl border p-3 ${stage.shell}`}>
-                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stage.iconShell}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <p className="mt-2 text-sm font-bold text-slate-950">{stage.title}</p>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{stage.subtitle}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{stage.description}</p>
-              </article>
-            );
-          })}
-        </div>
-        <div className="rounded-xl border border-amber-300 bg-amber-50/80 px-3 py-2.5 text-sm leading-6 text-slate-700">
-          <span className="font-semibold text-slate-950">Prep disclaimer:</span> before each round, confirm if it is
-          behavioral, technical, or mixed. That one answer changes your prep plan.
-        </div>
-      </section>
 
-      <section className="rounded-2xl border border-indigo-300 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-4">
-        <h2 className="text-lg font-bold tracking-tight text-slate-950">How to Prepare</h2>
-        <p className="mt-1 text-sm leading-6 text-slate-700">
-          Think in two interview types. Most prep mistakes come from preparing for the wrong type.
-        </p>
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <article className="rounded-xl border border-violet-200 bg-violet-50/70 p-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-white">
-                <Users className="h-4 w-4" />
-              </div>
-              <p className="text-sm font-bold text-slate-950">Interview Type 1: Behavioral / Recruiter</p>
+        {/* 4 round types */}
+        <div className="grid grid-cols-2 gap-px bg-slate-200 sm:grid-cols-4">
+          {roundTypes.map((rt) => (
+            <div key={rt.name} className="bg-white px-[18px] py-4">
+              <p className={`text-[10px] font-bold uppercase tracking-[0.08em] ${rt.tagColor} mb-1.5`}>{rt.tag}</p>
+              <p className="text-[13px] font-bold text-slate-900 mb-1.5">{rt.name}</p>
+              <p className="text-[11px] leading-[1.55] text-slate-500">{rt.body}</p>
             </div>
-            <p className="mt-2 text-sm leading-6 text-slate-700">
-              Prepare stories, company-fit messaging, and clear STAR responses.
-            </p>
-          </article>
-          <article className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
-                <Code2 className="h-4 w-4" />
-              </div>
-              <p className="text-sm font-bold text-slate-950">Interview Type 2: Technical</p>
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-700">
-              First identify format (LeetCode vs practical), then train for that format specifically.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-violet-300 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-600 text-white">
-            <Users className="h-4 w-4" />
-          </div>
-          <h2 className="text-lg font-bold tracking-tight text-slate-950">Behavioral and Recruiter Prep</h2>
-        </div>
-        <p className="mt-2 text-sm leading-6 text-slate-700">
-          This is where most candidates can gain edge quickly. The goal is to make your stories clear, relevant, and
-          easy to deliver under pressure.
-        </p>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {behavioralSteps.map((item) => (
-            <article key={item.title} className={`rounded-xl border p-3 ${item.shell}`}>
-              <p className={`text-sm font-bold ${item.titleColor}`}>{item.title}</p>
-              <p className="mt-1.5 text-sm leading-6 text-slate-700">{item.description}</p>
-              {item.note ? (
-                <div className="mt-2 rounded-lg border border-white/80 bg-white/80 p-2.5 text-xs leading-6 text-slate-700">
-                  <span className="font-semibold text-slate-950">Example:</span> {item.note}
-                </div>
-              ) : null}
-            </article>
           ))}
         </div>
 
-        <details className="group mt-4 overflow-hidden rounded-xl border border-violet-200 bg-white">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
+        {/* 2 prep types */}
+        <div className="grid grid-cols-2 gap-px border-t border-slate-200 bg-slate-200">
+          <div className="bg-white px-5 py-3.5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.07em] text-slate-400 mb-1">Interview Type 1</p>
+            <p className="text-[13px] font-bold text-slate-900 mb-1">Behavioral / Recruiter</p>
+            <p className="text-[12px] leading-[1.55] text-slate-500">
+              Prepare stories, company-fit messaging, and clear STAR responses. Research the company first.
+            </p>
+          </div>
+          <div className="bg-white px-5 py-3.5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.07em] text-slate-400 mb-1">Interview Type 2</p>
+            <p className="text-[13px] font-bold text-slate-900 mb-1">Technical</p>
+            <p className="text-[12px] leading-[1.55] text-slate-500">
+              First identify format (LeetCode vs. practical), then train for that format specifically. Don't prep the
+              wrong thing.
+            </p>
+          </div>
+        </div>
+
+        {/* Disclaimer — bottom */}
+        <div className="flex items-start gap-2.5 border-t border-amber-200 bg-amber-50 px-5 py-3">
+          <span className="shrink-0 text-[15px]">⚠️</span>
+          <p className="text-[12px] leading-6 text-amber-900">
+            <strong>Prep disclaimer:</strong> before each round, confirm if it is behavioral, technical, or mixed.
+            That one answer changes your prep plan entirely.
+          </p>
+        </div>
+      </div>
+
+      {/* ── Learning Guide ────────────────────────────────────────────────── */}
+      <div className="overflow-hidden rounded-[13px] border border-slate-200 bg-white">
+
+        {/* Toggle header */}
+        <button
+          type="button"
+          onClick={toggleLearningGuide}
+          className="flex w-full items-center justify-between gap-4 px-5 py-[15px] text-left transition hover:bg-slate-50"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-indigo-50 text-indigo-600">
+              <BookOpen className="h-4 w-4" />
+            </div>
             <div>
-              <p className="text-sm font-bold text-slate-950">Show company-research prep doc example</p>
-              <p className="text-xs text-slate-600">Use this format for mission, values, fit, and expected questions.</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-violet-700 transition-transform group-open:rotate-90" />
-          </summary>
-          <div className="border-t border-violet-100 p-3">
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-              <Image
-                src="/interview/company_research_example.png"
-                alt="Example behavioral prep document with company mission, values, and fit notes"
-                width={1400}
-                height={1800}
-                className="h-auto w-full"
-              />
-            </div>
-          </div>
-        </details>
-      </section>
-
-      <section className="space-y-4">
-        <section className="rounded-2xl border border-emerald-300 bg-emerald-50/70 p-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <CheckCircle2 className="h-4 w-4" />
-            </div>
-            <h3 className="text-base font-bold text-slate-950">STAR Method (Use this for behavioral answers)</h3>
-          </div>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            Structure answers as Situation, Task, Action, Result. This keeps answers concise and easier for the
-            interviewer to follow.
-          </p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-4">
-            {["Situation", "Task", "Action", "Result"].map((part, index) => (
-              <div
-                key={part}
-                className={`rounded-lg px-2.5 py-2 text-center text-xs font-bold ${index === 0
-                  ? "bg-violet-100 text-violet-900"
-                  : index === 1
-                    ? "bg-pink-100 text-pink-900"
-                    : index === 2
-                      ? "bg-rose-100 text-rose-900"
-                      : "bg-amber-100 text-amber-900"
-                  }`}
-              >
-                {part}
-              </div>
-            ))}
-          </div>
-          <details className="group mt-3 overflow-hidden rounded-lg border border-emerald-200 bg-white">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5">
-              <p className="text-sm font-semibold text-slate-950">Show STAR example answer</p>
-              <ChevronRight className="h-4 w-4 text-emerald-700 transition-transform group-open:rotate-90" />
-            </summary>
-            <div className="border-t border-emerald-100 p-3 text-sm leading-6 text-slate-700">
-              <p className="font-semibold text-slate-950">Question: Tell me about a time you had to meet a tight deadline.</p>
-              <div className="mt-2 space-y-2">
-                <div className="rounded-lg border border-violet-100 bg-violet-50/80 p-2.5">
-                  <span className="font-semibold text-violet-900">Situation:</span> Group assignment due in 3 days,
-                  one teammate dropped out last minute.
-                </div>
-                <div className="rounded-lg border border-pink-100 bg-pink-50/80 p-2.5">
-                  <span className="font-semibold text-pink-900">Task:</span> Finish both my part and the missing part
-                  before deadline.
-                </div>
-                <div className="rounded-lg border border-rose-100 bg-rose-50/80 p-2.5">
-                  <span className="font-semibold text-rose-900">Action:</span> Re-scoped to core deliverables,
-                  prioritized, worked late, and updated the professor proactively.
-                </div>
-                <div className="rounded-lg border border-amber-100 bg-amber-50/80 p-2.5">
-                  <span className="font-semibold text-amber-900">Result:</span> Submitted on time, earned a high
-                  grade, and learned prioritization under pressure.
-                </div>
-              </div>
-            </div>
-          </details>
-        </section>
-
-        <section className="rounded-2xl border border-indigo-300 bg-indigo-50/70 p-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white">
-              <BrainCircuit className="h-4 w-4" />
-            </div>
-            <h3 className="text-base font-bold text-slate-950">Build a Story Bank</h3>
-          </div>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            Map each experience to common behavioral categories so when a question comes, you can pick the right story
-            and build a STAR answer quickly.
-          </p>
-          <div className="mt-3 rounded-lg border border-indigo-200 bg-white p-2.5">
-            <p className="text-sm font-semibold text-indigo-900">What this is for</p>
-            <p className="mt-1 text-sm leading-6 text-slate-700">
-              The goal is not memorizing scripts. The goal is having a reliable memory bank so you do not freeze when
-              you hear "tell me about a time..." and can answer with confidence and structure.
-            </p>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {behavioralCategories.map((topic) => (
-              <span
-                key={topic}
-                className="rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700"
-              >
-                {topic}
-              </span>
-            ))}
-          </div>
-
-          <details className="group mt-3 overflow-hidden rounded-lg border border-indigo-200 bg-white">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5">
-              <p className="text-sm font-semibold text-slate-950">Show how to build a story bank</p>
-              <ChevronRight className="h-4 w-4 text-indigo-700 transition-transform group-open:rotate-90" />
-            </summary>
-            <div className="border-t border-indigo-100 p-3">
-              <div className="grid gap-2 text-xs leading-6 text-slate-700 md:grid-cols-3">
-                <div className="rounded-lg border border-indigo-100 bg-indigo-50/70 p-2.5">
-                  <p className="font-semibold text-indigo-900">Step 1</p>
-                  Pick one experience: internship, project, class, club, or even a non-tech job.
-                </div>
-                <div className="rounded-lg border border-indigo-100 bg-indigo-50/70 p-2.5">
-                  <p className="font-semibold text-indigo-900">Step 2</p>
-                  For that same experience, write down a challenge, failure, initiative, conflict, and impact that you had.
-                </div>
-                <div className="rounded-lg border border-indigo-100 bg-indigo-50/70 p-2.5">
-                  <p className="font-semibold text-indigo-900">Step 3</p>
-                  Repeat this for every project, experience, and school work you had. Then use these to build a STAR answer on the spot.
-                </div>
-              </div>
-              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Example card</p>
-                <p className="mt-1 text-sm font-semibold text-slate-950">Fidelity Internship</p>
-                <div className="mt-1.5 grid gap-1.5 text-xs leading-5 text-slate-700">
-                  <p><span className="font-semibold text-slate-900">Challenge:</span> Built a solo data pipeline flexible enough for multiple data sources.</p>
-                  <p><span className="font-semibold text-slate-900">Failure:</span> Missed early alignment with manager before a business presentation.</p>
-                  <p><span className="font-semibold text-slate-900">Initiative:</span> Proposed an automation step that removed repeated manual checks.</p>
-                  <p><span className="font-semibold text-slate-900">Conflict:</span> Resolved requirement mismatch by resetting expectations with stakeholders.</p>
-                </div>
-              </div>
-              <p className="mt-2 text-xs leading-5 text-slate-600">
-                You can use non-tech jobs too. What matters is having clear examples of challenge, initiative,
-                communication, conflict, and impact ready before the interview.
+              <p className="text-[14px] font-semibold text-slate-900">Learning Guide</p>
+              <p className="mt-0.5 text-[12px] text-slate-400">
+                Behavioral prep, technical interviews, and performing on the day — 3 reads
               </p>
             </div>
-          </details>
-        </section>
-
-        <section className="rounded-2xl border border-violet-200 bg-white p-3">
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-            <Image
-              src="/interview/preparationgrid.png"
-              alt="Behavioral preparation grid mapping topics to previous experiences"
-              width={1600}
-              height={1000}
-              className="h-auto w-full"
-            />
           </div>
-          <p className="mt-2 text-xs leading-6 text-slate-700">
-            Story-bank grid idea from <span className="italic">Cracking the Coding Interview</span>: build the bank
-            once so examples are always ready.
-          </p>
-        </section>
-      </section>
 
-      <section className="rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 via-white to-lime-50 p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white">
-            <Code2 className="h-4 w-4" />
-          </div>
-          <h2 className="text-lg font-bold tracking-tight text-slate-950">Technical Interviews</h2>
-        </div>
-        <p className="mt-2 text-sm leading-6 text-slate-700">
-          Research the format first. If you prep for LeetCode but get a practical interview, you lose time. If you prep
-          practical but get LeetCode, same problem.
-        </p>
-
-        <section className="mt-4 rounded-xl border border-emerald-200 bg-white p-3">
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-emerald-700" />
-            <h3 className="text-sm font-bold text-slate-950">Research the format first</h3>
-          </div>
-          <p className="mt-1.5 text-sm leading-6 text-slate-700">
-            Use these resources before starting prep. In CSCareers Discord, use the search button with your company
-            name, read existing interview mentions in chats, then ask in-channel or DM people who recently interviewed.
-          </p>
-          <div className="mt-3 grid gap-2 md:grid-cols-2">
-            {technicalResearchLinks.map((resource) => (
-              <a
-                key={resource.label}
-                href={resource.href}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 transition-colors hover:border-emerald-300 hover:bg-emerald-50/40"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-slate-950">{resource.label}</span>
-                  <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
-                </div>
-                <p className="mt-1 text-xs leading-5 text-slate-600">{resource.description}</p>
-              </a>
-            ))}
-          </div>
-          <p className="mt-2 text-xs leading-5 text-slate-600">
-            More resources will be added in the{" "}
-            <Link href="/opportunities" className="font-semibold text-emerald-700 hover:text-emerald-800">
-              Opportunities
-            </Link>{" "}
-            tab.
-          </p>
-        </section>
-
-        <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          <section className="rounded-xl border border-emerald-200 bg-white p-3">
-            <div className="flex items-center gap-2">
-              <Code2 className="h-4 w-4 text-emerald-700" />
-              <h3 className="text-sm font-bold text-slate-950">If LeetCode-style</h3>
-            </div>
-            <div className="mt-2 space-y-2">
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-                <p className="text-sm font-semibold text-slate-950">Set realistic expectations</p>
-                <p className="mt-1 text-sm leading-6 text-slate-700">
-                  LeetCode and DSA take months to build. If you are short on time, focus on high-yield categories and
-                  interview behavior instead of trying to cover everything.
-                </p>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-                <p className="text-sm font-semibold text-slate-950">Flow A: already did NC150 (or similar)</p>
-                <p className="mt-1 text-sm leading-6 text-slate-700">
-                  You can usually review most key patterns in about a week if needed, skip hard problems in a crunch,
-                  and spend extra time on tagged questions.
-                </p>
-              </div>
-              <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-2.5">
-                <p className="text-sm font-semibold text-amber-900">Flow B: new to DSA/LeetCode</p>
-                <p className="mt-1 text-sm leading-6 text-slate-700">
-                  Prioritize easiest high-yield topics first: arrays, hash maps, linked lists, and binary search. This
-                  gives the best return with limited prep time.
-                </p>
-              </div>
-              <div className="rounded-lg border border-indigo-200 bg-indigo-50/70 p-2.5">
-                <p className="text-sm font-semibold text-indigo-900">LeetCode tagged questions are mandatory prep</p>
-                <p className="mt-1 text-sm leading-6 text-slate-700">
-                  Tagged questions are problems reported by people interviewing at that specific company. You can get
-                  many through LeetCode Premium, or gather them from communities and peers. Both Flow A and Flow B
-                  should use tagged questions.
-                </p>
-              </div>
-            </div>
-
-            <details className="group mt-2.5 overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50/70">
-              <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5">
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4 text-emerald-700" />
-                  <p className="text-sm font-semibold text-emerald-900">How I prepared for Amazon (after NC150 baseline)</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-emerald-700 transition-transform group-open:rotate-90" />
-              </summary>
-              <div className="border-t border-emerald-200 px-3 py-2.5">
-                <p className="text-sm leading-6 text-slate-700">
-                  In 5 days I reviewed key NC150 patterns, skipped hard problems, and prioritized Amazon-tagged
-                  reports. I got asked LRU Cache, which was in my review set.
-                </p>
-                <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
-                  <Image
-                    src="/interview/common_questions.png"
-                    alt="Amazon interview prep notes with common and tagged coding questions"
-                    width={1600}
-                    height={1300}
-                    className="h-auto w-full"
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="flex gap-[5px]">
+              {GUIDE_STEPS.map((step, index) => {
+                const isCurrent = learningGuideOpen && index === activeGuideStep;
+                const isVisited = visitedGuideSteps[index] && index !== activeGuideStep;
+                return (
+                  <span
+                    key={step.id}
+                    className={`h-[5px] w-[22px] rounded-full transition-colors ${
+                      isCurrent ? "bg-indigo-600" : isVisited ? "bg-emerald-500" : "bg-slate-200"
+                    }`}
                   />
-                </div>
-              </div>
-            </details>
-          </section>
-
-          <section className="rounded-xl border border-amber-200 bg-white p-3">
-            <div className="flex items-center gap-2">
-              <Wrench className="h-4 w-4 text-amber-700" />
-              <h3 className="text-sm font-bold text-slate-950">If not LeetCode</h3>
+                );
+              })}
             </div>
-            <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50/80 p-2.5">
-              <p className="text-sm font-semibold text-amber-900">Format varies a lot by company and team</p>
-              <p className="mt-1 text-sm leading-6 text-slate-700">
-                Research is even more important here: use Glassdoor, Reddit, Discord, LinkedIn, friends, and alumni to
-                confirm the exact interview style.
-              </p>
+            <div className="flex items-center gap-1 text-[12px] font-semibold text-slate-400">
+              {learningGuideOpen ? "Close" : "Open"}
+              <ChevronDown className={`h-4 w-4 transition-transform ${learningGuideOpen ? "rotate-180" : ""}`} />
             </div>
-            <p className="mt-2 text-sm leading-6 text-slate-700">
-              Common types of non-LeetCode technical interviews are below. These are small examples so you can quickly
-              recognize the format and prepare the right way.
-            </p>
-            <div className="mt-2.5 space-y-2">
-              <details className="group overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">1. Resume and project deep dive</p>
-                    <p className="text-xs text-slate-600">Very common: they start from your own work.</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-600 transition-transform group-open:rotate-90" />
-                </summary>
-                <div className="border-t border-slate-200 px-3 py-2.5 text-sm leading-6 text-slate-700">
-                  <p>
-                    Typical prompts: "Tell me about a project you built", "Walk me through the architecture", "Why did
-                    you choose this technology?", "What challenges did you face?"
-                  </p>
-                  <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Example</p>
-                    <p className="mt-1 text-sm">
-                      If you built an image-upload web app, be ready to explain data flow, framework choice, tradeoffs,
-                      and what would break at 10x traffic.
-                    </p>
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-slate-600">
-                    They are evaluating technical depth, decision making, tradeoffs, and explanation clarity.
-                  </p>
-                </div>
-              </details>
-
-              <details className="group overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">2. Code reading interview</p>
-                    <p className="text-xs text-slate-600">Common for interns: analyze code instead of writing from scratch.</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-600 transition-transform group-open:rotate-90" />
-                </summary>
-                <div className="border-t border-slate-200 px-3 py-2.5 text-sm leading-6 text-slate-700">
-                  <p>Typical prompts: "What does this do?", "What bugs might exist?", "How can this be improved?"</p>
-                  <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Example snippet</p>
-                    <pre className="mt-1 whitespace-pre-wrap text-xs leading-5 text-slate-700">{`def get_average(nums):
-    total = 0
-    for i in range(len(nums)):
-        total += nums[i]
-    return total / len(nums)`}</pre>
-                  </div>
-                  <p className="mt-2">
-                    Follow-ups you may get: empty list behavior, clearer implementation, time complexity, and Pythonic
-                    alternatives.
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-slate-600">
-                    They are evaluating debugging ability, edge-case reasoning, and code quality awareness.
-                  </p>
-                </div>
-              </details>
-
-              <details className="group overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">3. Debugging interview</p>
-                    <p className="text-xs text-slate-600">Real-engineering style: diagnose why something fails.</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-600 transition-transform group-open:rotate-90" />
-                </summary>
-                <div className="border-t border-slate-200 px-3 py-2.5 text-sm leading-6 text-slate-700">
-                  <p>Typical prompts: "Why does this crash?", "Why is output wrong?", "How would you debug this?"</p>
-                  <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Example snippet</p>
-                    <pre className="mt-1 whitespace-pre-wrap text-xs leading-5 text-slate-700">{`def divide(a, b):
-    return a / b`}</pre>
-                  </div>
-                  <p className="mt-2">
-                    Follow-ups you may get: zero division handling, preventive checks, and tests to avoid regressions.
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-slate-600">
-                    They are evaluating structured debugging process, root-cause analysis, and practical engineering
-                    mindset.
-                  </p>
-                </div>
-              </details>
-
-              <details className="group overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">4. Small system design</p>
-                    <p className="text-xs text-slate-600">Simplified system design questions for intern roles.</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-600 transition-transform group-open:rotate-90" />
-                </summary>
-                <div className="border-t border-slate-200 px-3 py-2.5 text-sm leading-6 text-slate-700">
-                  <p>
-                    Common prompts: URL shortener, notification system, rate limiter, caching layer.
-                  </p>
-                  <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Example prompt</p>
-                    <p className="mt-1 text-sm">"Design a URL shortener like bit.ly."</p>
-                    <p className="mt-2 text-sm">
-                      Be ready for endpoints, data model, short-code generation, and scaling to millions of users.
-                    </p>
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-slate-600">
-                    They are evaluating how you break down systems, reason about architecture, and think about scaling.
-                  </p>
-                </div>
-              </details>
-            </div>
-
-            <details className="group mt-2.5 overflow-hidden rounded-lg border border-amber-200 bg-amber-50/70">
-              <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5">
-                <p className="text-sm font-semibold text-amber-900">Show common verbal technical fundamentals</p>
-                <ChevronRight className="h-4 w-4 text-amber-700 transition-transform group-open:rotate-90" />
-              </summary>
-              <div className="border-t border-amber-200 px-3 py-2.5 text-sm leading-6 text-slate-700">
-                Typical examples: "What are the 4 principles of OOP?", "When would you use a queue vs stack?", "How
-                does HTTP differ from HTTPS?", and role-specific fundamentals.
-              </div>
-            </details>
-          </section>
-        </div>
-
-        <section className="mt-4 rounded-2xl border border-cyan-300 bg-cyan-50/60 p-3">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-cyan-700" />
-            <h3 className="text-sm font-bold text-slate-950">At the end of any interview</h3>
           </div>
-          <div className="mt-2 grid gap-2 md:grid-cols-2">
-            <div className="rounded-lg border border-cyan-200 bg-white p-2.5">
-              <p className="text-sm font-semibold text-slate-950">Ask thoughtful questions before wrapping up</p>
-              <p className="mt-1 text-sm leading-6 text-slate-700">
-                Examples: "What makes an intern successful here?" and "What projects did past interns usually work on?"
-              </p>
+        </button>
+
+        {learningGuideOpen ? (
+          <>
+            {/* Step tabs */}
+            <div className="flex overflow-x-auto border-t border-slate-200 bg-slate-50 [scrollbar-width:none]">
+              {GUIDE_STEPS.map((step, index) => {
+                const isActive = index === activeGuideStep;
+                const isVisited = visitedGuideSteps[index] && !isActive;
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    onClick={() => goToGuideStep(index)}
+                    className={`flex shrink-0 items-center gap-2 border-b-2 px-[18px] py-[11px] text-[13px] font-medium transition-colors ${
+                      isActive
+                        ? "border-indigo-600 bg-white text-indigo-600"
+                        : isVisited
+                          ? "border-transparent text-emerald-600 hover:bg-white"
+                          : "border-transparent text-slate-400 hover:bg-white hover:text-slate-700"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-[22px] w-[22px] items-center justify-center rounded-full text-[10px] font-bold transition-all ${
+                        isActive
+                          ? "bg-indigo-600 text-white"
+                          : isVisited
+                            ? "bg-emerald-500 text-white"
+                            : "bg-slate-200 text-slate-500"
+                      }`}
+                    >
+                      {isVisited ? "✓" : index + 1}
+                    </span>
+                    {step.label}
+                  </button>
+                );
+              })}
             </div>
-            <div className="rounded-lg border border-cyan-200 bg-white p-2.5">
+
+            {/* ── Step 1: Behavioral Prep ────────────────────────────────── */}
+            {GUIDE_STEPS[activeGuideStep]?.id === "behavioral" ? (
+              <div className="border-t border-slate-200 px-9 py-8">
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">
+                  Behavioral & Recruiter
+                </p>
+                <h2 className="mb-1 text-[19px] font-bold leading-[1.3] text-slate-900">
+                  Behavioral & Recruiter Prep
+                </h2>
+                <p className="mb-6 text-[13px] leading-6 text-slate-500">
+                  This is where most candidates can gain edge quickly. The goal is to make your stories clear,
+                  relevant, and easy to deliver under pressure.
+                </p>
+
+                {/* 6-step list */}
+                <p className="mb-2.5 text-[12px] font-semibold text-slate-700">
+                  The 6-Step Behavioral Prep Process
+                </p>
+                <div className="mb-5 flex flex-col gap-2">
+                  {behavioralSteps.map((step) => (
+                    <div
+                      key={step.num}
+                      className="flex gap-3 rounded-[9px] border border-slate-200 bg-white px-[14px] py-3"
+                    >
+                      <div className="mt-[1px] flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] bg-pink-100 text-[10px] font-extrabold text-pink-700">
+                        {step.num}
+                      </div>
+                      <div>
+                        <p className="mb-[3px] text-[12px] font-bold text-indigo-800">{step.title}</p>
+                        <p className="text-[12px] leading-[1.55] text-slate-500">{step.body}</p>
+                        {step.note ? (
+                          <p className="mt-1 text-[12px] italic leading-[1.55] text-slate-400">{step.note}</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* STAR method */}
+                <div className="mb-3 rounded-[9px] border border-slate-200 bg-slate-50 p-4">
+                  <p className="mb-2 text-[12px] font-bold text-slate-900">
+                    STAR Method (Use this for behavioral answers)
+                  </p>
+                  <p className="mb-3 text-[12px] leading-6 text-slate-500">
+                    Structure answers as Situation, Task, Action, Result. This keeps answers concise and easier for
+                    the interviewer to follow.
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { label: "Situation", hint: "set the scene briefly" },
+                      { label: "Task", hint: "your specific responsibility" },
+                      { label: "Action", hint: "what you specifically did" },
+                      { label: "Result", hint: "the outcome, quantified if possible" }
+                    ].map((part) => (
+                      <div
+                        key={part.label}
+                        className="rounded-[7px] border border-slate-200 bg-white px-3 py-2 text-[12px] text-slate-600"
+                      >
+                        <strong className="text-slate-900">{part.label}</strong> — {part.hint}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* STAR example — expandable */}
+                <div className="mb-5 overflow-hidden rounded-[9px] border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => toggleDisclosure("star-example")}
+                    className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${openDisclosures["star-example"] ? "border-b border-indigo-200 bg-indigo-50" : "bg-white hover:bg-indigo-50"}`}
+                  >
+                    <p className={`text-[12px] font-semibold ${openDisclosures["star-example"] ? "text-indigo-800" : "text-slate-700"}`}>
+                      Show STAR example answer
+                    </p>
+                    <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${openDisclosures["star-example"] ? "rotate-180 text-indigo-500" : ""}`} />
+                  </button>
+                  {openDisclosures["star-example"] ? (
+                    <div className="border-indigo-200 bg-indigo-50 px-4 py-4">
+                      <p className="mb-2 text-[12px] font-semibold text-slate-900">
+                        Question: Tell me about a time you had to meet a tight deadline.
+                      </p>
+                      <div className="space-y-2 text-[12px]">
+                        <div className="rounded-[7px] border border-violet-100 bg-violet-50 p-2.5">
+                          <span className="font-semibold text-violet-900">Situation:</span>{" "}
+                          <span className="text-slate-700">Group assignment due in 3 days, one teammate dropped out last minute.</span>
+                        </div>
+                        <div className="rounded-[7px] border border-pink-100 bg-pink-50 p-2.5">
+                          <span className="font-semibold text-pink-900">Task:</span>{" "}
+                          <span className="text-slate-700">Finish both my part and the missing part before deadline.</span>
+                        </div>
+                        <div className="rounded-[7px] border border-rose-100 bg-rose-50 p-2.5">
+                          <span className="font-semibold text-rose-900">Action:</span>{" "}
+                          <span className="text-slate-700">Re-scoped to core deliverables, prioritized, worked late, and updated the professor proactively.</span>
+                        </div>
+                        <div className="rounded-[7px] border border-amber-100 bg-amber-50 p-2.5">
+                          <span className="font-semibold text-amber-900">Result:</span>{" "}
+                          <span className="text-slate-700">Submitted on time, earned a high grade, and learned prioritization under pressure.</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Story bank table */}
+                <div className="mb-3 rounded-[9px] border border-slate-200 bg-slate-50 p-4">
+                  <p className="mb-1.5 text-[12px] font-bold text-slate-900">
+                    Story Bank Grid (idea from <em>Cracking the Coding Interview</em>)
+                  </p>
+                  <p className="mb-3 text-[12px] text-slate-500">
+                    Map each experience to common behavioral categories so when a question comes, you can pick the
+                    right story and build a STAR answer quickly.
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-[11px]">
+                      <thead>
+                        <tr className="bg-slate-200">
+                          <th className="border border-slate-300 px-2.5 py-[7px] text-left font-semibold text-slate-600">
+                            Common Topics
+                          </th>
+                          {["Job 1", "Job 2", "Project 1", "Project 2"].map((col) => (
+                            <th
+                              key={col}
+                              className="border border-slate-300 px-2.5 py-[7px] text-center font-semibold text-slate-600"
+                            >
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {storyBankRows.map((row) => (
+                          <tr key={row}>
+                            <td className="border border-slate-200 px-2.5 py-[7px] text-slate-600">{row}</td>
+                            <td className="border border-slate-200 bg-indigo-50 px-2.5 py-[7px]" />
+                            <td className="border border-slate-200 bg-indigo-50 px-2.5 py-[7px]" />
+                            <td className="border border-slate-200 bg-indigo-50 px-2.5 py-[7px]" />
+                            <td className="border border-slate-200 bg-indigo-50 px-2.5 py-[7px]" />
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="mt-1.5 text-[11px] text-slate-400">Build the bank once so examples are always ready.</p>
+                </div>
+
+                {/* How to build story bank — expandable */}
+                <div className="overflow-hidden rounded-[9px] border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => toggleDisclosure("story-bank")}
+                    className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${openDisclosures["story-bank"] ? "border-b border-indigo-200 bg-indigo-50" : "bg-white hover:bg-indigo-50"}`}
+                  >
+                    <p className={`text-[12px] font-semibold ${openDisclosures["story-bank"] ? "text-indigo-800" : "text-slate-700"}`}>
+                      How to build your story bank
+                    </p>
+                    <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${openDisclosures["story-bank"] ? "rotate-180 text-indigo-500" : ""}`} />
+                  </button>
+                  {openDisclosures["story-bank"] ? (
+                    <div className="border-indigo-200 bg-indigo-50 px-4 py-4">
+                      <div className="grid gap-2 text-[12px] md:grid-cols-3">
+                        {[
+                          { step: "Step 1", text: "Pick one experience: internship, project, class, club, or even a non-tech job." },
+                          { step: "Step 2", text: "For that experience, write a challenge, failure, initiative, conflict, and impact." },
+                          { step: "Step 3", text: "Repeat for every project and experience. Use these to build a STAR answer on the spot." }
+                        ].map((item) => (
+                          <div key={item.step} className="rounded-[7px] border border-indigo-200 bg-white p-2.5">
+                            <p className="mb-0.5 text-[11px] font-bold text-indigo-900">{item.step}</p>
+                            <p className="text-[11px] leading-5 text-slate-700">{item.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 rounded-[7px] border border-slate-200 bg-white p-3">
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                          Example card
+                        </p>
+                        <p className="mb-1.5 text-[12px] font-semibold text-slate-900">Fidelity Internship</p>
+                        <div className="space-y-1 text-[11px] leading-5 text-slate-600">
+                          <p><span className="font-semibold text-slate-800">Challenge:</span> Built a solo data pipeline flexible enough for multiple data sources.</p>
+                          <p><span className="font-semibold text-slate-800">Failure:</span> Missed early alignment with manager before a business presentation.</p>
+                          <p><span className="font-semibold text-slate-800">Initiative:</span> Proposed an automation step that removed repeated manual checks.</p>
+                          <p><span className="font-semibold text-slate-800">Conflict:</span> Resolved requirement mismatch by resetting expectations with stakeholders.</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            {/* ── Step 2: Technical Interviews ──────────────────────────── */}
+            {GUIDE_STEPS[activeGuideStep]?.id === "technical" ? (
+              <div className="border-t border-slate-200 px-9 py-8">
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">Technical</p>
+                <h2 className="mb-1 text-[19px] font-bold leading-[1.3] text-slate-900">Technical Interviews</h2>
+                <p className="mb-6 text-[13px] leading-6 text-slate-500">
+                  Research the format first. If you prep for LeetCode but get a practical interview, you lose time.
+                  If you prep practical but get LeetCode, same problem.
+                </p>
+
+                {/* Research the format */}
+                <div className="mb-4 rounded-[9px] border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Search className="h-3.5 w-3.5 text-slate-500" />
+                    <p className="text-[12px] font-bold text-slate-900">Research the format first</p>
+                  </div>
+                  <p className="mb-3 text-[12px] leading-6 text-slate-500">
+                    Use these resources before starting prep. In CSCareers Discord, use the search button with your
+                    company name, read existing interview mentions in chats, then ask in-channel or DM people who
+                    recently interviewed.
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {technicalResearchLinks.map((r) => (
+                      <a
+                        key={r.label}
+                        href={r.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-[6px] border border-indigo-200 bg-indigo-50 px-2.5 py-[5px] text-[12px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-600 hover:text-white"
+                      >
+                        {r.label}
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                {/* LeetCode-style vs not LeetCode — 2-col */}
+                <div className="mb-4 grid gap-3 md:grid-cols-2">
+                  {/* If LeetCode */}
+                  <div className="rounded-[9px] border border-slate-200 bg-white p-4">
+                    <div className="mb-2.5 flex items-center gap-1.5">
+                      <Code2 className="h-3.5 w-3.5 text-slate-600" />
+                      <p className="text-[12px] font-bold text-slate-900">If LeetCode-style</p>
+                    </div>
+
+                    <p className="mb-1 text-[12px] font-semibold text-slate-700">Set realistic expectations</p>
+                    <p className="mb-2.5 text-[12px] leading-[1.55] text-slate-500">
+                      LeetCode and DSA take months to build. If you are short on time, focus on high-yield categories
+                      and interview behavior instead of trying to cover everything.
+                    </p>
+
+                    <p className="mb-1 text-[12px] font-semibold text-slate-700">
+                      Flow A: already did NC150 (or similar)
+                    </p>
+                    <p className="mb-2.5 text-[12px] leading-[1.55] text-slate-500">
+                      You can usually review most key patterns in about a week, skip hard problems in a crunch, and
+                      spend extra time on tagged questions.
+                    </p>
+
+                    <div className="mb-2.5 rounded-[6px] border border-amber-200 bg-amber-50 p-2.5">
+                      <p className="mb-1 text-[11px] font-bold text-amber-800">Flow B: new to DSA / LeetCode</p>
+                      <p className="text-[11px] leading-[1.55] text-amber-900">
+                        Prioritize easiest high-yield topics first: arrays, hash maps, linked lists, and binary
+                        search. Best return with limited prep time.
+                      </p>
+                    </div>
+
+                    <div className="mb-3 rounded-[6px] border border-slate-200 bg-slate-50 p-2.5 text-[11px] leading-[1.55] text-slate-600">
+                      LeetCode tagged questions are problems reported by people interviewing at that specific company.
+                      Get them through LeetCode Premium, or gather them from communities and peers. Both flows should
+                      use tagged questions.
+                    </div>
+
+                    {/* Amazon prep — expandable */}
+                    <div className="overflow-hidden rounded-[7px] border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => toggleDisclosure("amazon-prep")}
+                        className={`flex w-full items-center gap-2 px-3 py-2.5 text-left transition-colors ${openDisclosures["amazon-prep"] ? "border-b border-slate-200 bg-emerald-50" : "bg-slate-50 hover:bg-emerald-50"}`}
+                      >
+                        <Lightbulb className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                        <p className={`flex-1 text-[12px] font-semibold ${openDisclosures["amazon-prep"] ? "text-emerald-800" : "text-slate-700"}`}>
+                          How I prepared for Amazon (after NC150 baseline)
+                        </p>
+                        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${openDisclosures["amazon-prep"] ? "rotate-180" : ""}`} />
+                      </button>
+                      {openDisclosures["amazon-prep"] ? (
+                        <div className="bg-white px-3 py-3">
+                          <p className="mb-2 text-[12px] leading-6 text-slate-700">
+                            In 5 days I reviewed key NC150 patterns, skipped hard problems, and prioritized
+                            Amazon-tagged reports. I got asked LRU Cache, which was in my review set.
+                          </p>
+                          <div className="overflow-hidden rounded-[7px] border border-slate-200">
+                            <Image
+                              src="/interview/common_questions.png"
+                              alt="Amazon interview prep notes with common and tagged coding questions"
+                              width={1600}
+                              height={1300}
+                              className="h-auto w-full"
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* If not LeetCode */}
+                  <div className="rounded-[9px] border border-slate-200 bg-white p-4">
+                    <div className="mb-2.5 flex items-center gap-1.5">
+                      <Wrench className="h-3.5 w-3.5 text-slate-600" />
+                      <p className="text-[12px] font-bold text-slate-900">If not LeetCode</p>
+                    </div>
+                    <p className="mb-3 text-[12px] leading-6 text-slate-500">
+                      Format varies a lot by company and team. Research is even more important here. Common types of
+                      non-LeetCode technical interviews:
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      {nonLcFormats.map((item) => (
+                        <div key={item.id} className="overflow-hidden rounded-[7px] border border-slate-200">
+                          <button
+                            type="button"
+                            onClick={() => toggleDisclosure(item.id)}
+                            className={`flex w-full items-start justify-between px-3 py-2.5 text-left transition-colors ${openDisclosures[item.id] ? "border-b border-slate-200 bg-slate-100" : "bg-slate-50 hover:bg-slate-100"}`}
+                          >
+                            <div>
+                              <p className="text-[12px] font-semibold text-slate-900">{item.title}</p>
+                              <p className="text-[11px] text-slate-500">{item.subtitle}</p>
+                            </div>
+                            <ChevronDown className={`mt-0.5 h-4 w-4 shrink-0 text-slate-400 transition-transform ${openDisclosures[item.id] ? "rotate-180" : ""}`} />
+                          </button>
+                          {openDisclosures[item.id] ? (
+                            <div className="space-y-2.5 bg-white px-3 py-3">
+                              <p className="text-[12px] leading-6 text-slate-600">{item.prompts}</p>
+                              {item.example ? (
+                                <div className="rounded-[7px] border border-slate-200 bg-slate-50 px-3 py-2.5">
+                                  <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">{item.example.label}</p>
+                                  <p className="text-[12px] leading-6 text-slate-700">{item.example.text}</p>
+                                </div>
+                              ) : null}
+                              {item.codeSnippet ? (
+                                <div className="rounded-[7px] border border-slate-200 bg-slate-50 px-3 py-2.5">
+                                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">Example snippet</p>
+                                  <pre className="text-[11px] leading-5 text-slate-700">{item.codeSnippet}</pre>
+                                </div>
+                              ) : null}
+                              {item.followUp ? (
+                                <p className="text-[12px] leading-6 text-slate-600">{item.followUp}</p>
+                              ) : null}
+                              {item.evaluating ? (
+                                <p className="text-[11px] leading-5 text-slate-400">{item.evaluating}</p>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Coding question process */}
+                <div className="rounded-[9px] border border-slate-200 bg-slate-50 p-4">
+                  <p className="mb-2 text-[12px] font-bold text-slate-900">How to Solve Coding Questions</p>
+                  <p className="mb-3 text-[12px] text-slate-500">
+                    You do not need to be perfect. You need a clear process and strong communication.
+                  </p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {codingSteps.map((step) => (
+                      <div key={step.title} className="rounded-[7px] border border-slate-200 bg-white p-2.5">
+                        <p className="mb-1 text-[11px] font-bold text-slate-900">{step.title}</p>
+                        <p className="text-[11px] leading-[1.5] text-slate-500">{step.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2.5">
+                    <a
+                      href="https://youtu.be/1qw5ITr3k9E?si=0Cut-Mdxu2aoHzZg"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-[6px] border border-indigo-200 bg-indigo-50 px-2.5 py-[5px] text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-600 hover:text-white"
+                    >
+                      Optional: watch a simple mock coding interview (freeCodeCamp)
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* ── Step 3: During & After ─────────────────────────────────── */}
+            {GUIDE_STEPS[activeGuideStep]?.id === "after" ? (
+              <div className="border-t border-slate-200 px-9 py-8">
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">
+                  Closing the Loop
+                </p>
+                <h2 className="mb-1 text-[19px] font-bold leading-[1.3] text-slate-900">
+                  During & After the Interview
+                </h2>
+                <p className="mb-6 text-[13px] leading-6 text-slate-500">
+                  What you do at the end of every interview, and how to follow up, matters more than most students
+                  realize.
+                </p>
+
+                <div className="mb-5 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-[9px] border border-slate-200 bg-white px-[15px] py-[13px]">
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-slate-500" />
+                      <p className="text-[12px] font-semibold text-slate-900">
+                        Ask thoughtful questions before wrapping up
+                      </p>
+                    </div>
+                    <p className="text-[12px] leading-6 text-slate-500">
+                      Examples: "What makes an intern successful here?" and "What projects did past interns usually
+                      work on?" These show genuine interest and give you real information about the role.
+                    </p>
+                  </div>
+                  <div className="rounded-[9px] border border-slate-200 bg-white px-[15px] py-[13px]">
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-slate-500" />
+                      <p className="text-[12px] font-semibold text-slate-900">Send a short thank-you email after</p>
+                    </div>
+                    <p className="text-[12px] leading-6 text-slate-500">
+                      Thank them for their time, mention one specific discussion point, and restate your interest.
+                      Most candidates don't do this. It takes 3 minutes and leaves a lasting impression.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Dark conclusion block */}
+                <div className="rounded-[9px] bg-[#1e1b4b] px-[22px] py-5 text-center">
+                  <p className="mb-3 text-[14px] font-bold text-white">Conclusion</p>
+                  <p className="mb-3 text-[13px] leading-7 text-white/70">
+                    If your resume reached interview stage, the company already believes you could be a hire. They are
+                    not spending an engineer hour interviewing someone they see as impossible to hire. Recruiters are
+                    also measured on successful hires, so everyone involved wants this to work.
+                  </p>
+                  <p className="mb-4 text-[13px] leading-7 text-white/70">
+                    I have passed interviews where I did not fully solve the coding question. What matters most is
+                    being likable, showing genuine interest, thinking clearly, asking good questions, collaborating
+                    with the interviewer, and staying steady when things get uncomfortable.
+                  </p>
+                  <div className="inline-block rounded-[9px] bg-white/10 px-[18px] py-2.5 text-[13px] font-semibold leading-6 text-white">
+                    You do not need perfect answers.<br />
+                    You need clear thinking, communication, and good collaboration signals.
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Guide footer */}
+            <div className="flex items-center justify-between rounded-b-[13px] border-t border-slate-200 bg-slate-50 px-5 py-[13px]">
+              <span className="text-[12px] text-slate-400">
+                Step {activeGuideStep + 1} of {GUIDE_STEPS.length}
+              </span>
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-cyan-700" />
-                <p className="text-sm font-semibold text-slate-950">Send a short thank-you email after</p>
+                <button
+                  type="button"
+                  onClick={() => navigateGuide(-1)}
+                  disabled={activeGuideStep === 0}
+                  className="inline-flex items-center gap-1.5 rounded-[7px] border border-slate-200 bg-white px-3 py-[7px] text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" /> Previous
+                </button>
+                {isLastStep ? (
+                  <button
+                    type="button"
+                    onClick={handleGuideCompletion}
+                    disabled={syncingTaskId !== null}
+                    className="inline-flex items-center gap-1.5 rounded-[7px] bg-emerald-600 px-4 py-[7px] text-[12px] font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    Done ✓
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => navigateGuide(1)}
+                    className="inline-flex items-center gap-1.5 rounded-[7px] bg-indigo-600 px-3 py-[7px] text-[12px] font-semibold text-white transition-colors hover:bg-indigo-700"
+                  >
+                    Next <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
-              <p className="mt-1 text-sm leading-6 text-slate-700">
-                Thank them for their time, mention one specific discussion point, and restate your interest.
-              </p>
             </div>
-          </div>
-        </section>
-      </section>
+          </>
+        ) : null}
+      </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
-            <Target className="h-4 w-4" />
-          </div>
-          <h2 className="text-lg font-bold tracking-tight text-slate-950">How to Solve Coding Questions</h2>
-        </div>
-        <p className="mt-2 text-sm leading-6 text-slate-700">
-          You do not need to be perfect. You need a clear process and strong communication.
-        </p>
-        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          {codingSteps.map((step) => (
-            <article key={step.title} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-sm font-bold text-slate-950">{step.title}</p>
-              <p className="mt-1.5 text-sm leading-6 text-slate-700">{step.description}</p>
-            </article>
-          ))}
+      <div className="flex items-center justify-between gap-4 rounded-[9px] bg-indigo-600 px-5 py-4 text-white">
+        <div>
+          <p className="text-[14px] font-bold">Up next: LeetCode</p>
+          <p className="mt-1 text-[12px] text-indigo-100">
+            Optional advanced track for algorithm-heavy interview pipelines.
+          </p>
         </div>
         <a
-          href="https://youtu.be/1qw5ITr3k9E?si=0Cut-Mdxu2aoHzZg"
-          target="_blank"
-          rel="noreferrer"
-          className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 hover:text-indigo-800"
+          href="/leetcode"
+          className="rounded-[7px] bg-white px-4 py-2.5 text-[13px] font-bold text-indigo-600"
         >
-          <ExternalLink className="h-4 w-4" />
-          Optional: watch a simple mock coding interview (freeCodeCamp)
+          Continue to LeetCode →
         </a>
-      </section>
+      </div>
 
-      <section className="overflow-hidden rounded-2xl border border-violet-300 bg-gradient-to-br from-violet-50 via-white to-indigo-50 p-4">
-        <div className="mx-auto max-w-4xl text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-violet-600 text-white shadow-sm shadow-violet-200">
-            <Heart className="h-6 w-6" />
-          </div>
-          <h2 className="mt-3 text-xl font-bold tracking-tight text-slate-950">Conclusion</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            If your resume reached interview stage, the company already believes you could be a hire. They are not
-            spending an engineer hour interviewing someone they see as impossible to hire. Recruiters are also measured
-            on successful hires, so everyone involved wants this to work.
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            I have passed interviews where I did not fully solve the coding question. What matters most is being
-            likable, showing genuine interest, thinking clearly, asking good questions, collaborating with the
-            interviewer, and staying steady when things get uncomfortable.
-          </p>
-          <div className="mt-4 rounded-xl border border-indigo-200 bg-white p-3">
-            <p className="text-sm font-semibold text-indigo-900">
-              You do not need perfect answers. You need clear thinking, communication, and good collaboration signals.
-            </p>
-          </div>
+      {tasksError ? (
+        <div className="rounded-[9px] border border-red-200 bg-red-50 px-4 py-3 text-[12px] text-red-700">
+          {tasksError}
         </div>
-      </section>
-
-      <section className="rounded-2xl border border-emerald-200 bg-white p-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Complete This Module</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Use this checklist to confirm the core concepts are clear. You can complete this even if you are not
-              actively interviewing yet.
-            </p>
-          </div>
-          <Link
-            href="/leetcode"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100"
-          >
-            Continue to Leetcode
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
-          <div className="space-y-2.5">
-            {interviewPrepCompletionItems.map((item, index) => (
-              <label key={item} className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={completionChecks[index]}
-                  onChange={() => toggleCompletionCheck(index)}
-                  disabled={syncingTaskId !== null}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-60"
-                />
-                <span className="text-sm leading-relaxed text-slate-700">{item}</span>
-              </label>
-            ))}
-          </div>
-
-          {tasksLoading ? <p className="mt-3 text-sm text-slate-500">Loading checklist...</p> : null}
-          {tasksError ? <p className="mt-3 text-xs text-rose-600">{tasksError}</p> : null}
-
-          <p className="mt-3 text-xs text-slate-500">
-            {tasksLoading
-              ? "Checking your task progress..."
-              : moduleScore !== null
-                ? `Interview Prep module progress: ${moduleScore}%.`
-                : interviewPrepTask
-                  ? interviewPrepTask.is_completed
-                    ? "Interview prep checklist complete."
-                    : "Complete all checklist items to mark this module done."
-                  : "Checklist task will sync here once it is available."}
-          </p>
-        </div>
-      </section>
+      ) : null}
     </div>
   );
 }

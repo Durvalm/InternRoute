@@ -1251,24 +1251,20 @@ export default function ApplicationsPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="overflow-hidden rounded-[13px] bg-indigo-600">
-        <div className="flex flex-col gap-4 px-6 py-6 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-[13px] font-bold text-indigo-200">Up next</p>
-            <h2 className="mt-0.5 text-[18px] font-bold text-white">Interview Prep</h2>
-            <p className="mt-1 text-[12px] leading-5 text-indigo-200">
-              Behavioral strategy, technical interview tactics, and how to tell your story once interviews start.
-            </p>
-          </div>
-          <a
-            href="/interview-prep"
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-[9px] bg-white px-5 py-3 text-[13px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-50"
-          >
-            Continue to Interview Prep
-            <ArrowRight className="h-4 w-4" />
-          </a>
+      <div className="flex items-center justify-between gap-4 rounded-[9px] bg-indigo-600 px-5 py-4 text-white">
+        <div>
+          <p className="text-[14px] font-bold">Up next: Opportunities</p>
+          <p className="mt-1 text-[12px] text-indigo-100">
+            Run programs, fellowships, and hackathons in parallel with your internship applications.
+          </p>
         </div>
-      </section>
+        <a
+          href="/opportunities"
+          className="rounded-[7px] bg-white px-4 py-2.5 text-[13px] font-bold text-indigo-600"
+        >
+          Continue to Opportunities →
+        </a>
+      </div>
 
       {tasksError ? (
         <div className="rounded-[9px] border border-red-200 bg-red-50 px-4 py-3 text-[12px] text-red-700">

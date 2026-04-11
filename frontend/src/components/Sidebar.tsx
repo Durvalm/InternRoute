@@ -52,8 +52,8 @@ const navSections: NavSection[] = [
   {
     label: "Support",
     items: [
-      { icon: Users, label: "Interview Prep", href: "/interview-prep" },
-      { icon: Sparkles, label: "Opportunities", href: "/opportunities" }
+      { icon: Sparkles, label: "Opportunities", href: "/opportunities" },
+      { icon: Users, label: "Interview Prep", href: "/interview-prep" }
     ]
   },
   {

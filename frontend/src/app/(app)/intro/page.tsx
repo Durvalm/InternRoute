@@ -182,6 +182,13 @@ const SUPPORT_MODULES: Array<{
   noteClassName: string;
 }> = [
   {
+    icon: Briefcase,
+    title: "Opportunities",
+    body: "Hackathons, fellowships, open source, and other parallel experiences that strengthen your profile.",
+    note: "Run in parallel with applications",
+    noteClassName: "text-emerald-700"
+  },
+  {
     icon: Sparkles,
     title: "Interview Prep",
     body: "Behavioral strategy, technical interview tactics, and how to tell your story once interviews start happening.",
@@ -194,13 +201,6 @@ const SUPPORT_MODULES: Array<{
     body: "Important if you want to level up into Big Tech and top-tier recruiting, but not what beginners should center first.",
     note: "Optional level-up after solid fundamentals",
     noteClassName: "text-amber-700"
-  },
-  {
-    icon: Briefcase,
-    title: "Opportunities",
-    body: "Hackathons, fellowships, open source, and other parallel experiences that strengthen your profile.",
-    note: "Run in parallel with applications",
-    noteClassName: "text-emerald-700"
   }
 ];
 
