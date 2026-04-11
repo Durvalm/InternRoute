@@ -55,6 +55,16 @@ This file documents module-level behavior, completion gates, and the task identi
 - Source file:
   - backend/migrations/versions/1f9a8c7b6d5e_seed_applications_task.py
 
+## Opportunities (opportunities)
+- Purpose: support pipeline with fellowships, hackathons, and parallel opportunities.
+- Completion model: support module (no required completion task in progression).
+- Unlock threshold: 100.
+- Notes:
+  - Treated as a support module between Applications and Interview Prep.
+  - Configured with weight 0 so readiness score math remains unchanged.
+- Source file:
+  - backend/migrations/versions/f2b7d1c9e4a0_align_support_module_progression_order.py
+
 ## Interview Prep (interview_prep)
 - Purpose: interview conversion and preparation execution.
 - Completion model: checklist completion task.
@@ -79,10 +89,11 @@ This file documents module-level behavior, completion gates, and the task identi
 
 ## Dependencies and sequence
 Default order:
-- timeline -> coding -> projects -> resume -> applications -> interview_prep -> leetcode
+- timeline -> coding -> projects -> resume -> applications -> opportunities -> interview_prep -> leetcode
 
 Source:
 - backend/migrations/versions/8a1c9d2f4b6e_progression_foundation.py
+- backend/migrations/versions/f2b7d1c9e4a0_align_support_module_progression_order.py
 
 ## Notes for future changes
 When changing any module completion behavior:

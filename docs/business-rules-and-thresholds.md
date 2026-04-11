@@ -46,6 +46,7 @@ Source of seeded defaults: `backend/migrations/versions/8a1c9d2f4b6e_progression
 - Projects (`projects`): weight 30, unlock 80
 - Resume (`resume`): weight 10, unlock 80
 - Applications (`applications`): weight 5, unlock 100
+- Opportunities (`opportunities`): weight 0, unlock 100
 - Interview Prep (`interview_prep`): weight 5, unlock 100
 - LeetCode (`leetcode`): weight 25, unlock 80
 
