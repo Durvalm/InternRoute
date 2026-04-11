@@ -189,16 +189,6 @@ export default function LeetcodePage() {
     setCurrentStep(index);
   };
 
-  // Progress row values
-  const stepsVisited = visitedSteps.size;
-  const guideProgressPct = Math.min((stepsVisited / 3) * 100, 100);
-  const guideBadge =
-    stepsVisited === 0
-      ? { label: "Not started", cls: "border-amber-200 bg-amber-50 text-amber-700" }
-      : stepsVisited < 3
-      ? { label: "In progress", cls: "border-amber-200 bg-amber-50 text-amber-700" }
-      : { label: "Complete", cls: "border-emerald-200 bg-emerald-50 text-emerald-700" };
-
   return (
     <div className="mx-auto max-w-[900px] px-10 pt-7 pb-20 space-y-5">
 
@@ -209,26 +199,6 @@ export default function LeetcodePage() {
         <p className="mt-1.5 text-[13px] leading-relaxed text-slate-500">
           LeetCode does not get you noticed — but it gets you past the technical screen once you do.
         </p>
-      </div>
-
-      {/* ── Progress row ─────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <p className="flex-shrink-0 text-[12px] font-semibold text-slate-700">LeetCode</p>
-        <div className="flex-1 h-1.5 rounded-full bg-slate-100">
-          <div
-            className="h-1.5 rounded-full bg-indigo-500 transition-all"
-            style={{ width: `${guideProgressPct}%` }}
-          />
-        </div>
-        <p className="flex-shrink-0 text-[12px] text-slate-500">{stepsVisited}/3 steps</p>
-        <span
-          className={[
-            "flex-shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em]",
-            guideBadge.cls
-          ].join(" ")}
-        >
-          {guideBadge.label}
-        </span>
       </div>
 
       {/* ── Progress tracker (lc-hero) ───────────────────────────────────── */}
