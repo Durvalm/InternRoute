@@ -49,9 +49,18 @@ export type TimelinePlan = {
   recommendation_summary: string;
   peak_hiring_note: string;
   season_explainer: string;
+  eligible_target_window: EligibleTargetWindow;
   ready_after_graduation: boolean;
   graduates_before_next_peak: boolean;
   graduation_date: string | null;
+};
+
+export type EligibleTargetWindow = {
+  status: "unknown" | "future_window" | "current_to_end" | "window_closed_off_cycle" | "post_grad_or_ineligible";
+  label: string;
+  internship_year: number | null;
+  window_start: string | null;
+  window_end: string | null;
 };
 
 export type RecruitingScenario = {
@@ -74,6 +83,7 @@ export type RecruitingSummary = {
   summers_left: number | null;
   next_peak_date: string;
   recruiting_window_end: string | null;
+  eligible_target_window: EligibleTargetWindow;
   season_explainer: string;
   scenario: RecruitingScenario;
 };

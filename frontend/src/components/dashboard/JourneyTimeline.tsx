@@ -3,11 +3,12 @@
 import { useMemo, type ElementType } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Circle, Code2, Info, Mic, Search } from "lucide-react";
-import type { JourneyPayload, TimelinePlan } from "@/components/dashboard/types";
+import type { EligibleTargetWindow, JourneyPayload, TimelinePlan } from "@/components/dashboard/types";
 
 type JourneyTimelineProps = {
   journey: JourneyPayload | null;
   timelinePlan: TimelinePlan | null;
+  eligibleTargetWindow: EligibleTargetWindow | null;
   graduationDate: string | null;
   summersLeft: number | null;
   nextPeakDate: string | null;
@@ -168,9 +169,20 @@ function formatPeakWindowLabel(peakStartDateValue: string | null | undefined): s
 }
 
 function formatTargetHiringWindow(
+  eligibleTargetWindow: EligibleTargetWindow | null,
   timelinePlan: TimelinePlan | null,
   fallbackPeakDate: string | null | undefined,
 ): string {
+  if (
+    eligibleTargetWindow
+    && (eligibleTargetWindow.status === "window_closed_off_cycle" || eligibleTargetWindow.status === "post_grad_or_ineligible")
+  ) {
+    const readyMonth = formatMonthYear(timelinePlan?.estimated_ready_date);
+    return readyMonth === "TBD" ? "Apply as soon as ready" : `Apply as soon as ready · ${readyMonth}`;
+  }
+  if (eligibleTargetWindow && eligibleTargetWindow.status !== "unknown") {
+    return eligibleTargetWindow.label;
+  }
   if (!timelinePlan) return formatPeakWindowLabel(fallbackPeakDate);
   if (timelinePlan.recommended_season === "peak") {
     return formatPeakWindowLabel(
@@ -180,6 +192,22 @@ function formatTargetHiringWindow(
     );
   }
   return formatMonthYear(timelinePlan.recommended_start_date);
+}
+
+function targetWindowSubcopy(eligibleTargetWindow: EligibleTargetWindow | null): string {
+  if (!eligibleTargetWindow || eligibleTargetWindow.status === "unknown") {
+    return "You'll be ready inside or before this window";
+  }
+  if (eligibleTargetWindow.status === "post_grad_or_ineligible") {
+    return "Apply as soon as you're ready to full-time roles and internships that accept graduates.";
+  }
+  if (eligibleTargetWindow.status === "window_closed_off_cycle") {
+    return "Peak window passed for your last eligible summer. Start with full-time roles, graduate-friendly internships, and startup/local openings.";
+  }
+  if (eligibleTargetWindow.status === "current_to_end") {
+    return "You are in your eligible cycle now";
+  }
+  return "This is your eligible internship cycle";
 }
 
 function dayDeltaLabel(value: number | null | undefined): string {
@@ -192,6 +220,7 @@ function dayDeltaLabel(value: number | null | undefined): string {
 export default function JourneyTimeline({
   journey,
   timelinePlan,
+  eligibleTargetWindow,
   graduationDate,
   summersLeft,
   nextPeakDate,
@@ -217,9 +246,11 @@ export default function JourneyTimeline({
 
   const trackMeta = TRACK_META[journey.track_key] ?? TRACK_META.foundation_start;
   const targetHiringWindow = formatTargetHiringWindow(
+    eligibleTargetWindow,
     timelinePlan,
     nextPeakDate ?? journey.readiness_target_date,
   );
+  const targetHiringWindowSubcopy = targetWindowSubcopy(eligibleTargetWindow);
   const graduatingLabel = formatMonthYear(graduationDate);
   const summersLabel =
     summersLeft === null
@@ -244,7 +275,7 @@ export default function JourneyTimeline({
           <div className="rounded-xl border border-white/10 bg-white/6 px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">Target hiring window</p>
             <p className="mt-1 text-[20px] font-bold">{targetHiringWindow}</p>
-            <p className="mt-1 text-[13px] text-white/62">You&apos;ll be ready inside or before this window</p>
+            <p className="mt-1 text-[13px] text-white/62">{targetHiringWindowSubcopy}</p>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/6 px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">Graduating</p>

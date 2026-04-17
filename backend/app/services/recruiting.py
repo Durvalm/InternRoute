@@ -9,6 +9,11 @@ SEASON_PEAK = "peak"
 SEASON_LOWER = "lower"
 SEASON_OFF = "off"
 READY_THRESHOLD = 62
+TARGET_WINDOW_UNKNOWN = "unknown"
+TARGET_WINDOW_FUTURE = "future_window"
+TARGET_WINDOW_CURRENT = "current_to_end"
+TARGET_WINDOW_CLOSED = "window_closed_off_cycle"
+TARGET_WINDOW_INELIGIBLE = "post_grad_or_ineligible"
 
 
 @dataclass
@@ -36,6 +41,24 @@ class RecruitingScenario:
       "countdown_days": self.countdown_days,
       "countdown_direction": self.countdown_direction,
       "show_one_summer_badge": self.show_one_summer_badge,
+    }
+
+
+@dataclass
+class EligibleTargetWindow:
+  status: str
+  label: str
+  internship_year: int | None
+  window_start: date | None
+  window_end: date | None
+
+  def to_dict(self) -> dict[str, Any]:
+    return {
+      "status": self.status,
+      "label": self.label,
+      "internship_year": self.internship_year,
+      "window_start": self.window_start.isoformat() if self.window_start else None,
+      "window_end": self.window_end.isoformat() if self.window_end else None,
     }
 
 
@@ -77,6 +100,57 @@ def calculate_summers_left(today: date, graduation_date: date | None) -> int | N
   return max(0, last_year - first_year + 1)
 
 
+def get_eligible_target_window(*, today: date, graduation_date: date | None) -> EligibleTargetWindow:
+  if graduation_date is None:
+    return EligibleTargetWindow(
+      status=TARGET_WINDOW_UNKNOWN,
+      label="Set graduation date",
+      internship_year=None,
+      window_start=None,
+      window_end=None,
+    )
+
+  internship_year = _last_eligible_summer_year(graduation_date)
+  window_start = date(internship_year - 1, 8, 1)
+  window_end = date(internship_year, 3, 31)
+  summers_left = calculate_summers_left(today, graduation_date)
+
+  if summers_left is not None and summers_left <= 0:
+    return EligibleTargetWindow(
+      status=TARGET_WINDOW_INELIGIBLE,
+      label="Apply as soon as ready",
+      internship_year=internship_year,
+      window_start=window_start,
+      window_end=window_end,
+    )
+
+  if today < window_start:
+    return EligibleTargetWindow(
+      status=TARGET_WINDOW_FUTURE,
+      label=f"Aug {window_start.year} - Mar {window_end.year}",
+      internship_year=internship_year,
+      window_start=window_start,
+      window_end=window_end,
+    )
+
+  if today <= window_end:
+    return EligibleTargetWindow(
+      status=TARGET_WINDOW_CURRENT,
+      label=f"Current - Mar {window_end.year}",
+      internship_year=internship_year,
+      window_start=window_start,
+      window_end=window_end,
+    )
+
+  return EligibleTargetWindow(
+    status=TARGET_WINDOW_CLOSED,
+    label="Apply as soon as ready",
+    internship_year=internship_year,
+    window_start=window_start,
+    window_end=window_end,
+  )
+
+
 def _build_scenario(
   *,
   season: str,
@@ -97,8 +171,8 @@ def _build_scenario(
     return RecruitingScenario(
       id="K",
       name="Post-Graduation Mode",
-      header="Transition: New Grad Mode",
-      subtext="Internship windows are closed. Shift your strategy to full-time entry-level roles and selective off-season opportunities.",
+      header="Apply-Now Mode",
+      subtext="Peak summer windows have passed. Start applying to full-time roles and internships that accept graduates, especially at startups, local teams, and smaller companies.",
       color_theme="slate",
       countdown_label="Since Graduation" if diff < 0 else "Until Graduation",
       countdown_target=target,
@@ -252,6 +326,7 @@ def build_recruiting_view(*, today: date, readiness_score: int, graduation_date:
   next_peak = _next_peak_start(today)
   recruiting_end = _recruiting_end_for_active_cycle(today, season)
   summers_left = calculate_summers_left(today, graduation_date)
+  eligible_target_window = get_eligible_target_window(today=today, graduation_date=graduation_date)
 
   scenario = _build_scenario(
     season=season,
@@ -270,6 +345,7 @@ def build_recruiting_view(*, today: date, readiness_score: int, graduation_date:
     "summers_left": summers_left,
     "next_peak_date": next_peak.isoformat(),
     "recruiting_window_end": recruiting_end.isoformat() if recruiting_end else None,
+    "eligible_target_window": eligible_target_window.to_dict(),
     "season_explainer": "Peak: Aug-Dec, Lower: Jan-Mar, Off: Apr-Jul.",
     "scenario": scenario.to_dict(),
   }

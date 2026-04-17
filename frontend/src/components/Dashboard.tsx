@@ -164,6 +164,7 @@ export default function Dashboard() {
           <JourneyTimeline
             journey={summary?.journey ?? null}
             timelinePlan={summary?.timeline_plan ?? null}
+            eligibleTargetWindow={summary?.recruiting?.eligible_target_window ?? null}
             graduationDate={summary?.graduation_date ?? null}
             summersLeft={summary?.recruiting?.summers_left ?? null}
             nextPeakDate={summary?.recruiting?.next_peak_date ?? summary?.recruiting_date ?? null}

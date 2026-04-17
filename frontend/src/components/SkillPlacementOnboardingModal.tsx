@@ -431,16 +431,16 @@ function getTimelineGuidance(plan: OnboardingTimelinePlan): { title: string; sum
   }
   if (plan.recommendation_key === "lower_no_wait" || plan.recommendation_key === "off_no_wait") {
     return {
-      title: "Don't wait for a later cycle",
+      title: "Start with current opportunities",
       summary:
-        "Because of your graduation timeline, apply as soon as you're ready. Focus on internships at local companies and startups, and keep improving while you apply.",
+        "Because of your timeline, apply as soon as you're ready. Target internships at local/startup companies, and include full-time or graduate-friendly openings when relevant.",
     };
   }
   if (plan.recommendation_key === "urgent_no_wait") {
     return {
-      title: "Apply immediately and expand your target",
+      title: "Start now and broaden your target",
       summary:
-        "You're near or past graduation timing, so waiting is risky. Target startup/local internships and add new-grad full-time opportunities while you keep improving weekly.",
+        "You're near or past graduation timing. Target full-time roles and internships that accept graduates while you keep improving weekly.",
     };
   }
   return {

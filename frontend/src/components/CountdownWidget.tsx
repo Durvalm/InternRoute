@@ -1,31 +1,7 @@
 "use client";
 
 import { AlertTriangle, Calendar, Zap } from "lucide-react";
-import type { TimelinePlan } from "@/components/dashboard/types";
-
-type RecruitingScenario = {
-  id: string;
-  name: string;
-  header: string;
-  subtext: string;
-  color_theme: "indigo" | "emerald" | "amber" | "slate";
-  countdown_label: string;
-  countdown_target: string;
-  countdown_days: number;
-  countdown_direction: "until" | "since";
-  show_one_summer_badge: boolean;
-};
-
-type RecruitingSummary = {
-  season: "peak" | "lower" | "off";
-  ready_threshold: number;
-  readiness_status: "ready" | "not_ready";
-  summers_left: number | null;
-  next_peak_date: string;
-  recruiting_window_end: string | null;
-  season_explainer: string;
-  scenario: RecruitingScenario;
-};
+import type { EligibleTargetWindow, RecruitingSummary, TimelinePlan } from "@/components/dashboard/types";
 
 type CountdownWidgetProps = {
   seasonStatus?: "prep" | "window";
@@ -112,10 +88,26 @@ function formatPeakWindowLabel(peakStartDateValue: string | null | undefined): s
   return `Aug ${peakYear} - Mar ${peakYear + 1}`;
 }
 
+function formatApplyWhenReadyLabel(timelinePlan: TimelinePlan | null | undefined): string {
+  const readyMonth = formatMonthYear(timelinePlan?.estimated_ready_date);
+  if (readyMonth === "Not set") return "Apply as soon as ready";
+  return `Apply as soon as ready · ${readyMonth}`;
+}
+
 function formatTargetHiringWindow(
+  eligibleTargetWindow: EligibleTargetWindow | null | undefined,
   timelinePlan: TimelinePlan | null | undefined,
   fallbackPeakDate: string | null | undefined,
 ): string {
+  if (
+    eligibleTargetWindow
+    && (eligibleTargetWindow.status === "window_closed_off_cycle" || eligibleTargetWindow.status === "post_grad_or_ineligible")
+  ) {
+    return formatApplyWhenReadyLabel(timelinePlan);
+  }
+  if (eligibleTargetWindow && eligibleTargetWindow.status !== "unknown") {
+    return eligibleTargetWindow.label;
+  }
   if (!timelinePlan) {
     return formatPeakWindowLabel(fallbackPeakDate);
   }
@@ -130,9 +122,37 @@ function formatTargetHiringWindow(
 }
 
 function targetWindowSupportingCopy(
+  eligibleTargetWindow: EligibleTargetWindow | null | undefined,
   timelinePlan: TimelinePlan | null | undefined,
   fallbackPeakDate: string | null | undefined,
 ): string {
+  if (eligibleTargetWindow) {
+    if (eligibleTargetWindow.status === "post_grad_or_ineligible") {
+      const readyMonth = formatMonthYear(timelinePlan?.estimated_ready_date);
+      return `You're projected ready by ${readyMonth}. Start applying as soon as you're ready to full-time roles and internships that accept graduates.`;
+    }
+    if (eligibleTargetWindow.status === "window_closed_off_cycle") {
+      const readyMonth = formatMonthYear(timelinePlan?.estimated_ready_date);
+      return `You're projected ready by ${readyMonth}. Your peak-cycle window has passed, so apply as soon as you're ready to full-time roles, internships that accept graduates, and startup/local openings.`;
+    }
+    if (eligibleTargetWindow.status === "current_to_end") {
+      return "You are already in your eligible recruiting cycle. Apply now and keep pushing through March.";
+    }
+    if (eligibleTargetWindow.status === "future_window") {
+      const readyMonth = formatMonthYear(timelinePlan?.estimated_ready_date);
+      const readyDate = parseDateOnly(timelinePlan?.estimated_ready_date);
+      const windowStart = parseDateOnly(eligibleTargetWindow.window_start);
+      const windowEnd = parseDateOnly(eligibleTargetWindow.window_end);
+      if (readyDate && windowStart && windowEnd && readyDate >= windowStart && readyDate <= windowEnd) {
+        return `You'll be ready by ${readyMonth}, inside this eligible window. Start applying as soon as you hit readiness.`;
+      }
+      if (readyDate && windowStart && readyDate < windowStart) {
+        return `You'll be ready by ${readyMonth}, before this eligible window opens. Keep building until August opens.`;
+      }
+      return `You'll be ready by ${readyMonth}. Apply as soon as you're ready and keep improving while you apply.`;
+    }
+  }
+
   if (!timelinePlan) {
     const fallbackWindow = formatPeakWindowLabel(fallbackPeakDate);
     return fallbackWindow === "TBD"
@@ -174,6 +194,13 @@ export default function CountdownWidget({
     summers_left: null,
     next_peak_date: recruitingDate ?? "",
     recruiting_window_end: recruitingWindowEnd ?? null,
+    eligible_target_window: {
+      status: "unknown",
+      label: "TBD",
+      internship_year: null,
+      window_start: null,
+      window_end: null,
+    },
     season_explainer: "Peak: Aug-Dec. Lower: Jan-Mar. Off: Apr-Jul.",
     scenario: {
       id: "fallback",
@@ -192,7 +219,11 @@ export default function CountdownWidget({
     },
   };
 
-  const targetWindowLabel = formatTargetHiringWindow(timelinePlan, data.next_peak_date || recruitingDate);
+  const targetWindowLabel = formatTargetHiringWindow(
+    data.eligible_target_window,
+    timelinePlan,
+    data.next_peak_date || recruitingDate,
+  );
   const theme = THEME_CLASSES[data.scenario.color_theme];
   const readinessLabel =
     data.readiness_status === "ready"
@@ -246,7 +277,7 @@ export default function CountdownWidget({
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">Your target hiring window</p>
           <p className="mt-2 text-[20px] font-bold leading-none text-white">{targetWindowLabel}</p>
           <p className="mt-2 text-[13px] leading-6 text-white/72">
-            {targetWindowSupportingCopy(timelinePlan, data.next_peak_date || recruitingDate)}
+            {targetWindowSupportingCopy(data.eligible_target_window, timelinePlan, data.next_peak_date || recruitingDate)}
           </p>
         </div>
 
